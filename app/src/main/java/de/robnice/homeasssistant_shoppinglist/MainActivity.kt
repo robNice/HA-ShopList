@@ -21,8 +21,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import de.robnice.homeasssistant_shoppinglist.data.HaRepository
+import de.robnice.homeasssistant_shoppinglist.data.HaServiceFactory
 import de.robnice.homeasssistant_shoppinglist.data.SettingsDataStore
-
+import de.robnice.homeasssistant_shoppinglist.viewmodel.ShoppingViewModel
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
 
 class MainActivity : androidx.activity.ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,20 +71,57 @@ class MainActivity : androidx.activity.ComponentActivity() {
 @Composable
 fun ShoppingScreen(navController: NavController) {
 
-    val items = remember { mutableStateListOf("Milch", "Brot") }
+    val context = LocalContext.current
+    val dataStore = remember { SettingsDataStore(context) }
+
+    val haUrl by dataStore.haUrl.collectAsState(initial = "")
+    val haToken by dataStore.haToken.collectAsState(initial = "")
+
+    if (haUrl.isBlank() || haToken.isBlank()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Missing configuration")
+        }
+        return
+    }
+
+    val api = remember(haUrl) {
+        HaServiceFactory.create(haUrl)
+    }
+
+    val repository = remember(haToken) {
+        HaRepository(api, haToken)
+    }
+
+    val viewModel = remember {
+        ShoppingViewModel(repository)
+    }
+
+    val items by viewModel.items.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val loading by viewModel.loading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadItems()
+    }
+
     var newItem by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text( t(R.string.shopping_title) ) },
+                title = { Text(t(R.string.app_name)) },
                 actions = {
-                    IconButton(onClick = {
-                        navController.navigate("settings")
-                    }) {
+                    IconButton(
+                        onClick = {
+                            navController.navigate(Screen.Settings.route)
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = t(R.string.settings_title)
+                            contentDescription = t(R.string.settings)
                         )
                     }
                 }
@@ -87,46 +129,109 @@ fun ShoppingScreen(navController: NavController) {
         }
     ) { innerPadding ->
 
-        Column(
+        Box(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(16.dp)
+                .fillMaxSize()
         ) {
 
-            Row {
-                TextField(
-                    value = newItem,
-                    onValueChange = { newItem = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text(
-                        t(
-                                R.string.new_item
-                        )
-                    ) }
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Button(onClick = {
-                    if (newItem.isNotBlank()) {
-                        items.add(newItem)
-                        newItem = ""
-                    }
-                }) {
-                    Text(t(R.string.add))
+            when {
+                loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                error != null -> {
+                    Text(
+                        text = "Error: $error",
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
 
-            items.forEach { item ->
-                Text(
-                    text = item,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
+                items.isEmpty() -> {
+                    Text(
+                        text = t(R.string.no_items),
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    ) {
+
+                        Row {
+                            OutlinedTextField(
+                                value = newItem,
+                                onValueChange = { newItem = it },
+                                modifier = Modifier.weight(1f),
+                                placeholder = { Text("Neues Item") }
+                            )
+
+                            Spacer(Modifier.width(8.dp))
+
+                            Button(onClick = {
+                                if (newItem.isNotBlank()) {
+                                    viewModel.addItem(newItem)
+                                    newItem = ""
+                                }
+                            }) {
+                                Text("Add")
+                            }
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                        items.forEach { item ->
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+
+                                Checkbox(
+                                    checked = item.complete,
+                                    onCheckedChange = {
+                                        viewModel.toggleItem(item)
+                                    }
+                                )
+
+                                Text(
+                                    text = item.name,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                            }
+                        }
+
+
+                        val hasCompleted = items.any { it.complete }
+
+                        if (hasCompleted) {
+                            Spacer(Modifier.height(8.dp))
+
+                            Button(
+                                onClick = { viewModel.clearCompleted() },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Text( t(R.string.clear_completed) )
+                            }
+                        }
+
+
+                    }
+                }
             }
         }
     }
 }
+
+
 

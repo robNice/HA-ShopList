@@ -9,6 +9,18 @@ object HaServiceFactory {
 
     fun create(baseUrl: String): HaApi {
 
+        val normalizedBaseUrl = baseUrl
+            .trim()
+            .let {
+                if (!it.startsWith("http://") && !it.startsWith("https://")) {
+                    "https://$it"
+                } else it
+            }
+            .removeSuffix("/")
+            .plus("/")
+
+        println("BASE URL: $normalizedBaseUrl")
+
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
@@ -17,12 +29,17 @@ object HaServiceFactory {
             .addInterceptor(logging)
             .build()
 
+        val moshi = com.squareup.moshi.Moshi.Builder()
+            .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
+            .build()
+
         val retrofit = Retrofit.Builder()
-            .baseUrl(baseUrl)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .baseUrl(normalizedBaseUrl)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(client)
             .build()
 
         return retrofit.create(HaApi::class.java)
     }
+
 }

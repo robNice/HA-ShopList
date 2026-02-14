@@ -11,4 +11,8 @@
     <string name="back">Zurück</string>
     <string name="ha_token">Long-Lived Token</string>
     <string name="shopping_title">Shopping List</string>
+    <string name="list">List</string>
+    <string name="loading">Loading…</string>
+    <string name="no_items">No items</string>
+    <string name="clear_completed">Clear completed</string>
 </resources>

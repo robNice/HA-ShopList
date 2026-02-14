@@ -10,9 +10,7 @@ fun normalizeHaUrl(input: String): String {
         url = "https://$url"
     }
 
-    if (!url.endsWith("/")) {
-        url += "/"
-    }
+    url = url.trimEnd('/')
 
-    return url
+    return "$url/"
 }
