@@ -1,5 +1,6 @@
 package de.robnice.homeasssistant_shoppinglist.ui.screens
 
+import de.robnice.homeasssistant_shoppinglist.R
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -17,7 +18,14 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import de.robnice.homeasssistant_shoppinglist.ui.util.t
+import de.robnice.homeasssistant_shoppinglist.util.normalizeHaUrl
 
+/**
+ * @todo: prevent copying token
+ * @todo: prevent screenshots
+ * @todo: prevent autofill for token field
+ */
 @Composable
 fun SettingsScreen(
     navController: NavController,
@@ -41,14 +49,14 @@ fun SettingsScreen(
 
     Column(modifier = Modifier.padding(16.dp)) {
 
-        Text("Settings", style = MaterialTheme.typography.headlineMedium)
+        Text(t(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = url,
             onValueChange = { url = it },
-            label = { Text("Home Assistant URL") },
+            label = { Text(t(R.string.ha_url)) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -58,7 +66,7 @@ fun SettingsScreen(
         OutlinedTextField(
             value = token,
             onValueChange = { token = it },
-            label = { Text("Long-Lived Token") },
+            label = { Text(t(R.string.ha_token)) },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = if (tokenVisible)
                 VisualTransformation.None
@@ -85,12 +93,17 @@ fun SettingsScreen(
 
         Button(onClick = {
             coroutineScope.launch {
-                dataStore.saveHaUrl(url)
-                dataStore.saveHaToken(token)
+
+                val cleanedUrl = normalizeHaUrl(url)
+                val cleanedToken = token.trim()
+
+                dataStore.saveHaUrl(cleanedUrl)
+                dataStore.saveHaToken(cleanedToken)
+
                 navController.popBackStack()
             }
         }) {
-            Text("Save")
+            Text(t(R.string.save))
         }
     }
 }

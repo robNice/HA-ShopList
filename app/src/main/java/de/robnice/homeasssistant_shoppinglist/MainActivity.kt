@@ -72,14 +72,14 @@ fun ShoppingScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Shopping") },
+                title = { Text( t(R.string.shopping_title) ) },
                 actions = {
                     IconButton(onClick = {
                         navController.navigate("settings")
                     }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = t(R.string.settings_title)
                         )
                     }
                 }
