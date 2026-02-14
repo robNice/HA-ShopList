@@ -31,4 +31,12 @@ class HaRepository(
         api.clearCompleted("Bearer $token")
     }
 
+    suspend fun updateItemComplete(id: String, complete: Boolean) {
+        api.updateItem(
+            token = "Bearer $token",
+            id = id,
+            body = UpdateItemRequest(complete = complete)
+        )
+    }
+
 }

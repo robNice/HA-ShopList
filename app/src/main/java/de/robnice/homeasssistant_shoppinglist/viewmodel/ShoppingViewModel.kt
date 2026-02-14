@@ -43,10 +43,29 @@ class ShoppingViewModel(
 
     fun toggleItem(item: ShoppingItem) {
         viewModelScope.launch {
-            repository.toggleItem(item)
-            loadItems()
+            val newComplete = !item.complete
+            _items.value = _items.value.map {
+                if (it.id == item.id)
+                    it.copy(complete = newComplete)
+                else it
+            }
+
+            try {
+                repository.updateItemComplete(item.id, newComplete)
+
+            } catch (e: Exception) {
+                _items.value = _items.value.map {
+                    if (it.id == item.id)
+                        it.copy(complete = item.complete)
+                    else it
+                }
+
+                _error.value = e.message
+            }
         }
     }
+
+
 
     fun clearCompleted() {
         viewModelScope.launch {

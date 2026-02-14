@@ -27,7 +27,15 @@ import de.robnice.homeasssistant_shoppinglist.data.SettingsDataStore
 import de.robnice.homeasssistant_shoppinglist.viewmodel.ShoppingViewModel
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 
 class MainActivity : androidx.activity.ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -185,27 +193,54 @@ fun ShoppingScreen(navController: NavController) {
 
                         Spacer(Modifier.height(16.dp))
 
-                        items.forEach { item ->
+                        val openItems = items.filter { !it.complete }
+                        val completedItems = items.filter { it.complete }
 
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                        var completedExpanded by remember { mutableStateOf(false) }
 
-                                Checkbox(
-                                    checked = item.complete,
-                                    onCheckedChange = {
-                                        viewModel.toggleItem(item)
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                        ) {
+
+                            // 🔵 Offene Items
+                            items(
+                                items = openItems,
+                                key = { it.id }
+                            ) { item ->
+                                ShoppingRow(item = item, viewModel = viewModel)
+                            }
+
+                            // 🟡 Completed Header
+                            if (completedItems.isNotEmpty()) {
+
+                                item {
+                                    Spacer(Modifier.height(16.dp))
+                                    HorizontalDivider()
+                                    Spacer(Modifier.height(8.dp))
+
+                                    TextButton(
+                                        onClick = { completedExpanded = !completedExpanded }
+                                    ) {
+                                        Text(
+                                            if (completedExpanded)
+                                                "${t(R.string.completed)} (${completedItems.size}) ▲"
+                                            else
+                                                "${t(R.string.completed)} (${completedItems.size}) ▼"
+                                        )
                                     }
-                                )
+                                }
 
-                                Text(
-                                    text = item.name,
-                                    modifier = Modifier.weight(1f)
-                                )
-
+                                // 🟡 Completed Items (nur wenn expanded)
+                                if (completedExpanded) {
+                                    items(
+                                        items = completedItems,
+                                        key = { it.id }
+                                    ) { item ->
+                                        ShoppingRow(item = item, viewModel = viewModel)
+                                    }
+                                }
                             }
                         }
 
@@ -213,9 +248,16 @@ fun ShoppingScreen(navController: NavController) {
                         val hasCompleted = items.any { it.complete }
 
                         if (hasCompleted) {
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(24.dp))
+                            HorizontalDivider(
+                                Modifier,
+                                DividerDefaults.Thickness,
+                                DividerDefaults.color
+                            )
+                            Spacer(Modifier.height(12.dp))
 
                             Button(
+                                modifier = Modifier.fillMaxWidth(),
                                 onClick = { viewModel.clearCompleted() },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.error
@@ -224,14 +266,64 @@ fun ShoppingScreen(navController: NavController) {
                                 Text( t(R.string.clear_completed) )
                             }
                         }
-
-
                     }
                 }
             }
         }
     }
 }
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun ShoppingRow(
+    item: ShoppingItem,
+    viewModel: ShoppingViewModel
+) {
+    var visible by remember { mutableStateOf(true) }
+    var localChecked by remember(item.id) { mutableStateOf(item.complete) }
+    val scope = rememberCoroutineScope()
+
+    AnimatedVisibility(
+        visible = visible,
+        exit = fadeOut(animationSpec = tween(250))
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Checkbox(
+                checked = localChecked,
+                onCheckedChange = {
+
+                    localChecked = it
+                    scope.launch {
+                        delay(250)
+                        visible = false
+                        delay(250)
+                        viewModel.toggleItem(item)
+                    }
+                }
+            )
+
+            Text(
+                text = item.name,
+                modifier = Modifier.weight(1f),
+                style = if (localChecked)
+                    MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                else
+                    MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
+
+
 
 
 
