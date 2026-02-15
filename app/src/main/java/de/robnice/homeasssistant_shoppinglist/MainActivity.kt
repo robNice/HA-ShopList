@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.*
 import de.robnice.homeasssistant_shoppinglist.ui.navigation.Screen
 import de.robnice.homeasssistant_shoppinglist.ui.screens.SettingsScreen
 import de.robnice.homeasssistant_shoppinglist.ui.theme.HomeAsssistantShoppingListTheme
@@ -32,17 +31,26 @@ import androidx.compose.foundation.lazy.items
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import org.burnoutcrew.reorderable.*
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -94,6 +102,7 @@ fun ShoppingScreen(navController: NavController) {
     var editingItemId by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
+
     if (haUrl.isBlank() || haToken.isBlank()) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -130,6 +139,14 @@ fun ShoppingScreen(navController: NavController) {
 
     val items by viewModel.items.collectAsState()
 
+    var hasReceivedData by remember { mutableStateOf(false) }
+
+    LaunchedEffect(items) {
+        if (items.isNotEmpty()) {
+            hasReceivedData = true
+        }
+    }
+
     var newItem by remember { mutableStateOf("") }
 
     Scaffold(
@@ -158,37 +175,75 @@ fun ShoppingScreen(navController: NavController) {
                 .fillMaxSize()
         ) {
 
-            if (items.isEmpty()) {
-                Text(
-                    text = t(R.string.no_items),
-                    modifier = Modifier.align(Alignment.Center)
-                )
+            if (!hasReceivedData) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (items.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(t(R.string.no_items))
+                }
+
             } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
+                        .pointerInput(editingItemId) {
+                            detectTapGestures {
+                                editingItemId = null
+                            }
+                        }
                 ) {
 
-                    Row {
-                        OutlinedTextField(
-                            value = newItem,
-                            onValueChange = { newItem = it },
-                            modifier = Modifier.weight(1f),
-                            placeholder = { Text( t(R.string.new_item) ) }
-                        )
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
 
-                        Spacer(Modifier.width(8.dp))
+                            OutlinedTextField(
+                                value = newItem,
+                                onValueChange = { newItem = it },
+                                modifier = Modifier.weight(1f),
+                                placeholder = { Text(t(R.string.new_item)) },
+                                singleLine = true,
+                                shape = MaterialTheme.shapes.large
+                            )
 
-                        Button(onClick = {
-                            if (newItem.isNotBlank()) {
-                                viewModel.addItem(newItem)
-                                newItem = ""
+                            Spacer(Modifier.width(12.dp))
+
+                            IconButton(
+                                onClick = {
+                                    if (newItem.isNotBlank()) {
+                                        viewModel.addItem(newItem)
+                                        newItem = ""
+                                    }
+                                },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = t(R.string.add),
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
                             }
-                        }) {
-                            Text(t(R.string.add))
                         }
                     }
+
 
                     Spacer(Modifier.height(16.dp))
 
@@ -206,129 +261,199 @@ fun ShoppingScreen(navController: NavController) {
 
                     var completedExpanded by remember { mutableStateOf(false) }
 
+                    val lazyListState = rememberLazyListState()
 
-                    val reorderState = rememberReorderableLazyListState(
+                    var draggingOpenKey by remember { mutableStateOf<String?>(null) }
 
-                        onMove = { from, to ->
-
-                            localOpenItems = localOpenItems.toMutableList().apply {
-                                val item = removeAt(from.index)
-                                add(to.index, item)
-                            }
-                        },
-
-                        onDragEnd = { startIndex, endIndex ->
-
-                            if (startIndex == endIndex) return@rememberReorderableLazyListState
-
-                            val movedItem = localOpenItems[endIndex]
-
-                            val previousItemId =
-                                if (endIndex > 0)
-                                    localOpenItems[endIndex - 1].id
-                                else
-                                    null
-
-                            viewModel.moveItem(movedItem.id, previousItemId)
+                    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+                        localOpenItems = localOpenItems.toMutableList().apply {
+                            add(to.index, removeAt(from.index))
                         }
-                    )
+                    }
 
-                        LazyColumn(
-                            state = reorderState.listState,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .reorderable(reorderState)
-                                .detectReorderAfterLongPress(reorderState)
-                        ) {
-
-                            items(
-                                items = localOpenItems,
-                                key = { it.id }
-                            ) { item ->
-                                ReorderableItem(reorderState, key = item.id) { isDragging ->
-
-                                    val elevation = if (isDragging) 8.dp else 0.dp
-
-                                    Card(
-                                        elevation = CardDefaults.cardElevation(elevation),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        ShoppingRow(
-                                            item = item,
-                                            isEditing = editingItemId == item.id,
-                                            onStartEdit = { editingItemId = item.id },
-                                            onStopEdit = { editingItemId = null },
-                                            viewModel = viewModel
-                                        )
-                                    }
-                                }
-                            }
-
-                            if (completedItems.isNotEmpty()) {
-
-                                item {
-                                    Spacer(Modifier.height(16.dp))
-                                    HorizontalDivider()
-                                    Spacer(Modifier.height(8.dp))
-
-                                    TextButton(
-                                        onClick = { completedExpanded = !completedExpanded }
-                                    ) {
-                                        Text(
-                                            if (completedExpanded)
-                                                "${t(R.string.completed)} (${completedItems.size}) ▲"
-                                            else
-                                                "${t(R.string.completed)} (${completedItems.size}) ▼"
-                                        )
-                                    }
-                                }
-
-                                // 🟡 Completed Items (nur wenn expanded)
-                                if (completedExpanded) {
-                                    items(
-                                        items = completedItems,
-                                        key = { it.id }
-                                    ) { item ->
-                                        ShoppingRow(
-                                            item = item,
-                                            isEditing = editingItemId == item.id,
-                                            onStartEdit = { editingItemId = item.id },
-                                            onStopEdit = { editingItemId = null },
-                                            viewModel = viewModel
-                                        )
-                                    }
-                                }
-                            }
+                    LaunchedEffect(completedExpanded, localOpenItems.size, completedItems.size) {
+                        if (completedExpanded && completedItems.isNotEmpty()) {
+                            val headerIndex = localOpenItems.size
+                            kotlinx.coroutines.delay(16)
+                            lazyListState.animateScrollToItem(headerIndex)
                         }
+                    }
 
+                    LazyColumn(
+                        state = lazyListState,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
 
-                        val hasCompleted = items.any { it.complete }
+                        items(
+                            items = localOpenItems,
+                            key = { "open_${it.id}" }
+                        ) { item ->
 
-                        if (hasCompleted) {
-                            Spacer(Modifier.height(24.dp))
-                            HorizontalDivider(
-                                Modifier,
-                                DividerDefaults.Thickness,
-                                DividerDefaults.color
-                            )
-                            Spacer(Modifier.height(12.dp))
+                            val openKey = "open_${item.id}"
 
-                            Button(
-                                modifier = Modifier.fillMaxWidth(),
-                                //onClick = { viewModel.clearCompleted() },
-                                onClick = { showConfirmDialog = true  },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error
+                            ReorderableItem(reorderState, key = openKey) { isDragging ->
+
+                                val elevation by animateDpAsState(
+                                    targetValue = if (isDragging) 16.dp else 2.dp,
+                                    label = "dragElevation"
                                 )
-                            ) {
-                                Text( t(R.string.clear_completed) )
+
+                                val scale by animateFloatAsState(
+                                    targetValue = if (isDragging) 1.03f else 1f,
+                                    label = "dragScale"
+                                )
+
+                                Card(
+                                    elevation = CardDefaults.cardElevation(elevation),
+                                    shape = MaterialTheme.shapes.large,
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                    ),
+                                    modifier = Modifier
+                                        .graphicsLayer {
+                                            scaleX = scale
+                                            scaleY = scale
+                                        }
+                                        .fillMaxWidth()
+                                        .longPressDraggableHandle(
+                                            onDragStarted = { draggingOpenKey = openKey },
+                                            onDragStopped = {
+                                                val id = draggingOpenKey?.removePrefix("open_")
+                                                    ?: return@longPressDraggableHandle
+                                                draggingOpenKey = null
+
+                                                val endIndex =
+                                                    localOpenItems.indexOfFirst { it.id == id }
+                                                if (endIndex < 0) return@longPressDraggableHandle
+
+                                                val movedItem = localOpenItems[endIndex]
+                                                val previousItemId =
+                                                    if (endIndex > 0) localOpenItems[endIndex - 1].id else null
+
+                                                viewModel.moveItem(movedItem.id, previousItemId)
+                                            }
+                                        )
+                                ) {
+                                    ShoppingRow(
+                                        item = item,
+                                        isEditing = editingItemId == item.id,
+                                        onStartEdit = { clickedId ->
+
+                                            if (editingItemId != null && editingItemId != clickedId) {
+                                                editingItemId = null
+                                                return@ShoppingRow
+                                            }
+
+                                            editingItemId = clickedId
+                                        },
+                                        onStopEdit = { editingItemId = null },
+                                        viewModel = viewModel
+                                    )
+                                }
                             }
                         }
+
+
+
+                        if (completedItems.isNotEmpty()) {
+
+                            item {
+                                Spacer(Modifier.height(16.dp))
+                                HorizontalDivider(
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                                Spacer(Modifier.height(8.dp))
+
+                                TextButton(
+                                    onClick = { completedExpanded = !completedExpanded }
+                                ) {
+                                    Text(
+                                        text = if (completedExpanded)
+                                            "${t(R.string.completed)} (${completedItems.size})"
+                                        else
+                                            "${t(R.string.completed)} (${completedItems.size})",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(if (completedExpanded) "▲" else "▼")
+                                }
+                            }
+
+                            if (completedExpanded) {
+                                items(
+                                    items = completedItems,
+                                    key = { "completed_${it.id}" }
+                                ) { item ->
+                                    ShoppingRow(
+                                        item = item,
+                                        isEditing = editingItemId == item.id,
+                                        onStartEdit = { clickedId ->
+
+                                            if (editingItemId != null && editingItemId != clickedId) {
+                                                editingItemId = null
+                                                return@ShoppingRow
+                                            }
+
+                                            editingItemId = clickedId
+                                        },
+                                        onStopEdit = { editingItemId = null },
+                                        viewModel = viewModel,
+                                        animateVisibility = false
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+
+                    val hasCompleted = items.any { it.complete }
+
+                    if (hasCompleted) {
+                        Spacer(Modifier.height(24.dp))
+                        HorizontalDivider(
+                            Modifier,
+                            DividerDefaults.Thickness,
+                            DividerDefaults.color
+                        )
+                        Spacer(Modifier.height(12.dp))
+
+                        Button(
+                            onClick = { showConfirmDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ),
+                            border = BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.35f)
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteSweep,
+                                contentDescription = null
+                            )
+
+                            Spacer(Modifier.width(10.dp))
+
+                            Text(
+                                text = t(R.string.clear_completed),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+
                     }
                 }
             }
         }
+    }
     if (showConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
@@ -353,7 +478,7 @@ fun ShoppingScreen(navController: NavController) {
             }
         )
     }
-    }
+}
 
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -361,12 +486,12 @@ fun ShoppingScreen(navController: NavController) {
 fun ShoppingRow(
     item: ShoppingItem,
     isEditing: Boolean,
-    onStartEdit: () -> Unit,
+    onStartEdit: (String) -> Unit,
     onStopEdit: () -> Unit,
     viewModel: ShoppingViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    animateVisibility: Boolean = true
 ) {
-    var visible by remember { mutableStateOf(true) }
     var localChecked by remember(item.id) { mutableStateOf(item.complete) }
     val scope = rememberCoroutineScope()
     var editText by remember(item.id) { mutableStateOf(item.name) }
@@ -400,10 +525,9 @@ fun ShoppingRow(
         } + fadeOut(animationSpec = tween(250))
 
     AnimatedVisibility(
-        visible = visible,
+        visible = if (animateVisibility) !item.complete else true,
         exit = exitAnimation
     ) {
-
         Row(
             modifier = modifier
                 .fillMaxWidth()
@@ -413,6 +537,9 @@ fun ShoppingRow(
 
             Checkbox(
                 checked = localChecked,
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.primary
+                ),
                 onCheckedChange = {
                     localChecked = it
                     scope.launch {
@@ -452,7 +579,7 @@ fun ShoppingRow(
                     modifier = Modifier
                         .weight(1f)
                         .clickable {
-                            onStartEdit()
+                            onStartEdit(item.id)
                             editText = item.name
                         },
                     style = if (localChecked)
