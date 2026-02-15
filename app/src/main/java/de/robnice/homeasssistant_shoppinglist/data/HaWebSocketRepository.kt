@@ -2,6 +2,7 @@ package de.robnice.homeasssistant_shoppinglist.data
 
 import de.robnice.homeasssistant_shoppinglist.data.websocket.HaWebSocketClient
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
+import de.robnice.homeasssistant_shoppinglist.util.Debug
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.json.JSONArray
@@ -26,7 +27,7 @@ class HaWebSocketRepository(
 
         scope.launch {
             client.ready.collect {
-                println("WS READY (RECONNECTED)")
+                Debug.log("WS READY (RECONNECTED)")
 
                 client.send(
                     type = "todo/item/subscribe",
@@ -42,7 +43,7 @@ class HaWebSocketRepository(
         scope.launch {
             client.events.collect { json ->
                 try {
-                    println("WS EVENT: $json")
+                    Debug.log("WS EVENT: $json")
 
                     when (json.optString("type")) {
 

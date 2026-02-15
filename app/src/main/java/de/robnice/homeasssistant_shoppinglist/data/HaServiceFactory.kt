@@ -1,5 +1,6 @@
 package de.robnice.homeasssistant_shoppinglist.data
 
+import de.robnice.homeasssistant_shoppinglist.util.Debug
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -19,7 +20,7 @@ object HaServiceFactory {
             .removeSuffix("/")
             .plus("/")
 
-        println("BASE URL: $normalizedBaseUrl")
+        Debug.log("BASE URL: $normalizedBaseUrl")
 
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY

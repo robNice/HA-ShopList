@@ -53,7 +53,6 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 val navController = rememberNavController()
                 val context = LocalContext.current
                 val dataStore = remember { SettingsDataStore(context) }
-
                 val haUrl by dataStore.haUrl.collectAsState(initial = "")
                 val haToken by dataStore.haToken.collectAsState(initial = "")
 
@@ -91,6 +90,7 @@ fun ShoppingScreen(navController: NavController) {
     val haUrl by dataStore.haUrl.collectAsState(initial = "")
     val haToken by dataStore.haToken.collectAsState(initial = "")
     var editingItemId by remember { mutableStateOf<String?>(null) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     if (haUrl.isBlank() || haToken.isBlank()) {
         Box(
@@ -173,7 +173,7 @@ fun ShoppingScreen(navController: NavController) {
                                 value = newItem,
                                 onValueChange = { newItem = it },
                                 modifier = Modifier.weight(1f),
-                                placeholder = { Text("Neues Item") }
+                                placeholder = { Text( t(R.string.new_item) ) }
                             )
 
                             Spacer(Modifier.width(8.dp))
@@ -184,7 +184,7 @@ fun ShoppingScreen(navController: NavController) {
                                     newItem = ""
                                 }
                             }) {
-                                Text("Add")
+                                Text(t(R.string.add))
                             }
                         }
 
@@ -267,7 +267,8 @@ fun ShoppingScreen(navController: NavController) {
 
                             Button(
                                 modifier = Modifier.fillMaxWidth(),
-                                onClick = { viewModel.clearCompleted() },
+                                //onClick = { viewModel.clearCompleted() },
+                                onClick = { showConfirmDialog = true  },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.error
                                 )
@@ -279,6 +280,30 @@ fun ShoppingScreen(navController: NavController) {
                 }
             }
         }
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text("Bestätigung") },
+            text = { Text("Alle erledigten Einträge wirklich löschen?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showConfirmDialog = false
+                        viewModel.clearCompleted()
+                    }
+                ) {
+                    Text("Löschen")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text("Abbrechen")
+                }
+            }
+        )
+    }
     }
 
 

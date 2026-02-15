@@ -1,5 +1,6 @@
 package de.robnice.homeasssistant_shoppinglist.data.websocket
 
+import de.robnice.homeasssistant_shoppinglist.util.Debug
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import okhttp3.*
@@ -37,7 +38,7 @@ class HaWebSocketClient(
             .replace("https://", "wss://")
             .replace("http://", "ws://") + "/api/websocket"
 
-        println("WS URL: $wsUrl")
+        Debug.log("WS URL: $wsUrl")
 
         val request = Request.Builder()
             .url(wsUrl)
@@ -51,31 +52,31 @@ class HaWebSocketClient(
     private val socketListener = object : WebSocketListener() {
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
-            println("WS OPEN")
-            println("WS HTTP CODE: ${response.code}")
-            println("WS HTTP HEADERS: ${response.headers}")
+            Debug.log("WS OPEN")
+            Debug.log("WS HTTP CODE: ${response.code}")
+            Debug.log("WS HTTP HEADERS: ${response.headers}")
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-            println("WS CLOSING $code $reason")
+            Debug.log("WS CLOSING $code $reason")
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
             isConnected = false
             isAuthenticated = false
             this@HaWebSocketClient.webSocket = null
-            println("WS CLOSED $code $reason")
+            Debug.log("WS CLOSED $code $reason")
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
-            println("WS MESSAGE: $text")
+            Debug.log("WS MESSAGE: $text")
 
             val json = JSONObject(text)
 
             when (json.getString("type")) {
 
                 "auth_required" -> {
-                    println("WS AUTH REQUIRED")
+                    Debug.log("WS AUTH REQUIRED")
                     val auth = JSONObject()
                         .put("type", "auth")
                         .put("access_token", token)
@@ -84,14 +85,14 @@ class HaWebSocketClient(
                 }
 
                 "auth_ok" -> {
-                    println("WS WebSocket Auth OK")
+                    Debug.log("WS WebSocket Auth OK")
                     isAuthenticated = true
                     isConnected = true
                     _ready.tryEmit(Unit)
                 }
 
                 "auth_invalid" -> {
-                    println("WS AUTH INVALID")
+                    Debug.log("WS AUTH INVALID")
                 }
 
                 else -> {
@@ -108,11 +109,11 @@ class HaWebSocketClient(
             isConnected = false
             isAuthenticated = false
             this@HaWebSocketClient.webSocket = null
-            println("WS FAILURE")
+            Debug.log("WS FAILURE")
             t.printStackTrace()
             response?.let {
-                println("WS HTTP FAIL CODE: ${it.code}")
-                println("WS HTTP FAIL HEADERS: ${it.headers}")
+                Debug.log("WS HTTP FAIL CODE: ${it.code}")
+                Debug.log("WS HTTP FAIL HEADERS: ${it.headers}")
             }
         }
     }
