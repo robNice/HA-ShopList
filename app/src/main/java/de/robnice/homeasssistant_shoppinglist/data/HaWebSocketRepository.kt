@@ -170,6 +170,15 @@ class HaWebSocketRepository(
         )
     }
 
+    fun moveItem(itemId: String, previousItemId: String?) {
+        client.send(
+            type = "todo/item/move",
+            payload = JSONObject()
+                .put("entity_id", "todo.einkaufsliste")
+                .put("uid", itemId)
+                .put("previous_uid", previousItemId ?: JSONObject.NULL)
+        )
+    }
 
     fun clearCompleted() {
         val completedIds = _items.value

@@ -41,6 +41,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import org.burnoutcrew.reorderable.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -168,54 +170,101 @@ fun ShoppingScreen(navController: NavController) {
                         .padding(16.dp)
                 ) {
 
-                        Row {
-                            OutlinedTextField(
-                                value = newItem,
-                                onValueChange = { newItem = it },
-                                modifier = Modifier.weight(1f),
-                                placeholder = { Text( t(R.string.new_item) ) }
-                            )
+                    Row {
+                        OutlinedTextField(
+                            value = newItem,
+                            onValueChange = { newItem = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text( t(R.string.new_item) ) }
+                        )
 
-                            Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(8.dp))
 
-                            Button(onClick = {
-                                if (newItem.isNotBlank()) {
-                                    viewModel.addItem(newItem)
-                                    newItem = ""
-                                }
-                            }) {
-                                Text(t(R.string.add))
+                        Button(onClick = {
+                            if (newItem.isNotBlank()) {
+                                viewModel.addItem(newItem)
+                                newItem = ""
                             }
+                        }) {
+                            Text(t(R.string.add))
                         }
+                    }
 
-                        Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
 
-                        val openItems = items.filter { !it.complete }
-                        val completedItems = items.filter { it.complete }
+                    val openItems = items.filter { !it.complete }
+                    val completedItems = items.filter { it.complete }
 
-                        var completedExpanded by remember { mutableStateOf(false) }
+                    var localOpenItems by remember {
+                        mutableStateOf<List<ShoppingItem>>(emptyList())
+                    }
+
+                    LaunchedEffect(openItems) {
+                        localOpenItems = openItems
+                    }
+
+
+                    var completedExpanded by remember { mutableStateOf(false) }
+
+
+                    val reorderState = rememberReorderableLazyListState(
+
+                        onMove = { from, to ->
+
+                            localOpenItems = localOpenItems.toMutableList().apply {
+                                val item = removeAt(from.index)
+                                add(to.index, item)
+                            }
+                        },
+
+                        onDragEnd = { startIndex, endIndex ->
+
+                            if (startIndex == endIndex) return@rememberReorderableLazyListState
+
+                            val movedItem = localOpenItems[endIndex]
+
+                            val previousItemId =
+                                if (endIndex > 0)
+                                    localOpenItems[endIndex - 1].id
+                                else
+                                    null
+
+                            viewModel.moveItem(movedItem.id, previousItemId)
+                        }
+                    )
 
                         LazyColumn(
+                            state = reorderState.listState,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
+                                .reorderable(reorderState)
+                                .detectReorderAfterLongPress(reorderState)
                         ) {
 
-                            // 🔵 Offene Items
                             items(
-                                items = openItems,
+                                items = localOpenItems,
                                 key = { it.id }
                             ) { item ->
-                                ShoppingRow(
-                                    item = item,
-                                    isEditing = editingItemId == item.id,
-                                    onStartEdit = { editingItemId = item.id },
-                                    onStopEdit = { editingItemId = null },
-                                    viewModel = viewModel
-                                )
+                                ReorderableItem(reorderState, key = item.id) { isDragging ->
+
+                                    val elevation = if (isDragging) 8.dp else 0.dp
+
+                                    Card(
+                                        elevation = CardDefaults.cardElevation(elevation),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        ShoppingRow(
+                                            item = item,
+                                            isEditing = editingItemId == item.id,
+                                            onStartEdit = { editingItemId = item.id },
+                                            onStopEdit = { editingItemId = null },
+                                            viewModel = viewModel
+                                        )
+                                    }
+                                }
                             }
 
-                            // 🟡 Completed Header
                             if (completedItems.isNotEmpty()) {
 
                                 item {
@@ -314,7 +363,8 @@ fun ShoppingRow(
     isEditing: Boolean,
     onStartEdit: () -> Unit,
     onStopEdit: () -> Unit,
-    viewModel: ShoppingViewModel
+    viewModel: ShoppingViewModel,
+    modifier: Modifier = Modifier
 ) {
     var visible by remember { mutableStateOf(true) }
     var localChecked by remember(item.id) { mutableStateOf(item.complete) }
@@ -355,7 +405,7 @@ fun ShoppingRow(
     ) {
 
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically

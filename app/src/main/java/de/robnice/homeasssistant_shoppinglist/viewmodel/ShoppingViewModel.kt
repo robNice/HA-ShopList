@@ -37,6 +37,10 @@ class ShoppingViewModel(
         repository.ensureConnected()
     }
 
+    fun moveItem(itemId: String, previousItemId: String?) {
+        repository.moveItem(itemId, previousItemId)
+    }
+
     override fun onCleared() {
         super.onCleared()
         repository.disconnect()
