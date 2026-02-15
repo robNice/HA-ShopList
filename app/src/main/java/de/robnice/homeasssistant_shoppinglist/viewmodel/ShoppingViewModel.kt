@@ -33,6 +33,10 @@ class ShoppingViewModel(
         repository.renameItem(item, newName)
     }
 
+    fun ensureConnection() {
+        repository.ensureConnected()
+    }
+
     override fun onCleared() {
         super.onCleared()
         repository.disconnect()

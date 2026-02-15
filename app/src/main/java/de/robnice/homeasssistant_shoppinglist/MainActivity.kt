@@ -43,6 +43,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 
 class MainActivity : androidx.activity.ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -84,12 +85,11 @@ class MainActivity : androidx.activity.ComponentActivity() {
 @Composable
 fun ShoppingScreen(navController: NavController) {
 
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val context = LocalContext.current
     val dataStore = remember { SettingsDataStore(context) }
-
     val haUrl by dataStore.haUrl.collectAsState(initial = "")
     val haToken by dataStore.haToken.collectAsState(initial = "")
-
     var editingItemId by remember { mutableStateOf<String?>(null) }
 
     if (haUrl.isBlank() || haToken.isBlank()) {
@@ -111,6 +111,19 @@ fun ShoppingScreen(navController: NavController) {
 
     val viewModel = remember(repository) {
         ShoppingViewModel(repository)
+    }
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.ensureConnection()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     val items by viewModel.items.collectAsState()

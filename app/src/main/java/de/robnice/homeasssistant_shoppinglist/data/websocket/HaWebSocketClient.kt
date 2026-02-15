@@ -12,7 +12,9 @@ class HaWebSocketClient(
     private val token: String
 ) {
 
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .pingInterval(30, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
     private var webSocket: WebSocket? = null
     private val messageId = AtomicInteger(1)
 
@@ -25,6 +27,7 @@ class HaWebSocketClient(
     private val _ready = MutableSharedFlow<Unit>(replay = 1)
     val ready = _ready.asSharedFlow()
 
+    private var isConnected = false
     private var isAuthenticated = false
 
     fun connect() {
@@ -58,6 +61,9 @@ class HaWebSocketClient(
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+            isConnected = false
+            isAuthenticated = false
+            this@HaWebSocketClient.webSocket = null
             println("WS CLOSED $code $reason")
         }
 
@@ -80,6 +86,7 @@ class HaWebSocketClient(
                 "auth_ok" -> {
                     println("WS WebSocket Auth OK")
                     isAuthenticated = true
+                    isConnected = true
                     _ready.tryEmit(Unit)
                 }
 
@@ -98,7 +105,9 @@ class HaWebSocketClient(
             t: Throwable,
             response: Response?
         ) {
-
+            isConnected = false
+            isAuthenticated = false
+            this@HaWebSocketClient.webSocket = null
             println("WS FAILURE")
             t.printStackTrace()
             response?.let {
@@ -108,6 +117,7 @@ class HaWebSocketClient(
         }
     }
 
+    fun isConnected(): Boolean = isConnected
     fun send(type: String, payload: JSONObject = JSONObject()): Int {
         val id = messageId.getAndIncrement()
 
@@ -123,7 +133,12 @@ class HaWebSocketClient(
 
         return id
     }
-
+    fun ensureConnected() {
+        if (!isConnected || webSocket == null) {
+            disconnect()
+            connect()
+        }
+    }
     fun disconnect() {
         webSocket?.close(1000, "Closing")
     }

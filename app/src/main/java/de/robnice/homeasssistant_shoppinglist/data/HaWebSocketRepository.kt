@@ -25,18 +25,19 @@ class HaWebSocketRepository(
         client.connect()
 
         scope.launch {
-            client.ready.first()
+            client.ready.collect {
+                println("WS READY (RECONNECTED)")
 
-            println("WS READY")
-
-            client.send(
-                type = "todo/item/subscribe",
-                payload = JSONObject()
-                    .put("entity_id", "todo.einkaufsliste")
-            )
-
-            loadItems()
+                client.send(
+                    type = "todo/item/subscribe",
+                    payload = JSONObject()
+                        .put("entity_id", "todo.einkaufsliste")
+                )
+                loadItems()
+            }
         }
+
+
 
         scope.launch {
             client.events.collect { json ->
@@ -193,9 +194,13 @@ class HaWebSocketRepository(
         )
     }
 
-
-
     fun disconnect() {
         client.disconnect()
     }
+
+    fun ensureConnected() {
+        client.ensureConnected()
+    }
+
+
 }
