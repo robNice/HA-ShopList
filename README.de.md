@@ -1,4 +1,4 @@
-# HA Shopping List (Android / Jetpack Compose)
+# HA Shopping List (Android)
 
 Standalone-Android-App für die **Home Assistant Shopping-List** (Todo-List) mit **Live-Updates via WebSocket**, **Drag’n’Drop-Reihenfolge**, **Inline-Editing** und optionalen **Push-Notifications bei neuen Einträgen** (auch im Hintergrund via Foreground Service).
 
