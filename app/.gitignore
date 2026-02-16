@@ -1,0 +1,32 @@
+# Gradle
+.gradle/
+build/
+
+# Local config (VERY IMPORTANT)
+local.properties
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kotlin / Java
+*.class
+
+# Generated files
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Logs
+*.log
+
+# Signing / Keystore (CRITICAL)
+*.jks
+*.keystore
+
+# Android Studio cache
+.navigation/

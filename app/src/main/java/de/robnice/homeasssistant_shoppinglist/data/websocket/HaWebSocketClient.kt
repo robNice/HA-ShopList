@@ -7,6 +7,7 @@ import okhttp3.*
 import okio.ByteString
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.*
 
 class HaWebSocketClient(
     private val baseUrl: String,
@@ -37,7 +38,12 @@ class HaWebSocketClient(
     private val _connectionErrors = MutableSharedFlow<String>(replay = 1)
     val connectionErrors = _connectionErrors.asSharedFlow()
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var reconnectJob: Job? = null
+    private var manualDisconnect = false
+
     fun connect() {
+        manualDisconnect = false
         val cleanedBase = baseUrl.trimEnd('/')
 
         val wsUrl = cleanedBase
@@ -72,6 +78,7 @@ class HaWebSocketClient(
             isAuthenticated = false
             this@HaWebSocketClient.webSocket = null
             Debug.log("WS CLOSED $code $reason")
+            scheduleReconnect()
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
@@ -124,6 +131,7 @@ class HaWebSocketClient(
             _connectionErrors.tryEmit(
                 t.message ?: "Connection failed"
             )
+            scheduleReconnect()
         }
     }
 
@@ -145,11 +153,22 @@ class HaWebSocketClient(
     }
     fun ensureConnected() {
         if (!isConnected || webSocket == null) {
-            disconnect()
             connect()
         }
     }
     fun disconnect() {
+        Debug.log("WS disconnect() called")
+        manualDisconnect = true
+        reconnectJob?.cancel()
         webSocket?.close(1000, "Closing")
+    }
+
+    private fun scheduleReconnect() {
+        if (manualDisconnect) return
+        if (reconnectJob?.isActive == true) return
+        reconnectJob = scope.launch {
+            delay(2_000) // minimal: 2s
+            connect()
+        }
     }
 }

@@ -91,6 +91,23 @@ class MainActivity : androidx.activity.ComponentActivity() {
                     Screen.Shopping.route
                 }
 
+                val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
+
+                LaunchedEffect(haUrl, haToken, notificationsEnabled) {
+                    if (!notificationsEnabled || haUrl.isBlank() || haToken.isBlank()) {
+                        context.stopService(android.content.Intent(context,
+                            de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService::class.java))
+                        return@LaunchedEffect
+                    }
+                    val i = android.content.Intent(context,
+                        de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService::class.java).apply {
+                        putExtra(de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService.EXTRA_BASE_URL, haUrl)
+                        putExtra(de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService.EXTRA_TOKEN, haToken)
+                    }
+                    androidx.core.content.ContextCompat.startForegroundService(context, i)
+                }
+
+
                 NavHost(
                     navController = navController,
                     startDestination = startDestination
@@ -131,12 +148,12 @@ fun ShoppingScreen(navController: NavController) {
         return
     }
 
-    val repository = remember(haUrl, haToken) {
+    /*val repository = remember(haUrl, haToken) {
         HaWebSocketRepository(
             baseUrl = haUrl,
             token = haToken
         )
-    }
+    }*/
 
     //val viewModel = remember(repository) {
     //    ShoppingViewModel(repository)

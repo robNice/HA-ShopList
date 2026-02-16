@@ -2,6 +2,7 @@ package de.robnice.homeasssistant_shoppinglist.factory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository
 import de.robnice.homeasssistant_shoppinglist.viewmodel.ShoppingViewModel
 
@@ -11,7 +12,9 @@ class ShoppingViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val repository = HaWebSocketRepository(url, token)
+        val repository = HaRuntime.repository ?: HaWebSocketRepository(url, token).also {
+            HaRuntime.repository = it
+        }
         return ShoppingViewModel(repository) as T
     }
 }
