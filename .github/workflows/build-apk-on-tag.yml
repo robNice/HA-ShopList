@@ -41,11 +41,16 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease
 
+      - name: Rename APK to include tag
+        run: |
+          APK="$(ls app/build/outputs/apk/release/*.apk | head -n 1)"
+          mv "$APK" "app-${{ github.ref_name }}.apk"
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: apk-${{ github.ref_name }}-live
-          path: app/build/outputs/apk/release/*.apk
+          name: apk-${{ github.ref_name }}
+          path: app-${{ github.ref_name }}.apk
           if-no-files-found: error
 
       - name: Publish APK to GitHub Release
@@ -54,4 +59,4 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           generate_release_notes: true
-          files: app/build/outputs/apk/release/*.apk
+          files: app-${{ github.ref_name }}.apk
