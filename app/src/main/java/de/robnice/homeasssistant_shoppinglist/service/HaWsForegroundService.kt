@@ -30,11 +30,13 @@ class HaWsForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        de.robnice.homeasssistant_shoppinglist.util.Debug.log("SERVICE onCreate()")
         ensureServiceChannel()
         startForeground(SERVICE_NOTIFICATION_ID, buildServiceNotification())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        de.robnice.homeasssistant_shoppinglist.util.Debug.log("SERVICE onStartCommand(startId=$startId flags=$flags)")
         val baseUrl = intent?.getStringExtra(EXTRA_BASE_URL) ?: return START_NOT_STICKY
         val token = intent.getStringExtra(EXTRA_TOKEN) ?: return START_NOT_STICKY
 
@@ -54,6 +56,7 @@ class HaWsForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        de.robnice.homeasssistant_shoppinglist.util.Debug.log("SERVICE onDestroy()")
         HaRuntime.repository?.disconnect()
         scope.cancel()
         super.onDestroy()

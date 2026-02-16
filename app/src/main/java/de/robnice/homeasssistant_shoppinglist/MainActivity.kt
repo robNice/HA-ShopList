@@ -57,6 +57,10 @@ import androidx.compose.ui.text.style.TextAlign
 import de.robnice.homeasssistant_shoppinglist.factory.ShoppingViewModelFactory
 import de.robnice.homeasssistant_shoppinglist.util.Debug
 import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
+import kotlinx.coroutines.flow.map
+import android.content.Intent
+import androidx.core.content.ContextCompat
+import de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -81,31 +85,39 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 val navController = rememberNavController()
                 val context = LocalContext.current
                 val dataStore = remember { SettingsDataStore(context) }
-                val haUrl by dataStore.haUrl.collectAsState(initial = "")
-                val haToken by dataStore.haToken.collectAsState(initial = "")
 
-                val startDestination = if (haUrl.isBlank() || haToken.isBlank()) {
-                    Screen.Settings.route
-                } else {
-                    Screen.Shopping.route
-                }
+                val haUrlFlow = remember(dataStore) { dataStore.haUrl.map { it } }
+                val haTokenFlow = remember(dataStore) { dataStore.haToken.map { it } }
+
+                val haUrl by haUrlFlow.collectAsState(initial = null)
+                val haToken by haTokenFlow.collectAsState(initial = null)
+
+
+                val startDestination =
+                    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
+                        Screen.Settings.route
+                    } else {
+                        Screen.Shopping.route
+                    }
 
                 val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
 
                 LaunchedEffect(haUrl, haToken, notificationsEnabled) {
-                    if (!notificationsEnabled || haUrl.isBlank() || haToken.isBlank()) {
-                        context.stopService(android.content.Intent(context,
-                            de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService::class.java))
+                    if (!notificationsEnabled) {
+                        Debug.log("MainActivity: stopService() because notifications disabled")
+                        context.stopService(Intent(context, HaWsForegroundService::class.java))
                         return@LaunchedEffect
                     }
-                    val i = android.content.Intent(context,
-                        de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService::class.java).apply {
-                        putExtra(de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService.EXTRA_BASE_URL, haUrl)
-                        putExtra(de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService.EXTRA_TOKEN, haToken)
-                    }
-                    androidx.core.content.ContextCompat.startForegroundService(context, i)
-                }
 
+                    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) return@LaunchedEffect
+
+                    ContextCompat.startForegroundService(
+                        context,
+                        Intent(context, HaWsForegroundService::class.java).apply {
+                            putExtra(HaWsForegroundService.EXTRA_BASE_URL, haUrl)
+                            putExtra(HaWsForegroundService.EXTRA_TOKEN, haToken)
+                        })
+                }
 
                 NavHost(
                     navController = navController,
@@ -192,15 +204,15 @@ fun ShoppingScreen(navController: NavController) {
     val items by viewModel.items.collectAsState()
 
 
-    if (authFailed || connectionErrors ) {
+    if (authFailed || connectionErrors) {
         val errorTitle: String
         val errorText: String
-        if( authFailed )    {
+        if (authFailed) {
             errorTitle = t(R.string.auth_failed_title)
-            errorText  = t( R.string.auth_failed_text)
+            errorText = t(R.string.auth_failed_text)
         } else {
             errorTitle = t(R.string.connection_errors_title)
-            errorText  = t( R.string.connection_errors_text)
+            errorText = t(R.string.connection_errors_text)
         }
 
         Box(
@@ -243,7 +255,7 @@ fun ShoppingScreen(navController: NavController) {
                     ) {
                         Icon(Icons.Default.Settings, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text( t(R.string.settings_cta ) )
+                        Text(t(R.string.settings_cta))
                     }
                 }
             }
@@ -387,7 +399,6 @@ fun ShoppingScreen(navController: NavController) {
                     LaunchedEffect(openItems) {
                         localOpenItems = openItems
                     }
-
 
 
                     val lazyListState = rememberLazyListState()

@@ -53,6 +53,5 @@ class ShoppingViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        repository.disconnect()
     }
 }
