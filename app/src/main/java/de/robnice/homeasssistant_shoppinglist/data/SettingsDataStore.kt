@@ -1,6 +1,7 @@
 package de.robnice.homeasssistant_shoppinglist.data
 
 import android.content.Context
+import androidx.datastore.dataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -13,8 +14,12 @@ class SettingsDataStore(private val context: Context) {
     companion object {
         private val HA_URL = stringPreferencesKey("ha_url")
         private val HA_TOKEN = stringPreferencesKey("ha_token")
+
+        private val KEY_NOTIFICATIONS = booleanPreferencesKey("notifications_enabled")
     }
 
+    val notificationsEnabled = context.dataStore.data
+        .map { it[KEY_NOTIFICATIONS] ?: true }
     val haUrl: Flow<String> = context.dataStore.data
         .map { it[HA_URL] ?: "" }
 
@@ -31,5 +36,9 @@ class SettingsDataStore(private val context: Context) {
         context.dataStore.edit {
             it[HA_TOKEN] = token
         }
+    }
+
+    suspend fun setNotificationsEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_NOTIFICATIONS] = enabled }
     }
 }

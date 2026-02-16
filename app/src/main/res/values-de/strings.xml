@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">Home-Asssistant-Einkaufsliste</string>
     <string name="settings">Einstellungen</string>
+    <string name="settings_cta">Einstellungen  öffnen</string>
     <string name="settings_title">Einstellungen</string>
     <string name="ha_url">Home Assistant URL</string>
+    <string name="notifications_enabled">Benachrichtigungen erlauben</string>
     <string name="long_token">Long-Lived Access Token</string>
     <string name="language">Sprache</string>
     <string name="new_item">Neuer Artikel</string>
@@ -16,6 +18,10 @@
     <string name="no_items">Keine Einträge</string>
     <string name="completed">Erledigt</string>
     <string name="clear_completed">Erledigte löschen</string>
+    <string name="auth_failed_title">Authentifizierung fehlgeschlagen</string>
+    <string name="auth_failed_text">Bitte überprüfe deinen Token oder die Home-Assistant URL.</string>
+    <string name="connection_errors_title">Verbindung fehlgeschlagen</string>
+    <string name="connection_errors_text">Bitte überprüfe deinen Home-Assistant URL.</string>
 </resources>
 
 

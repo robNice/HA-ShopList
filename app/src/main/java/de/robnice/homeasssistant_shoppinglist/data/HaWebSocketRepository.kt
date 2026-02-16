@@ -15,20 +15,41 @@ class HaWebSocketRepository(
 
     private val client = HaWebSocketClient(baseUrl, token)
     private val scope = CoroutineScope(Dispatchers.IO)
-
     private val _items = MutableStateFlow<List<ShoppingItem>>(emptyList())
+    private val _authFailed = MutableStateFlow(false)
+    private val _connectionErrors = MutableStateFlow(false)
+    private val _newItems = MutableSharedFlow<ShoppingItem>( replay = 1 )
+
+    private val locallyAddedItemNames = mutableSetOf<String>()
+
+    val authFailed = _authFailed.asStateFlow()
+    val connectionErrors = _connectionErrors.asStateFlow()
     val items = _items.asStateFlow()
 
-
+    val newItems = _newItems.asSharedFlow()
 
     init {
 
         client.connect()
 
         scope.launch {
-            client.ready.collect {
-                Debug.log("WS READY (RECONNECTED)")
+            client.authFailed.collect {
+                Debug.log("REPOSITORY: AUTH FAILED")
+                _authFailed.value = true
+            }
+        }
+        scope.launch {
+            client.connectionErrors.collect {
+                Debug.log("REPOSITORY: AUTH FAILED")
+                _connectionErrors.value = true
+            }
+        }
 
+        scope.launch {
+            client.ready.collect {
+                _authFailed.value = false
+                _connectionErrors.value = false
+                Debug.log("WS READY (RECONNECTED)")
                 client.send(
                     type = "todo/item/subscribe",
                     payload = JSONObject()
@@ -37,8 +58,6 @@ class HaWebSocketRepository(
                 loadItems()
             }
         }
-
-
 
         scope.launch {
             client.events.collect { json ->
@@ -69,11 +88,6 @@ class HaWebSocketRepository(
                 }
             }
         }
-
-
-
-
-
     }
 
     private fun parseItemsFromResult(resultObj: JSONObject) {
@@ -96,6 +110,24 @@ class HaWebSocketRepository(
             )
         }
 
+        val previousIds = _items.value.map { it.id }.toSet()
+        val newIds = parsed.map { it.id }.toSet()
+        val addedIds = newIds - previousIds
+
+        if (_items.value.isNotEmpty()) {
+            parsed
+                .filter { it.id in addedIds }
+                .forEach {
+
+                    if (locallyAddedItemNames.contains(it.name.trim())) {
+                        locallyAddedItemNames.remove(it.name.trim())
+                        return@forEach
+                    }
+
+                    _newItems.tryEmit(it)
+                }
+        }
+
         _items.value = parsed
     }
 
@@ -108,6 +140,8 @@ class HaWebSocketRepository(
     }
 
     fun addItem(name: String) {
+
+        locallyAddedItemNames.add(name.trim())
 
         client.send(
             type = "call_service",

@@ -1,5 +1,8 @@
 package de.robnice.homeasssistant_shoppinglist
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -51,11 +54,27 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextAlign
+import de.robnice.homeasssistant_shoppinglist.factory.ShoppingViewModelFactory
+import de.robnice.homeasssistant_shoppinglist.util.Debug
+import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissions(
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    1001
+                )
+            }
+        }
+
         enableEdgeToEdge()
         setContent {
             HomeAsssistantShoppingListTheme {
@@ -93,7 +112,6 @@ class MainActivity : androidx.activity.ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoppingScreen(navController: NavController) {
-
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val context = LocalContext.current
     val dataStore = remember { SettingsDataStore(context) }
@@ -101,7 +119,7 @@ fun ShoppingScreen(navController: NavController) {
     val haToken by dataStore.haToken.collectAsState(initial = "")
     var editingItemId by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
-
+    val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
 
     if (haUrl.isBlank() || haToken.isBlank()) {
         Box(
@@ -120,8 +138,26 @@ fun ShoppingScreen(navController: NavController) {
         )
     }
 
-    val viewModel = remember(repository) {
-        ShoppingViewModel(repository)
+    //val viewModel = remember(repository) {
+    //    ShoppingViewModel(repository)
+    //}
+
+    val viewModel: ShoppingViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = ShoppingViewModelFactory(haUrl, haToken)
+    )
+
+
+    val authFailed by viewModel.authFailed.collectAsState()
+    val connectionErrors by viewModel.connectionErrors.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.newItems.collect { item ->
+            Debug.log("RECEIVED IN UI: ${item.name}")
+
+            if (notificationsEnabled) {
+                NotificationHelper.showNewItemNotification(context, item)
+            }
+        }
     }
     DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -138,6 +174,66 @@ fun ShoppingScreen(navController: NavController) {
     }
 
     val items by viewModel.items.collectAsState()
+
+
+    if (authFailed || connectionErrors ) {
+        val errorTitle: String
+        val errorText: String
+        if( authFailed )    {
+            errorTitle = t(R.string.auth_failed_title);
+            errorText  = t( R.string.auth_failed_text);
+        } else {
+            errorTitle = t(R.string.connection_errors_title);
+            errorText  = t( R.string.connection_errors_text)
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+
+            Card(
+                elevation = CardDefaults.cardElevation(6.dp),
+                shape = MaterialTheme.shapes.large
+            ) {
+
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 28.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    Text(
+                        text = errorTitle,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Text(
+                        text = errorText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(Modifier.height(20.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            navController.navigate(Screen.Settings.route)
+                        }
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text( t(R.string.settings_cta ) )
+                    }
+                }
+            }
+        }
+        return
+    }
 
     var hasReceivedData by remember { mutableStateOf(false) }
 
@@ -219,7 +315,18 @@ fun ShoppingScreen(navController: NavController) {
                                 modifier = Modifier.weight(1f),
                                 placeholder = { Text(t(R.string.new_item)) },
                                 singleLine = true,
-                                shape = MaterialTheme.shapes.large
+                                shape = MaterialTheme.shapes.large,
+                                keyboardOptions = KeyboardOptions(
+                                    imeAction = ImeAction.Done
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
+                                        if (newItem.isNotBlank()) {
+                                            viewModel.addItem(newItem.trim())
+                                            newItem = ""
+                                        }
+                                    }
+                                )
                             )
 
                             Spacer(Modifier.width(12.dp))
@@ -249,6 +356,13 @@ fun ShoppingScreen(navController: NavController) {
 
                     val openItems = items.filter { !it.complete }
                     val completedItems = items.filter { it.complete }
+                    var completedExpanded by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(items) {
+                        if (items.none { it.complete }) {
+                            completedExpanded = false
+                        }
+                    }
 
                     var localOpenItems by remember {
                         mutableStateOf<List<ShoppingItem>>(emptyList())
@@ -259,7 +373,6 @@ fun ShoppingScreen(navController: NavController) {
                     }
 
 
-                    var completedExpanded by remember { mutableStateOf(false) }
 
                     val lazyListState = rememberLazyListState()
 
@@ -369,13 +482,12 @@ fun ShoppingScreen(navController: NavController) {
                                 Spacer(Modifier.height(8.dp))
 
                                 TextButton(
-                                    onClick = { completedExpanded = !completedExpanded }
+                                    onClick = {
+                                        completedExpanded = !completedExpanded
+                                    }
                                 ) {
                                     Text(
-                                        text = if (completedExpanded)
-                                            "${t(R.string.completed)} (${completedItems.size})"
-                                        else
-                                            "${t(R.string.completed)} (${completedItems.size})",
+                                        text = "${t(R.string.completed)} (${completedItems.size})",
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(if (completedExpanded) "▲" else "▼")

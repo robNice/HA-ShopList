@@ -31,6 +31,12 @@ class HaWebSocketClient(
     private var isConnected = false
     private var isAuthenticated = false
 
+    private val _authFailed = MutableSharedFlow<Unit>(replay = 1)
+    val authFailed = _authFailed.asSharedFlow()
+
+    private val _connectionErrors = MutableSharedFlow<String>(replay = 1)
+    val connectionErrors = _connectionErrors.asSharedFlow()
+
     fun connect() {
         val cleanedBase = baseUrl.trimEnd('/')
 
@@ -93,6 +99,9 @@ class HaWebSocketClient(
 
                 "auth_invalid" -> {
                     Debug.log("WS AUTH INVALID")
+                    isAuthenticated = false
+                    isConnected = false
+                    _authFailed.tryEmit(Unit)
                 }
 
                 else -> {
@@ -111,10 +120,10 @@ class HaWebSocketClient(
             this@HaWebSocketClient.webSocket = null
             Debug.log("WS FAILURE")
             t.printStackTrace()
-            response?.let {
-                Debug.log("WS HTTP FAIL CODE: ${it.code}")
-                Debug.log("WS HTTP FAIL HEADERS: ${it.headers}")
-            }
+
+            _connectionErrors.tryEmit(
+                t.message ?: "Connection failed"
+            )
         }
     }
 
