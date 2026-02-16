@@ -1,121 +1,118 @@
 # HA Shopping List (Android / Jetpack Compose)
 
-Android-App für eine Home Assistant **ToDo-/Shopping-List-Entity** mit **Live-Updates via WebSocket**, **Drag’n’Drop-Reihenfolge**, **Inline-Editing** und optionalen **Push-Notifications bei neuen Einträgen** (auch im Hintergrund via Foreground Service).
+Standalone Android app for the **Home Assistant Shopping List** (ToDo list) with **live updates via WebSocket**, **drag-and-drop ordering**, **inline editing**, and optional **push notifications for new entries** (also in the background via a foreground service).
 
 ---
 
-## Features (aktueller Stand)
+## Features (current status)
 
 ### Live via Home Assistant WebSocket API
-- WebSocket-Connect auf `/api/websocket` (OkHttp)
+- WebSocket connect to `/api/websocket` (OkHttp)
 - Auth via Long-Lived Access Token
-- Automatisches **Reconnect**-Verhalten (bei Disconnect/Failure)
-- Subscribe auf Item-Events und Initial-Load
+- Automatic **reconnect** behavior (on disconnect/failure)
+- Subscribe to item events and initial load
     - `todo/item/subscribe`
     - `todo/item/list`
 
-### Liste & Aktionen
-- Items anzeigen (Compose, Flow/StateFlow)
-- Item hinzufügen (`todo.add_item`)
-- Item umschalten erledigt/offen (`todo.update_item`)
-- Item umbenennen (`todo.update_item`)
-- **Erledigte löschen** (Bulk) per Confirm-Dialog (`todo.remove_item` mit Array)
-- **Drag’n’Drop Sortierung** für offene Items:
-    - UI-Reorder lokal
-    - Persistenz in HA per `todo/item/move` (mit `previous_uid`)
+### List & actions
+- Display items (Compose, Flow/StateFlow)
+- Add item (`todo.add_item`)
+- Toggle item done/open (`todo.update_item`)
+- Rename item (`todo.update_item`)
+- **Delete completed** (bulk) via confirm dialog (`todo.remove_item` with array)
+- **Drag-and-drop sorting** for open items:
+    - Local UI reorder
+    - Persistence in HA via `todo/item/move` (with `previous_uid`)
 
 ### UX / UI
-- Material 3 UI (Light/Dark, optional dynamic colors über Theme)
-- Settings-Screen (URL/Token + Notifications Toggle)
-- Fehlerzustände:
-    - Auth-Fehler (Token ungültig)
-    - Connection-Fehler (Netzwerk/WebSocket down)
-    - CTA zur Settings-Seite
+- Material 3 UI (Light/Dark, optional dynamic colors via theme)
+- Settings screen (URL/token + notifications toggle)
+- Error states:
+    - Auth error (token invalid)
+    - Connection error (network/WebSocket down)
+    - CTA to the Settings screen
 
-### Notifications (neue Einträge)
-- Notification bei neu auftauchenden Items (via `newItems` SharedFlow)
-- Optional **auch im Hintergrund**, wenn Notifications aktiviert:
-    - Foreground Service hält WS-Verbindung & sendet Notifications
-- Runtime-Permission für Android 13+ (`POST_NOTIFICATIONS`)
+### Notifications (new entries)
+- Notification for newly appearing items (via `newItems` SharedFlow)
+- Optional **also in the background** when notifications are enabled:
+    - Foreground service keeps the WS connection & sends notifications
+- Runtime permission for Android 13+ (`POST_NOTIFICATIONS`)
 
-> Die App vermeidet Doppel-Notifications für lokal hinzugefügte Items (Name wird kurzzeitig gemerkt).
-
-
----
-
-## Tech-Stack
-
-- Kotlin
-- Jetpack Compose (Material 3)
-- Coroutines / Flow / StateFlow
-- Navigation Compose
-- OkHttp WebSockets (Ping-Interval)
-- Android DataStore (Preferences)
-- (Legacy/optional) Retrofit + Moshi für REST-Endpoints
+> The app avoids duplicate notifications for locally added items (the name is remembered briefly).
 
 ---
 
-## Projektstruktur (Kurzüberblick)
+## Localisations
+
+Currently supported languages:
+
+- English (default)
+- German
+- French
+
+---
+
+## Project structure (quick overview)
 
 - `MainActivity.kt`
     - Compose UI (ShoppingScreen + SettingsScreen)
-    - Drag’n’Drop (reorderable LazyList)
-    - Confirm-Dialog für „Erledigte löschen“
-    - Start/Stop Foreground Service abhängig von Settings
+    - Drag-and-drop (reorderable LazyList)
+    - Confirm dialog for “Delete completed”
+    - Start/stop foreground service depending on settings
 - `data/`
-    - `HaWebSocketRepository` – subscribe/list/events + Aktionen (add/toggle/rename/move/clearCompleted)
-    - `websocket/HaWebSocketClient` – Connect/Auth/Events, Reconnect
-    - `SettingsDataStore` – URL/Token/Notifications enabled
-    - `HaApi`, `HaServiceFactory` – REST (derzeit nicht primär)
+    - `HaWebSocketRepository` – subscribe/list/events + actions (add/toggle/rename/move/clearCompleted)
+    - `websocket/HaWebSocketClient` – connect/auth/events, reconnect
+    - `SettingsDataStore` – URL/token/notifications enabled
+    - `HaApi`, `HaServiceFactory` – REST (currently not primary)
 - `service/HaWsForegroundService`
-    - hält Repository (Singleton) & versendet Notifications
+    - holds repository (singleton) & sends notifications
 - `util/`
-    - `NotificationHelper` – Notification-Channel + Notification bauen
-    - `UrlNormalizer` – URL normalisieren (Schema + Slash)
-    - `Debug` – Debug-Logging
+    - `NotificationHelper` – notification channel + build notifications
+    - `UrlNormalizer` – normalize URL (scheme + slash)
+    - `Debug` – debug logging
 - `viewmodel/ShoppingViewModel`
-    - UI-Bridge auf Repository (Flows + Aktionen)
+    - UI bridge to repository (flows + actions)
 
 ---
 
-## Setup / Konfiguration
+## Setup / configuration
 
-### 1) Home Assistant vorbereiten
-- Einen **Long-Lived Access Token** erstellen (Profil → Long-Lived Access Tokens)
-- Sicherstellen, dass die ToDo-Entity existiert (aktuell erwartet: `todo.einkaufsliste`)
+### 1) Prepare Home Assistant
+- Create a **Long-Lived Access Token** (Profile → Long-Lived Access Tokens)
+- Make sure the ToDo entity exists (currently expected: `todo.einkaufsliste`)
 
-### 2) App konfigurieren (Settings)
+### 2) Configure the app (Settings)
 - **Home Assistant URL**
-    - Beispiel: `http://homeassistant.local:8123` oder `http://192.168.x.x:8123`
-    - Die App normalisiert:
-        - wenn kein Schema: default `https://`
-        - entfernt doppelte Slashes, erzwingt trailing `/`
+    - Example: `http://homeassistant.local:8123` or `http://192.168.x.x:8123`
+    - The app normalizes:
+        - if no scheme: default `https://`
+        - removes double slashes, enforces trailing `/`
 - **Token** (Long-Lived Access Token)
-- **Notifications** (Toggle)
-    - aktiviert → Foreground Service startet automatisch (sofern URL/Token gesetzt)
-    - deaktiviert → Service wird gestoppt
+- **Notifications** (toggle)
+    - enabled → foreground service starts automatically (as long as URL/token are set)
+    - disabled → service is stopped
 
 ---
 
 ## Permissions (Android 13+)
 
 - `android.permission.POST_NOTIFICATIONS`
-    - Wird in `MainActivity` zur Laufzeit angefragt (SDK 33+)
-    - Ohne Erlaubnis: Notifications können ausbleiben
+    - Requested at runtime in `MainActivity` (SDK 33+)
+    - Without permission: notifications may not appear
 
 ---
 
-## Build & Run
+## Build & run
 
 ### Android Studio
-- Projekt öffnen → Gradle Sync → Run (Debug)
+- Open project → Gradle Sync → Run (Debug)
 
 ### CLI
 - `./gradlew installDebug`
 
 ---
 
-## WebSocket-Protokoll (vereinfacht)
+## WebSocket protocol (simplified)
 
 1. Connect: `ws(s)://<base>/api/websocket`
 2. Server → `auth_required`
@@ -124,37 +121,37 @@ Android-App für eine Home Assistant **ToDo-/Shopping-List-Entity** mit **Live-U
 5. Client:
     - `todo/item/subscribe` (entity_id)
     - `todo/item/list` (entity_id)
-6. Server → `result` (items) / `event` (items) → Repository parst → UI aktualisiert
+6. Server → `result` (items) / `event` (items) → repository parses → UI updates
 
 Reconnect:
-- bei `onClosed` / `onFailure` → Reconnect nach ~2s (wenn nicht manuell disconnected)
+- on `onClosed` / `onFailure` → reconnect after ~2s (if not manually disconnected)
 
 ---
 
 ## Troubleshooting
 
-### „Missing configuration“
-- URL oder Token leer → Settings ausfüllen
+### “Missing configuration”
+- URL or token empty → fill out settings
 
 ### Auth failed
-- Token ungültig/abgelaufen → neuen Long-Lived Token setzen
+- Token invalid/expired → set a new Long-Lived token
 
 ### Connection errors
-- HA nicht erreichbar (Netzwerk/VPN/HTTPS/HTTP)
-- URL prüfen (inkl. Port)
-- bei Self-signed TLS ggf. HTTPS/Cert-Thema beachten
+- HA not reachable (network/VPN/HTTPS/HTTP)
+- Check URL (including port)
+- With self-signed TLS, note possible HTTPS/cert issues
 
-### Keine Items / Spinner hängt
-- Prüfen, ob Entity `todo.einkaufsliste` existiert
-- Debug-Logs ansehen (`HASL:`)
+### No items / spinner stuck
+- Check whether entity `todo.einkaufsliste` exists
+- Check debug logs (`HASL:`)
 
 ---
 
-## Roadmap / TODO (konkret)
+## Roadmap / TODO (concrete)
 
-- Token-Feld härten (Copy/Screenshot/Autofill verhindern)
-- Notifications verbessern (Localization, Aktionen, Deep-Link)
-- Robustere Reconnect-Strategie (Backoff, Offline-Erkennung)
-- REST-Teil entweder entfernen oder gezielt als Fallback integrieren
+- Harden token field (prevent copy/screenshot/autofill)
+- Improve notifications (localization, actions, deep link)
+- More robust reconnect strategy (backoff, offline detection)
+- Either remove REST part or integrate it selectively as a fallback
 
 ---

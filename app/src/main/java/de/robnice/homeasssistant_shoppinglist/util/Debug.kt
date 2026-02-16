@@ -2,7 +2,7 @@ package de.robnice.homeasssistant_shoppinglist.util
 
 object Debug {
 
-    var enabled: Boolean = true
+    var enabled: Boolean = false
 
     fun log(message: Any?) {
         if (enabled) {
