@@ -624,7 +624,6 @@ fun ShoppingRow(
     val scope = rememberCoroutineScope()
     var editText by remember(item.id) { mutableStateOf(item.name) }
 
-    val wasCompleted = remember { mutableStateOf(item.complete) }
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(isEditing) {

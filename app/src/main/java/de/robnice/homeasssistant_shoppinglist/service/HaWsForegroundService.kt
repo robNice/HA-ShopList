@@ -11,7 +11,6 @@ import androidx.core.app.NotificationCompat
 import de.robnice.homeasssistant_shoppinglist.R
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository
-import de.robnice.homeasssistant_shoppinglist.ui.util.t
 import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
 import kotlinx.coroutines.*
 
@@ -62,7 +61,7 @@ class HaWsForegroundService : Service() {
 
     private fun ensureServiceChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val mgr = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             mgr.createNotificationChannel(
                 NotificationChannel(
                     SERVICE_CHANNEL_ID,
