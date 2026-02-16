@@ -18,6 +18,10 @@
     <string name="no_items">Keine Einträge</string>
     <string name="completed">Erledigt</string>
     <string name="clear_completed">Erledigte löschen</string>
+    <string name="clear_completed_confirm_title">Bestätigung</string>
+    <string name="clear_completed_confirm_msg">Alle erledigten Einträge wirklich löschen?</string>
+    <string name="clear_completed_confirm_btn_delete">Löschen</string>
+    <string name="clear_completed_confirm_btn_cancel">Abbrechen</string>
     <string name="auth_failed_title">Authentifizierung fehlgeschlagen</string>
     <string name="auth_failed_text">Bitte überprüfe deinen Token oder die Home-Assistant URL.</string>
     <string name="connection_errors_title">Verbindung fehlgeschlagen</string>

@@ -18,6 +18,10 @@
     <string name="no_items">No items</string>
     <string name="completed">Completed</string>
     <string name="clear_completed">Clear completed</string>
+    <string name="clear_completed_confirm_title">Confirm</string>
+    <string name="clear_completed_confirm_msg">Delete all completed items?</string>
+    <string name="clear_completed_confirm_btn_delete">Delete</string>
+    <string name="clear_completed_confirm_btn_cancel">Cancel</string>
     <string name="auth_failed_title">Authentication failed</string>
     <string name="auth_failed_text">Please check your token or the Home Assistant URL.</string>
     <string name="connection_errors_title">Connection failed</string>

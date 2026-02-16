@@ -54,12 +54,12 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
-import de.robnice.homeasssistant_shoppinglist.factory.ShoppingViewModelFactory
 import de.robnice.homeasssistant_shoppinglist.util.Debug
 import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
 import kotlinx.coroutines.flow.map
 import android.content.Intent
 import androidx.core.content.ContextCompat
+import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService
 
 class MainActivity : androidx.activity.ComponentActivity() {
@@ -159,21 +159,26 @@ fun ShoppingScreen(navController: NavController) {
         return
     }
 
-    /*val repository = remember(haUrl, haToken) {
-        HaWebSocketRepository(
-            baseUrl = haUrl,
-            token = haToken
-        )
-    }*/
 
-    //val viewModel = remember(repository) {
-    //    ShoppingViewModel(repository)
-    //}
+    val repo = HaRuntime.repository
+    if (repo == null) {
+        LaunchedEffect(Unit) {
+            navController.navigate(Screen.Settings.route) {
+                popUpTo(Screen.Shopping.route) { inclusive = true }
+            }
+        }
 
-    val viewModel: ShoppingViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = ShoppingViewModelFactory(haUrl, haToken)
-    )
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
+
+    val viewModel = remember(repo) { ShoppingViewModel(repo) }
 
     val authFailed by viewModel.authFailed.collectAsState()
     val connectionErrors by viewModel.connectionErrors.collectAsState()
@@ -596,8 +601,8 @@ fun ShoppingScreen(navController: NavController) {
     if (showConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
-            title = { Text("Bestätigung") },
-            text = { Text("Alle erledigten Einträge wirklich löschen?") },
+            title = { Text(t(R.string.clear_completed_confirm_title )) },
+            text = { Text(t(R.string.clear_completed_confirm_msg)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -605,14 +610,14 @@ fun ShoppingScreen(navController: NavController) {
                         viewModel.clearCompleted()
                     }
                 ) {
-                    Text("Löschen")
+                    Text(t(R.string.clear_completed_confirm_btn_delete))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showConfirmDialog = false }
                 ) {
-                    Text("Abbrechen")
+                    Text(t(R.string.clear_completed_confirm_btn_cancel))
                 }
             }
         )
