@@ -95,7 +95,7 @@ class HaWebSocketRepository(
         parseItemsFromArray(resultObj.getJSONArray("items"))
     }
 
-    private fun parseItemsFromArray(array: org.json.JSONArray) {
+    private fun parseItemsFromArray(array: JSONArray) {
         val parsed = mutableListOf<ShoppingItem>()
 
         for (i in 0 until array.length()) {
@@ -221,7 +221,7 @@ class HaWebSocketRepository(
 
         if (completedIds.isEmpty()) return
 
-        val jsonArray = org.json.JSONArray()
+        val jsonArray = JSONArray()
         completedIds.forEach { jsonArray.put(it) }
 
         client.send(

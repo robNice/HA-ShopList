@@ -27,10 +27,6 @@ class ShoppingViewModel(
         }
     }
 
-    fun loadItems() {
-        repository.loadItems()
-    }
-
     fun addItem(name: String) {
         repository.addItem(name)
     }

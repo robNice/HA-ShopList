@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Home-Asssistant-Einkaufsliste</string>
+    <string name="app_name">HA ShopList</string>
     <string name="settings">Einstellungen</string>
     <string name="settings_cta">Einstellungen  öffnen</string>
     <string name="settings_title">Einstellungen</string>
@@ -22,6 +22,8 @@
     <string name="auth_failed_text">Bitte überprüfe deinen Token oder die Home-Assistant URL.</string>
     <string name="connection_errors_title">Verbindung fehlgeschlagen</string>
     <string name="connection_errors_text">Bitte überprüfe deinen Home-Assistant URL.</string>
+    <string name="alwaysActiveMsg">App dauerhaft aktiv im Hintergrund</string>
+    <string name="appIsRunning">HA ShopListläuft</string>
 </resources>
 
 

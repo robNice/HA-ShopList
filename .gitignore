@@ -1,0 +1,59 @@
+# ---- Android / Gradle ----
+.gradle/
+build/
+**/build/
+local.properties
+.gradle
+captures/
+.externalNativeBuild/
+.cxx/
+
+# ---- Kotlin DSL ----
+.gradle.kts.cache
+
+# ---- Android Studio ----
+.idea/
+*.iml
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/gradle.xml
+.idea/deploymentTargetDropDown.xml
+
+# ---- Keystore / Signing ----
+*.jks
+*.keystore
+key.properties
+
+# ---- Logs ----
+*.log
+
+# ---- macOS ----
+.DS_Store
+
+# ---- Windows ----
+Thumbs.db
+
+# ---- NDK ----
+obj/
+.libs/
+
+# ---- Generated ----
+app/release/
+app/debug/
+
+# ---- Firebase / Google Services (falls später genutzt) ----
+google-services.json
+
+# ---- Kotlin compile output ----
+*.class
+out/
+
+# ---- IntelliJ ----
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+/app/src/androidTest/

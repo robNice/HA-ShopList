@@ -12,9 +12,13 @@ class ShoppingViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val repository = HaRuntime.repository ?: HaWebSocketRepository(url, token).also {
-            HaRuntime.repository = it
+        if (modelClass.isAssignableFrom(ShoppingViewModel::class.java)) {
+            val repository = HaRuntime.repository ?: HaWebSocketRepository(url, token).also {
+                HaRuntime.repository = it
+            }
+            @Suppress("UNCHECKED_CAST")
+            return ShoppingViewModel(repository) as T
         }
-        return ShoppingViewModel(repository) as T
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

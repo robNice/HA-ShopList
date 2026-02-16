@@ -4,7 +4,6 @@ import de.robnice.homeasssistant_shoppinglist.util.Debug
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import okhttp3.*
-import okio.ByteString
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.*

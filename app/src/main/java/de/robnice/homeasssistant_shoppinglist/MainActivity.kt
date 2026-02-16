@@ -40,7 +40,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -197,10 +196,10 @@ fun ShoppingScreen(navController: NavController) {
         val errorTitle: String
         val errorText: String
         if( authFailed )    {
-            errorTitle = t(R.string.auth_failed_title);
-            errorText  = t( R.string.auth_failed_text);
+            errorTitle = t(R.string.auth_failed_title)
+            errorText  = t( R.string.auth_failed_text)
         } else {
-            errorTitle = t(R.string.connection_errors_title);
+            errorTitle = t(R.string.connection_errors_title)
             errorText  = t( R.string.connection_errors_text)
         }
 

@@ -4,7 +4,6 @@ import android.app.NotificationChannel
 import android.content.Context
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
 import android.app.NotificationManager
-import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.core.app.NotificationCompat

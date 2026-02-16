@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import de.robnice.homeasssistant_shoppinglist.R
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository
+import de.robnice.homeasssistant_shoppinglist.ui.util.t
 import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
 import kotlinx.coroutines.*
 
@@ -74,8 +75,8 @@ class HaWsForegroundService : Service() {
 
     private fun buildServiceNotification() =
         NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
-            .setContentTitle("Shopping List läuft")
-            .setContentText("WebSocket aktiv im Hintergrund")
+            .setContentTitle(getString(R.string.appIsRunning))
+            .setContentText(getString(R.string.alwaysActiveMsg))
             .setSmallIcon(R.drawable.ic_notification)
             .setOngoing(true)
             .build()
