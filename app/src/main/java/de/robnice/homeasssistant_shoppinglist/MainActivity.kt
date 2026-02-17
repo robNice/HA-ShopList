@@ -182,6 +182,7 @@ fun ShoppingScreen(navController: NavController) {
 
     val authFailed by viewModel.authFailed.collectAsState()
     val connectionErrors by viewModel.connectionErrors.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.newItems.collect { item ->
@@ -268,14 +269,6 @@ fun ShoppingScreen(navController: NavController) {
         return
     }
 
-    var hasReceivedData by remember { mutableStateOf(false) }
-
-    LaunchedEffect(items) {
-        if (items.isNotEmpty()) {
-            hasReceivedData = true
-        }
-    }
-
     var newItem by remember { mutableStateOf("") }
 
     Scaffold(
@@ -304,21 +297,13 @@ fun ShoppingScreen(navController: NavController) {
                 .fillMaxSize()
         ) {
 
-            if (!hasReceivedData) {
+            if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
                 }
-            } else if (items.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(t(R.string.no_items))
-                }
-
             } else {
                 Column(
                     modifier = Modifier
@@ -387,6 +372,14 @@ fun ShoppingScreen(navController: NavController) {
 
                     Spacer(Modifier.height(16.dp))
 
+                    if (items.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(t(R.string.no_items))
+                        }
+                    } else {
                     val openItems = items.filter { !it.complete }
                     val completedItems = items.filter { it.complete }
                     var completedExpanded by remember { mutableStateOf(false) }
@@ -550,6 +543,7 @@ fun ShoppingScreen(navController: NavController) {
                                 }
                             }
                         }
+                    }
                     }
 
 

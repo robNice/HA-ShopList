@@ -21,7 +21,8 @@ class HaWebSocketRepository(
     private val _newItems = MutableSharedFlow<ShoppingItem>( replay = 1 )
 
     private val locallyAddedItemNames = mutableSetOf<String>()
-
+    private val _loaded = MutableStateFlow(false)
+    val loaded = _loaded.asStateFlow()
     val authFailed = _authFailed.asStateFlow()
     val connectionErrors = _connectionErrors.asStateFlow()
     val items = _items.asStateFlow()
@@ -47,6 +48,7 @@ class HaWebSocketRepository(
 
         scope.launch {
             client.ready.collect {
+                _loaded.value = false
                 _authFailed.value = false
                 _connectionErrors.value = false
                 Debug.log("WS READY (RECONNECTED)")
@@ -127,8 +129,9 @@ class HaWebSocketRepository(
                     _newItems.tryEmit(it)
                 }
         }
-
         _items.value = parsed
+        _loaded.value = true
+
     }
 
     fun loadItems() {
