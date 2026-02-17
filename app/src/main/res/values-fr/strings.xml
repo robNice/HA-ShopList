@@ -4,10 +4,10 @@
     <string name="settings_cta">Ouvrir les paramètres</string>
     <string name="settings_title">Paramètres</string>
     <string name="ha_url">URL Home Assistant</string>
-    <string name="notifications_enabled">Autoriser les notifications</string>
+    <string name="notifications_enabled">Activer les notifications</string>
     <string name="long_token">Jeton d’accès longue durée</string>
     <string name="language">Langue</string>
-    <string name="new_item">Nouvel article</string>
+    <string name="new_item">Nouvel élément</string>
     <string name="add">Ajouter</string>
     <string name="save">Enregistrer</string>
     <string name="back">Retour</string>
@@ -18,10 +18,14 @@
     <string name="no_items">Aucun élément</string>
     <string name="completed">Terminés</string>
     <string name="clear_completed">Supprimer les éléments terminés</string>
+    <string name="clear_completed_confirm_title">Confirmation</string>
+    <string name="clear_completed_confirm_msg">Supprimer tous les éléments terminés?</string>
+    <string name="clear_completed_confirm_btn_delete">Supprimer</string>
+    <string name="clear_completed_confirm_btn_cancel">Annuler</string>
     <string name="auth_failed_title">Échec de l’authentification</string>
-    <string name="auth_failed_text">Veuillez vérifier votre jeton ou l’URL de Home Assistant.</string>
+    <string name="auth_failed_text">Veuillez vérifier votre jeton ou l’URL Home Assistant.</string>
     <string name="connection_errors_title">Échec de la connexion</string>
-    <string name="connection_errors_text">Veuillez vérifier l’URL de Home Assistant.</string>
-    <string name="alwaysActiveMsg">Application toujours active en arrière-plan</string>
-    <string name="appIsRunning">HA ShopList est en cours d’exécution</string>
+    <string name="connection_errors_text">Veuillez vérifier l’URL Home Assistant et votre connexion Internet, puis réessayez.</string>
+    <string name="alwaysActiveMsg">Application toujours active</string>
+    <string name="appIsRunning">HA ShopList en cours d’exécution</string>
 </resources>

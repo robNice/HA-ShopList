@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">HA ShopList</string>
+    <string name="settings">Ustawienia</string>
+    <string name="settings_cta">Otwórz ustawienia</string>
+    <string name="settings_title">Ustawienia</string>
+    <string name="ha_url">URL Home Assistant</string>
+    <string name="notifications_enabled">Włącz powiadomienia</string>
+    <string name="long_token">Długoterminowy token dostępu</string>
+    <string name="language">Język</string>
+    <string name="new_item">Nowy element</string>
+    <string name="add">Dodaj</string>
+    <string name="save">Zapisz</string>
+    <string name="back">Wstecz</string>
+    <string name="ha_token">Token długoterminowy</string>
+    <string name="shopping_title">Lista zakupów</string>
+    <string name="list">Lista</string>
+    <string name="loading">Ładowanie…</string>
+    <string name="no_items">Brak elementów</string>
+    <string name="completed">Zakończone</string>
+    <string name="clear_completed">Usuń zakończone</string>
+    <string name="clear_completed_confirm_title">Potwierdź</string>
+    <string name="clear_completed_confirm_msg">Usunąć wszystkie zakończone elementy?</string>
+    <string name="clear_completed_confirm_btn_delete">Usuń</string>
+    <string name="clear_completed_confirm_btn_cancel">Anuluj</string>
+    <string name="auth_failed_title">Uwierzytelnianie nie powiodło się</string>
+    <string name="auth_failed_text">Sprawdź token lub URL Home Assistant.</string>
+    <string name="connection_errors_title">Połączenie nie powiodło się</string>
+    <string name="connection_errors_text">Sprawdź URL Home Assistant oraz połączenie z internetem i spróbuj ponownie.</string>
+    <string name="alwaysActiveMsg">Aplikacja zawsze aktywna</string>
+    <string name="appIsRunning">HA ShopList działa</string>
+</resources>

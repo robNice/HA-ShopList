@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">HA ShopList</string>
+    <string name="settings">Настройки</string>
+    <string name="settings_cta">Открыть настройки</string>
+    <string name="settings_title">Настройки</string>
+    <string name="ha_url">URL Home Assistant</string>
+    <string name="notifications_enabled">Включить уведомления</string>
+    <string name="long_token">Долгосрочный токен доступа</string>
+    <string name="language">Язык</string>
+    <string name="new_item">Новый элемент</string>
+    <string name="add">Добавить</string>
+    <string name="save">Сохранить</string>
+    <string name="back">Назад</string>
+    <string name="ha_token">Долгосрочный токен</string>
+    <string name="shopping_title">Список покупок</string>
+    <string name="list">Список</string>
+    <string name="loading">Загрузка…</string>
+    <string name="no_items">Нет элементов</string>
+    <string name="completed">Выполнено</string>
+    <string name="clear_completed">Удалить выполненные</string>
+    <string name="clear_completed_confirm_title">Подтверждение</string>
+    <string name="clear_completed_confirm_msg">Удалить все выполненные элементы?</string>
+    <string name="clear_completed_confirm_btn_delete">Удалить</string>
+    <string name="clear_completed_confirm_btn_cancel">Отмена</string>
+    <string name="auth_failed_title">Ошибка аутентификации</string>
+    <string name="auth_failed_text">Проверьте токен или URL Home Assistant.</string>
+    <string name="connection_errors_title">Не удалось подключиться</string>
+    <string name="connection_errors_text">Проверьте URL Home Assistant и подключение к интернету и попробуйте снова.</string>
+    <string name="alwaysActiveMsg">Приложение всегда активно</string>
+    <string name="appIsRunning">HA ShopList запущен</string>
+</resources>

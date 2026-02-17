@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">HA ShopList</string>
+    <string name="settings">설정</string>
+    <string name="settings_cta">설정 열기</string>
+    <string name="settings_title">설정</string>
+    <string name="ha_url">Home Assistant URL</string>
+    <string name="notifications_enabled">알림 사용</string>
+    <string name="long_token">장기 액세스 토큰</string>
+    <string name="language">언어</string>
+    <string name="new_item">새 항목</string>
+    <string name="add">추가</string>
+    <string name="save">저장</string>
+    <string name="back">뒤로</string>
+    <string name="ha_token">장기 토큰</string>
+    <string name="shopping_title">장보기 목록</string>
+    <string name="list">목록</string>
+    <string name="loading">로딩 중…</string>
+    <string name="no_items">항목 없음</string>
+    <string name="completed">완료됨</string>
+    <string name="clear_completed">완료 항목 삭제</string>
+    <string name="clear_completed_confirm_title">확인</string>
+    <string name="clear_completed_confirm_msg">완료된 항목을 모두 삭제할까요?</string>
+    <string name="clear_completed_confirm_btn_delete">삭제</string>
+    <string name="clear_completed_confirm_btn_cancel">취소</string>
+    <string name="auth_failed_title">인증 실패</string>
+    <string name="auth_failed_text">토큰 또는 Home Assistant URL을 확인하세요.</string>
+    <string name="connection_errors_title">연결 실패</string>
+    <string name="connection_errors_text">Home Assistant URL과 인터넷 연결을 확인한 뒤 다시 시도하세요.</string>
+    <string name="alwaysActiveMsg">앱을 항상 활성 상태로 유지</string>
+    <string name="appIsRunning">HA ShopList 실행 중</string>
+</resources>

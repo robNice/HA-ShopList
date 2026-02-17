@@ -49,7 +49,16 @@ Momentan steht die APP in folgenden Sprachen zur Verfügung
 
 - Englisch (default)
 - Deutsch
+- Spanisch
 - Französisch
+- Italienisch
+- Japanisch
+- Koreanisch
+- Niederländisch
+- Polnisch
+- Portugiesisch
+- Russisch
+- Türkisch
 
 ---
 
