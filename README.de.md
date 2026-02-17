@@ -25,7 +25,6 @@ Standalone-Android-App für die **Home Assistant Shopping-List** (Todo-List) mit
     - Persistenz in HA per `todo/item/move` (mit `previous_uid`)
 
 ### UX / UI
-- Material 3 UI (Light/Dark, optional dynamic colors über Theme)
 - Settings-Screen (URL/Token + Notifications Toggle)
 - Fehlerzustände:
     - Auth-Fehler (Token ungültig)
