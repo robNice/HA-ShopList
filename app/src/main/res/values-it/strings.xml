@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">HA ShopList</string>
+    <string name="settings">Impostazioni</string>
+    <string name="settings_cta">Apri impostazioni</string>
+    <string name="settings_title">Impostazioni</string>
+    <string name="ha_url">URL di Home Assistant</string>
+    <string name="notifications_enabled">Abilita notifiche</string>
+    <string name="long_token">Token di accesso a lunga durata</string>
+    <string name="language">Lingua</string>
+    <string name="new_item">Nuovo elemento</string>
+    <string name="add">Aggiungi</string>
+    <string name="save">Salva</string>
+    <string name="back">Indietro</string>
+    <string name="ha_token">Token a lunga durata</string>
+    <string name="shopping_title">Lista della spesa</string>
+    <string name="list">Lista</string>
+    <string name="loading">Caricamento…</string>
+    <string name="no_items">Nessun elemento</string>
+    <string name="completed">Completati</string>
+    <string name="clear_completed">Elimina completati</string>
+    <string name="clear_completed_confirm_title">Conferma</string>
+    <string name="clear_completed_confirm_msg">Eliminare tutti gli elementi completati?</string>
+    <string name="clear_completed_confirm_btn_delete">Elimina</string>
+    <string name="clear_completed_confirm_btn_cancel">Annulla</string>
+    <string name="auth_failed_title">Autenticazione non riuscita</string>
+    <string name="auth_failed_text">Controlla il token o l’URL di Home Assistant.</string>
+    <string name="connection_errors_title">Connessione non riuscita</string>
+    <string name="connection_errors_text">Controlla l’URL di Home Assistant e la connessione Internet e riprova.</string>
+    <string name="alwaysActiveMsg">App sempre attiva</string>
+    <string name="appIsRunning">HA ShopList in esecuzione</string>
+</resources>

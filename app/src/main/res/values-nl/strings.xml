@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">HA ShopList</string>
+    <string name="settings">Instellingen</string>
+    <string name="settings_cta">Instellingen openen</string>
+    <string name="settings_title">Instellingen</string>
+    <string name="ha_url">Home Assistant-URL</string>
+    <string name="notifications_enabled">Meldingen inschakelen</string>
+    <string name="long_token">Langdurige toegangstoken</string>
+    <string name="language">Taal</string>
+    <string name="new_item">Nieuw item</string>
+    <string name="add">Toevoegen</string>
+    <string name="save">Opslaan</string>
+    <string name="back">Terug</string>
+    <string name="ha_token">Langdurige token</string>
+    <string name="shopping_title">Boodschappenlijst</string>
+    <string name="list">Lijst</string>
+    <string name="loading">Laden…</string>
+    <string name="no_items">Geen items</string>
+    <string name="completed">Voltooid</string>
+    <string name="clear_completed">Voltooide items wissen</string>
+    <string name="clear_completed_confirm_title">Bevestigen</string>
+    <string name="clear_completed_confirm_msg">Alle voltooide items verwijderen?</string>
+    <string name="clear_completed_confirm_btn_delete">Verwijderen</string>
+    <string name="clear_completed_confirm_btn_cancel">Annuleren</string>
+    <string name="auth_failed_title">Authenticatie mislukt</string>
+    <string name="auth_failed_text">Controleer je token of de Home Assistant-URL.</string>
+    <string name="connection_errors_title">Verbinding mislukt</string>
+    <string name="connection_errors_text">Controleer je Home Assistant-URL en je internetverbinding en probeer het opnieuw.</string>
+    <string name="alwaysActiveMsg">App altijd actief</string>
+    <string name="appIsRunning">HA ShopList actief</string>
+</resources>
