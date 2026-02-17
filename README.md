@@ -25,7 +25,6 @@ Standalone Android app for the **Home Assistant Shopping List** (ToDo list) with
     - Persistence in HA via `todo/item/move` (with `previous_uid`)
 
 ### UX / UI
-- Material 3 UI (Light/Dark, optional dynamic colors via theme)
 - Settings screen (URL/token + notifications toggle)
 - Error states:
     - Auth error (token invalid)
