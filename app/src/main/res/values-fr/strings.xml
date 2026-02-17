@@ -19,7 +19,7 @@
     <string name="completed">Terminés</string>
     <string name="clear_completed">Supprimer les éléments terminés</string>
     <string name="clear_completed_confirm_title">Confirmation</string>
-    <string name="clear_completed_confirm_msg">Supprimer tous les éléments terminés&nbsp;?</string>
+    <string name="clear_completed_confirm_msg">Supprimer tous les éléments terminés?</string>
     <string name="clear_completed_confirm_btn_delete">Supprimer</string>
     <string name="clear_completed_confirm_btn_cancel">Annuler</string>
     <string name="auth_failed_title">Échec de l’authentification</string>

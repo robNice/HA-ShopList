@@ -48,7 +48,16 @@ Currently supported languages:
 
 - English (default)
 - German
+- Spanish
 - French
+- Italian
+- Japanese
+- Korean
+- Dutch
+- Polish
+- Portuguese
+- Russian
+- Turkish
 
 ---
 
