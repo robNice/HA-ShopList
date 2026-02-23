@@ -28,6 +28,7 @@
     <string name="connection_errors_text">Bitte überprüfe deinen Home-Assistant URL.</string>
     <string name="alwaysActiveMsg">App dauerhaft aktiv im Hintergrund</string>
     <string name="appIsRunning">HA ShopListläuft</string>
+    <string name="reconnected">Verbindung wieder hergestellt</string>
 </resources>
 
 

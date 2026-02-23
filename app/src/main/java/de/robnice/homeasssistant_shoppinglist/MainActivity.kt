@@ -1,6 +1,7 @@
 package de.robnice.homeasssistant_shoppinglist
 
 import android.Manifest
+import android.widget.Toast
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -55,12 +56,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import de.robnice.homeasssistant_shoppinglist.util.Debug
-import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
-import kotlinx.coroutines.flow.map
-import android.content.Intent
-import androidx.core.content.ContextCompat
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
-import de.robnice.homeasssistant_shoppinglist.service.HaWsForegroundService
+import kotlinx.coroutines.flow.combine
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -86,12 +83,15 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 val context = LocalContext.current
                 val dataStore = remember { SettingsDataStore(context) }
 
-                val haUrlFlow = remember(dataStore) { dataStore.haUrl.map { it } }
-                val haTokenFlow = remember(dataStore) { dataStore.haToken.map { it } }
+                val configFlow = remember(dataStore) {
+                    combine(dataStore.haUrl, dataStore.haToken) { url, token ->
+                        url to token
+                    }
+                }
 
-                val haUrl by haUrlFlow.collectAsState(initial = null)
-                val haToken by haTokenFlow.collectAsState(initial = null)
-
+                val config by configFlow.collectAsState(initial = null)
+                val haUrl = config?.first
+                val haToken = config?.second
 
                 val startDestination =
                     if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
@@ -104,19 +104,35 @@ class MainActivity : androidx.activity.ComponentActivity() {
 
                 LaunchedEffect(haUrl, haToken, notificationsEnabled) {
                     if (!notificationsEnabled) {
-                        Debug.log("MainActivity: stopService() because notifications disabled")
-                        context.stopService(Intent(context, HaWsForegroundService::class.java))
+                        Debug.log("MainActivity: notifications disabled -> disconnect repo")
+                        HaRuntime.repository?.setReconnectAllowed(false)
+                        HaRuntime.repository?.disconnect()
                         return@LaunchedEffect
                     }
 
                     if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) return@LaunchedEffect
 
-                    ContextCompat.startForegroundService(
-                        context,
-                        Intent(context, HaWsForegroundService::class.java).apply {
-                            putExtra(HaWsForegroundService.EXTRA_BASE_URL, haUrl)
-                            putExtra(HaWsForegroundService.EXTRA_TOKEN, haToken)
-                        })
+                    val repo = HaRuntime.repository
+                    if (repo == null) {
+                        Debug.log("MainActivity: create repository")
+                        HaRuntime.repository = de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository(
+                            haUrl!!,
+                            haToken!!,
+                            context.applicationContext
+                        )
+                    } else {
+                        Debug.log("MainActivity: repository already exists")
+                    }
+                }
+
+                if (config == null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                    return@HomeAsssistantShoppingListTheme
                 }
 
                 NavHost(
@@ -184,19 +200,33 @@ fun ShoppingScreen(navController: NavController) {
     val connectionErrors by viewModel.connectionErrors.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.newItems.collect { item ->
-            Debug.log("RECEIVED IN UI: ${item.name}")
+    LaunchedEffect(repo) {
+        repo.reconnected.collect { ts ->
+            if (ts == 0L) return@collect
 
-            if (notificationsEnabled) {
-                NotificationHelper.showNewItemNotification(context, item)
-            }
+            Toast.makeText(
+                context,
+                context.getString(R.string.reconnected),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
-    DisposableEffect(lifecycleOwner) {
+
+    DisposableEffect(lifecycleOwner, notificationsEnabled, repo) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                viewModel.ensureConnection()
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_START -> {
+                    if (notificationsEnabled) {
+                        repo.setReconnectAllowed(true)
+                        viewModel.ensureConnection()
+                    }
+                }
+
+                androidx.lifecycle.Lifecycle.Event.ON_STOP -> {
+                    repo.setReconnectAllowed(false)
+                }
+
+                else -> Unit
             }
         }
 

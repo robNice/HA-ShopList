@@ -10,7 +10,6 @@ import androidx.core.app.NotificationCompat
 import de.robnice.homeasssistant_shoppinglist.R
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository
-import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
 import kotlinx.coroutines.*
 
 class HaWsForegroundService : Service() {
@@ -24,8 +23,6 @@ class HaWsForegroundService : Service() {
 
         private var currentBaseUrl: String? = null
         private var currentToken: String? = null
-        private var newItemsJob: Job? = null
-
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -53,19 +50,12 @@ class HaWsForegroundService : Service() {
                 "SERVICE: (re)create repo. configChanged=$configChanged baseUrl=$baseUrl tokenHash=${token.hashCode()}"
             )
 
-            newItemsJob?.cancel()
             HaRuntime.repository?.disconnect()
 
             currentBaseUrl = baseUrl
             currentToken = token
 
-            HaRuntime.repository = HaWebSocketRepository(baseUrl, token)
-
-            newItemsJob = scope.launch {
-                HaRuntime.repository!!.newItems.collect { item ->
-                    NotificationHelper.showNewItemNotification(this@HaWsForegroundService, item)
-                }
-            }
+            HaRuntime.repository = HaWebSocketRepository(baseUrl, token, applicationContext)
 
         } else {
             HaRuntime.repository!!.ensureConnected()
@@ -78,7 +68,6 @@ class HaWsForegroundService : Service() {
 
     override fun onDestroy() {
         de.robnice.homeasssistant_shoppinglist.util.Debug.log("SERVICE onDestroy()")
-        newItemsJob?.cancel()
         HaRuntime.repository?.disconnect()
         scope.cancel()
         super.onDestroy()

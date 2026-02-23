@@ -28,4 +28,5 @@
     <string name="connection_errors_text">Lütfen Home Assistant URL’sini ve internet bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="alwaysActiveMsg">Uygulama her zaman aktif</string>
     <string name="appIsRunning">HA ShopList çalışıyor</string>
+    <string name="reconnected">Bağlantı yeniden kuruldu</string>
 </resources>
