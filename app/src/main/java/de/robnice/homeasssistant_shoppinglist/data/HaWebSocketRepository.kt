@@ -7,10 +7,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.json.JSONArray
 import org.json.JSONObject
+import android.content.Context
+import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
 
 class HaWebSocketRepository(
     baseUrl: String,
-    token: String
+    token: String,
+    private val appContext: Context
 ) {
 
     private val client = HaWebSocketClient(baseUrl, token)
@@ -28,6 +31,11 @@ class HaWebSocketRepository(
     val items = _items.asStateFlow()
 
     val newItems = _newItems.asSharedFlow()
+
+    private val _reconnected = MutableStateFlow(0L)
+    val reconnected = _reconnected.asStateFlow()
+
+    private var hadReadyOnce = false
 
     init {
 
@@ -51,7 +59,16 @@ class HaWebSocketRepository(
                 _loaded.value = false
                 _authFailed.value = false
                 _connectionErrors.value = false
-                Debug.log("WS READY (RECONNECTED)")
+
+                val wasReconnect = hadReadyOnce
+                hadReadyOnce = true
+
+                Debug.log("WS READY (RECONNECTED=$wasReconnect)")
+
+                if (wasReconnect) {
+                    _reconnected.value = System.currentTimeMillis()
+                }
+
                 client.send(
                     type = "todo/item/subscribe",
                     payload = JSONObject()
@@ -127,6 +144,7 @@ class HaWebSocketRepository(
                     }
 
                     _newItems.tryEmit(it)
+                    NotificationHelper.showNewItemNotification(appContext, it)
                 }
         }
         _items.value = parsed
@@ -246,8 +264,22 @@ class HaWebSocketRepository(
     }
 
     fun ensureConnected() {
+        _authFailed.value = false
+        _connectionErrors.value = false
+
+        if (client.isReady()) {
+            Debug.log("REPOSITORY: already connected -> reload items")
+            _loaded.value = false
+            loadItems()
+            return
+        }
+
+        _loaded.value = false
         client.ensureConnected()
     }
 
+    fun setReconnectAllowed(allowed: Boolean) {
+        client.setReconnectAllowed(allowed)
+    }
 
 }

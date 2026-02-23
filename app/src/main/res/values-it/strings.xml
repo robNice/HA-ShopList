@@ -28,4 +28,5 @@
     <string name="connection_errors_text">Controlla l’URL di Home Assistant e la connessione Internet e riprova.</string>
     <string name="alwaysActiveMsg">App sempre attiva</string>
     <string name="appIsRunning">HA ShopList in esecuzione</string>
+    <string name="reconnected">Reconnected to HomeAssistant</string>
 </resources>

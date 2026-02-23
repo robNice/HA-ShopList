@@ -7,15 +7,27 @@ import okhttp3.*
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.*
-
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import okhttp3.OkHttpClient
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
+import javax.net.ssl.*
 class HaWebSocketClient(
+
     private val baseUrl: String,
     private val token: String
 ) {
 
-    private val client = OkHttpClient.Builder()
-        .pingInterval(30, java.util.concurrent.TimeUnit.SECONDS)
-        .build()
+    @Volatile
+    private var reconnectAllowed = true
+
+    // Secure client
+    private val client = OkHttpClient.Builder().pingInterval(30, java.util.concurrent.TimeUnit.SECONDS).build()
+
+    // Unsecure Client
+    //private val client = buildOkHttpClientTrustAll()
+
     private var webSocket: WebSocket? = null
     private val messageId = AtomicInteger(1)
 
@@ -41,8 +53,34 @@ class HaWebSocketClient(
     private var reconnectJob: Job? = null
     private var manualDisconnect = false
 
+    @Volatile
+    private var isConnecting = false
+
+
     fun connect() {
+        if (!reconnectAllowed) {
+            Debug.log("WS connect skipped (not allowed)")
+            return
+        }
+
+        if (isConnected) {
+            Debug.log("WS connect skipped (already connected)")
+            return
+        }
+
+        if (isConnecting) {
+            Debug.log("WS connect skipped (already connecting)")
+            return
+        }
+
+        if (webSocket != null) {
+            Debug.log("WS connect skipped (socket already exists)")
+            return
+        }
+
         manualDisconnect = false
+        isConnecting = true
+
         val cleanedBase = baseUrl.trimEnd('/')
 
         val wsUrl = cleanedBase
@@ -57,6 +95,29 @@ class HaWebSocketClient(
             .build()
 
         webSocket = client.newWebSocket(request, socketListener)
+    }
+
+    private fun buildOkHttpClientTrustAll(): OkHttpClient {
+        val trustAllCerts = arrayOf<TrustManager>(
+            object : X509TrustManager {
+                override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = Unit
+                override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) = Unit
+                override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+            }
+        )
+
+        val sslContext = SSLContext.getInstance("TLS").apply {
+            init(null, trustAllCerts, SecureRandom())
+        }
+
+        val trustManager = trustAllCerts[0] as X509TrustManager
+        val sslSocketFactory = sslContext.socketFactory
+
+        return OkHttpClient.Builder()
+            .sslSocketFactory(sslSocketFactory, trustManager)
+            .hostnameVerifier(HostnameVerifier { _, _ -> true }) // TRUST ALL HOSTNAMES (TEST ONLY)
+            .pingInterval(30, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
     }
 
 
@@ -75,6 +136,7 @@ class HaWebSocketClient(
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
             isConnected = false
             isAuthenticated = false
+            isConnecting = false
             this@HaWebSocketClient.webSocket = null
             Debug.log("WS CLOSED $code $reason")
             scheduleReconnect()
@@ -100,6 +162,7 @@ class HaWebSocketClient(
                     Debug.log("WS WebSocket Auth OK")
                     isAuthenticated = true
                     isConnected = true
+                    isConnecting = false
                     _ready.tryEmit(Unit)
                 }
 
@@ -107,6 +170,7 @@ class HaWebSocketClient(
                     Debug.log("WS AUTH INVALID")
                     isAuthenticated = false
                     isConnected = false
+                    isConnecting = false
                     _authFailed.tryEmit(Unit)
                 }
 
@@ -123,6 +187,7 @@ class HaWebSocketClient(
         ) {
             isConnected = false
             isAuthenticated = false
+            isConnecting = false
             this@HaWebSocketClient.webSocket = null
             Debug.log("WS FAILURE")
             t.printStackTrace()
@@ -135,6 +200,9 @@ class HaWebSocketClient(
     }
 
     fun isConnected(): Boolean = isConnected
+
+    fun isReady(): Boolean = isConnected && isAuthenticated && webSocket != null
+
     fun send(type: String, payload: JSONObject = JSONObject()): Int {
         val id = messageId.getAndIncrement()
 
@@ -150,11 +218,39 @@ class HaWebSocketClient(
 
         return id
     }
+
     fun ensureConnected() {
-        if (!isConnected || webSocket == null) {
-            connect()
+        if (!reconnectAllowed) return
+        if (isConnecting) return
+
+        val fullyReady = isConnected && isAuthenticated && webSocket != null
+        if (fullyReady) return
+
+        Debug.log("WS ensureConnected(): stale/not-ready socket -> reconnect")
+
+        try {
+            webSocket?.cancel()
+        } catch (_: Exception) {
+        }
+
+        webSocket = null
+        isConnected = false
+        isAuthenticated = false
+        isConnecting = false
+
+        connect()
+    }
+
+
+    fun setReconnectAllowed(allowed: Boolean) {
+        reconnectAllowed = allowed
+        Debug.log("WS reconnectAllowed=$allowed")
+
+        if (!allowed) {
+            reconnectJob?.cancel()
         }
     }
+
     fun disconnect() {
         Debug.log("WS disconnect() called")
         manualDisconnect = true
@@ -164,10 +260,17 @@ class HaWebSocketClient(
 
     private fun scheduleReconnect() {
         if (manualDisconnect) return
+        if (!reconnectAllowed) {
+            Debug.log("WS reconnect skipped (background / not allowed)")
+            return
+        }
         if (reconnectJob?.isActive == true) return
+
         reconnectJob = scope.launch {
-            delay(2_000) // minimal: 2s
-            connect()
+            delay(2_000)
+            if (!manualDisconnect && reconnectAllowed) {
+                connect()
+            }
         }
     }
 }

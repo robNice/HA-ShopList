@@ -28,4 +28,5 @@
     <string name="connection_errors_text">Home Assistant URL과 인터넷 연결을 확인한 뒤 다시 시도하세요.</string>
     <string name="alwaysActiveMsg">앱을 항상 활성 상태로 유지</string>
     <string name="appIsRunning">HA ShopList 실행 중</string>
+    <string name="reconnected">연결이 복구되었습니다</string>
 </resources>
