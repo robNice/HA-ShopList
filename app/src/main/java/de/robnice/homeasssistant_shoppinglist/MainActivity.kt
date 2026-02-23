@@ -56,7 +56,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import de.robnice.homeasssistant_shoppinglist.util.Debug
-import kotlinx.coroutines.flow.map
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import kotlinx.coroutines.flow.combine
 
