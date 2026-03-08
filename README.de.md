@@ -1,166 +1,85 @@
 # HA Shopping List (Android)
 
-Standalone-Android-App für die **Home Assistant Shopping-List** (Todo-List) mit **Live-Updates via WebSocket**, **Drag’n’Drop-Reihenfolge**, **Inline-Editing** und optionalen **Push-Notifications bei neuen Einträgen** (auch im Hintergrund via Foreground Service).
+Standalone-Android-App für die **Home Assistant Todo-Listen** mit Live-Updates über die Home Assistant WebSocket API.
 
 ---
 
-## Features (aktueller Stand)
+## Inhaltsverzeichnis
 
-### Live via Home Assistant WebSocket API
-- WebSocket-Connect auf `/api/websocket` (OkHttp)
-- Auth via Long-Lived Access Token
-- Automatisches **Reconnect**-Verhalten (bei Disconnect/Failure)
-- Subscribe auf Item-Events und Initial-Load
-    - `todo/item/subscribe`
-    - `todo/item/list`
-
-### Liste & Aktionen
-- Items anzeigen (Compose, Flow/StateFlow)
-- Item hinzufügen (`todo.add_item`)
-- Item umschalten erledigt/offen (`todo.update_item`)
-- Item umbenennen (`todo.update_item`)
-- **Erledigte löschen** (Bulk) per Confirm-Dialog (`todo.remove_item` mit Array)
-- **Drag’n’Drop Sortierung** für offene Items:
-    - UI-Reorder lokal
-    - Persistenz in HA per `todo/item/move` (mit `previous_uid`)
-
-### UX / UI
-- Settings-Screen (URL/Token + Notifications Toggle)
-- Fehlerzustände:
-    - Auth-Fehler (Token ungültig)
-    - Connection-Fehler (Netzwerk/WebSocket down)
-    - CTA zur Settings-Seite
-
-### Notifications (neue Einträge)
-- Notification bei neu auftauchenden Items (via `newItems` SharedFlow)
-- Optional **auch im Hintergrund**, wenn Notifications aktiviert:
-    - Foreground Service hält WS-Verbindung & sendet Notifications
-- Runtime-Permission für Android 13+ (`POST_NOTIFICATIONS`)
-
-> Die App vermeidet Doppel-Notifications für lokal hinzugefügte Items (Name wird kurzzeitig gemerkt).
-
+- [Installation](#installation)
+- [Konfiguration](#konfiguration)
+- [Items umbenennen](#items-umbenennen)
+- [Items sortieren](#items-sortieren)
+- [Erledigte Items löschen](#erledigte-items-löschen)
 
 ---
 
-## Lokalisierungen
+## Installation
 
-Momentan steht die APP in folgenden Sprachen zur Verfügung
-
-- Englisch (default)
-- Deutsch
-- Spanisch
-- Französisch
-- Italienisch
-- Japanisch
-- Koreanisch
-- Niederländisch
-- Polnisch
-- Portugiesisch
-- Russisch
-- Türkisch
+Lade die aktuelle APK aus den **[Releases](https://github.com/robNice/HA-ShopList/releases)** herunter.
 
 ---
 
-## Projektstruktur (Kurzüberblick)
+## Konfiguration
 
-- `MainActivity.kt`
-    - Compose UI (ShoppingScreen + SettingsScreen)
-    - Drag’n’Drop (reorderable LazyList)
-    - Confirm-Dialog für „Erledigte löschen“
-    - Start/Stop Foreground Service abhängig von Settings
-- `data/`
-    - `HaWebSocketRepository` – subscribe/list/events + Aktionen (add/toggle/rename/move/clearCompleted)
-    - `websocket/HaWebSocketClient` – Connect/Auth/Events, Reconnect
-    - `SettingsDataStore` – URL/Token/Notifications enabled
-    - `HaApi`, `HaServiceFactory` – REST (derzeit nicht primär)
-- `service/HaWsForegroundService`
-    - hält Repository (Singleton) & versendet Notifications
-- `util/`
-    - `NotificationHelper` – Notification-Channel + Notification bauen
-    - `UrlNormalizer` – URL normalisieren (Schema + Slash)
-    - `Debug` – Debug-Logging
-- `viewmodel/ShoppingViewModel`
-    - UI-Bridge auf Repository (Flows + Aktionen)
+Beim ersten Start öffnet sich automatisch der **Settings-Screen**.
 
----
+Dort müssen folgende Einstellungen gesetzt werden:
 
-## Setup / Konfiguration
+### Home Assistant URL
+Die URL deiner Home Assistant Instanz (inkl. eventuellen Port).
+Die App normalisiert die URL automatisch.
 
-### 1) Home Assistant vorbereiten
-- Einen **Long-Lived Access Token** erstellen (Profil → Long-Lived Access Tokens)
-- Sicherstellen, dass die ToDo-Entity existiert (aktuell erwartet: `todo.einkaufsliste`)
+### Token
+Hier wird der zuvor erzeugte **Long-Lived Access Token** eingefügt.
 
-### 2) App konfigurieren (Settings)
-- **Home Assistant URL**
-    - Beispiel: `http://homeassistant.local:8123` oder `http://192.168.x.x:8123`
-    - Die App normalisiert:
-        - wenn kein Schema: default `https://`
-        - entfernt doppelte Slashes, erzwingt trailing `/`
-- **Token** (Long-Lived Access Token)
-- **Notifications** (Toggle)
-    - aktiviert → Foreground Service startet automatisch (sofern URL/Token gesetzt)
-    - deaktiviert → Service wird gestoppt
+### Liste
+
+Nach Eingabe von URL und Token lädt die App automatisch alle verfügbaren **Home Assistant Todo-Listen (`todo.*`)**.
+
+Diese erscheinen als **Dropdown-Auswahl**.
+
+Die ausgewählte Liste wird gespeichert und beim nächsten Start automatisch wieder verwendet.
 
 ---
 
-## Permissions (Android 13+)
+## Items umbenennen
 
-- `android.permission.POST_NOTIFICATIONS`
-    - Wird in `MainActivity` zur Laufzeit angefragt (SDK 33+)
-    - Ohne Erlaubnis: Notifications können ausbleiben
+Ein vorhandenes Item kann direkt in der Liste umbenannt werden.
 
----
+Vorgehen:
 
-## Build & Run
+1. Auf den **Item-Text tippen**
+2. Das Eingabefeld erscheint
+3. Neuen Namen eingeben
+4. Mit **Enter / Done** bestätigen
 
-### Android Studio
-- Projekt öffnen → Gradle Sync → Run (Debug)
-
-### CLI
-- `./gradlew installDebug`
+Die Änderung wird sofort an Home Assistant übertragen.
 
 ---
 
-## WebSocket-Protokoll (vereinfacht)
+## Items sortieren
 
-1. Connect: `ws(s)://<base>/api/websocket`
-2. Server → `auth_required`
-3. Client → `{"type":"auth","access_token":"..."}`
-4. Server → `auth_ok`
-5. Client:
-    - `todo/item/subscribe` (entity_id)
-    - `todo/item/list` (entity_id)
-6. Server → `result` (items) / `event` (items) → Repository parst → UI aktualisiert
+Offene Items können per **Drag & Drop** neu sortiert werden.
 
-Reconnect:
-- bei `onClosed` / `onFailure` → Reconnect nach ~2s (wenn nicht manuell disconnected)
+Vorgehen:
+
+1. Ein Item **lange gedrückt halten**
+2. Item an die gewünschte Position ziehen
+3. Loslassen
+
+Die neue Reihenfolge wird automatisch in Home Assistant gespeichert.
 
 ---
 
-## Troubleshooting
+## Erledigte Items löschen
 
-### „Missing configuration“
-- URL oder Token leer → Settings ausfüllen
+Erledigte Items können gesammelt entfernt werden.
 
-### Auth failed
-- Token ungültig/abgelaufen → neuen Long-Lived Token setzen
+Vorgehen:
 
-### Connection errors
-- HA nicht erreichbar (Netzwerk/VPN/HTTPS/HTTP)
-- URL prüfen (inkl. Port)
-- bei Self-signed TLS ggf. HTTPS/Cert-Thema beachten
+1. Zum unteren Bereich der Liste scrollen
+2. **„Erledigte löschen“** auswählen
+3. Löschvorgang im Dialog bestätigen
 
-### Keine Items / Spinner hängt
-- Prüfen, ob Entity `todo.einkaufsliste` existiert
-- Debug-Logs ansehen (`HASL:`)
-
----
-
-## Roadmap / TODO (konkret)
-
-- Token-Feld härten (Copy/Screenshot/Autofill verhindern)
-- Notifications verbessern (Localization, Aktionen, Deep-Link)
-- Robustere Reconnect-Strategie (Backoff, Offline-Erkennung)
-- REST-Teil entweder entfernen oder gezielt als Fallback integrieren
-
----
+Alle erledigten Items werden anschließend aus der Liste entfernt.

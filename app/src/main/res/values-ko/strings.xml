@@ -6,6 +6,7 @@
     <string name="ha_url">Home Assistant URL</string>
     <string name="notifications_enabled">알림 사용</string>
     <string name="long_token">장기 액세스 토큰</string>
+    <string name="todo_entity">목록 선택</string>
     <string name="language">언어</string>
     <string name="new_item">새 항목</string>
     <string name="add">추가</string>
@@ -29,4 +30,8 @@
     <string name="alwaysActiveMsg">앱을 항상 활성 상태로 유지</string>
     <string name="appIsRunning">HA ShopList 실행 중</string>
     <string name="reconnected">연결이 복구되었습니다</string>
+    <string name="settings_list">목록</string>
+    <string name="loading_failed">로드 실패</string>
+    <string name="loading_lists">목록 불러오는 중</string>
+    <string name="error_list_not_loaded">목록을 불러올 수 없습니다</string>
 </resources>

@@ -6,6 +6,7 @@
     <string name="ha_url">URL di Home Assistant</string>
     <string name="notifications_enabled">Abilita notifiche</string>
     <string name="long_token">Token di accesso a lunga durata</string>
+    <string name="todo_entity">Seleziona lista</string>
     <string name="language">Lingua</string>
     <string name="new_item">Nuovo elemento</string>
     <string name="add">Aggiungi</string>
@@ -29,4 +30,8 @@
     <string name="alwaysActiveMsg">App sempre attiva</string>
     <string name="appIsRunning">HA ShopList in esecuzione</string>
     <string name="reconnected">Reconnected to HomeAssistant</string>
+    <string name="settings_list">Lista</string>
+    <string name="loading_failed">Caricamento non riuscito</string>
+    <string name="loading_lists">Caricamento liste</string>
+    <string name="error_list_not_loaded">Impossibile caricare le liste</string>
 </resources>

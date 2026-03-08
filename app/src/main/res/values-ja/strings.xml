@@ -6,6 +6,7 @@
     <string name="ha_url">Home Assistant のURL</string>
     <string name="notifications_enabled">通知を有効にする</string>
     <string name="long_token">長期有効アクセストークン</string>
+    <string name="todo_entity">リストを選択</string>
     <string name="language">言語</string>
     <string name="new_item">新しい項目</string>
     <string name="add">追加</string>
@@ -29,4 +30,8 @@
     <string name="alwaysActiveMsg">アプリを常にアクティブにする</string>
     <string name="appIsRunning">HA ShopList 実行中</string>
     <string name="reconnected">接続が復旧しました</string>
+    <string name="settings_list">リスト</string>
+    <string name="loading_failed">読み込みに失敗しました</string>
+    <string name="loading_lists">リストを読み込み中</string>
+    <string name="error_list_not_loaded">リストを読み込めませんでした</string>
 </resources>

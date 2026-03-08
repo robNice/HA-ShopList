@@ -84,14 +84,15 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 val dataStore = remember { SettingsDataStore(context) }
 
                 val configFlow = remember(dataStore) {
-                    combine(dataStore.haUrl, dataStore.haToken) { url, token ->
-                        url to token
+                    combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity) { url, token, entity ->
+                        Triple(url, token, entity)
                     }
                 }
 
                 val config by configFlow.collectAsState(initial = null)
                 val haUrl = config?.first
                 val haToken = config?.second
+                val todoEntity = config?.third
 
                 val startDestination =
                     if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
@@ -102,7 +103,7 @@ class MainActivity : androidx.activity.ComponentActivity() {
 
                 val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
 
-                LaunchedEffect(haUrl, haToken, notificationsEnabled) {
+                LaunchedEffect(haUrl, haToken, todoEntity, notificationsEnabled) {
                     if (!notificationsEnabled) {
                         Debug.log("MainActivity: notifications disabled -> disconnect repo")
                         HaRuntime.repository?.setReconnectAllowed(false)
@@ -110,18 +111,34 @@ class MainActivity : androidx.activity.ComponentActivity() {
                         return@LaunchedEffect
                     }
 
-                    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) return@LaunchedEffect
+                    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank() || todoEntity.isNullOrBlank()) {
+                        return@LaunchedEffect
+                    }
 
                     val repo = HaRuntime.repository
-                    if (repo == null) {
-                        Debug.log("MainActivity: create repository")
+                    val configChanged =
+                        repo == null ||
+                                HaRuntime.baseUrl != haUrl ||
+                                HaRuntime.token != haToken ||
+                                HaRuntime.todoEntity != todoEntity
+
+                    if (configChanged) {
+                        Debug.log("MainActivity: recreate repository because config changed")
+
+                        HaRuntime.repository?.disconnect()
+
+                        HaRuntime.baseUrl = haUrl
+                        HaRuntime.token = haToken
+                        HaRuntime.todoEntity = todoEntity
+
                         HaRuntime.repository = de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository(
-                            haUrl!!,
-                            haToken!!,
-                            context.applicationContext
+                            haUrl,
+                            haToken,
+                            context.applicationContext,
+                            todoEntity
                         )
                     } else {
-                        Debug.log("MainActivity: repository already exists")
+                        Debug.log("MainActivity: repository already exists with same config")
                     }
                 }
 

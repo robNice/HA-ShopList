@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import de.robnice.homeasssistant_shoppinglist.R
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository
+import de.robnice.homeasssistant_shoppinglist.data.SettingsDataStore
 import kotlinx.coroutines.*
 
 class HaWsForegroundService : Service() {
@@ -18,11 +19,13 @@ class HaWsForegroundService : Service() {
         private const val SERVICE_CHANNEL_ID = "ws_service_channel"
         private const val SERVICE_NOTIFICATION_ID = 1
 
+        const val EXTRA_TODO_ENTITY = "todo_entity"
         const val EXTRA_BASE_URL = "base_url"
         const val EXTRA_TOKEN = "token"
 
         private var currentBaseUrl: String? = null
         private var currentToken: String? = null
+        private var currentTodoEntity: String? = null
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -41,8 +44,9 @@ class HaWsForegroundService : Service() {
 
         val baseUrl = intent?.getStringExtra(EXTRA_BASE_URL) ?: return START_NOT_STICKY
         val token = intent.getStringExtra(EXTRA_TOKEN) ?: return START_NOT_STICKY
+        val todoEntity = intent.getStringExtra(EXTRA_TODO_ENTITY) ?: "todo.einkaufsliste"
 
-        val configChanged = (currentBaseUrl != baseUrl) || (currentToken != token)
+        val configChanged = (currentBaseUrl != baseUrl) || (currentToken != token) || (currentTodoEntity != todoEntity)
 
         if (HaRuntime.repository == null || configChanged) {
 
@@ -54,8 +58,21 @@ class HaWsForegroundService : Service() {
 
             currentBaseUrl = baseUrl
             currentToken = token
+            currentTodoEntity = todoEntity
 
-            HaRuntime.repository = HaWebSocketRepository(baseUrl, token, applicationContext)
+            val settings = SettingsDataStore(applicationContext)
+            scope.launch {
+                settings.todoEntity.collect { entity ->
+
+                    HaRuntime.repository = HaWebSocketRepository(
+                        baseUrl,
+                        token,
+                        applicationContext,
+                        todoEntity
+                    )
+                    cancel()
+                }
+            }
 
         } else {
             HaRuntime.repository!!.ensureConnected()
