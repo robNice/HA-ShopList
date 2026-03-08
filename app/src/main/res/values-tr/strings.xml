@@ -6,6 +6,7 @@
     <string name="ha_url">Home Assistant URL’si</string>
     <string name="notifications_enabled">Bildirimleri etkinleştir</string>
     <string name="long_token">Uzun süreli erişim belirteci</string>
+    <string name="todo_entity">Liste seç</string>
     <string name="language">Dil</string>
     <string name="new_item">Yeni öğe</string>
     <string name="add">Ekle</string>
@@ -29,4 +30,8 @@
     <string name="alwaysActiveMsg">Uygulama her zaman aktif</string>
     <string name="appIsRunning">HA ShopList çalışıyor</string>
     <string name="reconnected">Bağlantı yeniden kuruldu</string>
+    <string name="settings_list">Liste</string>
+    <string name="loading_failed">Yükleme başarısız</string>
+    <string name="loading_lists">Listeler yükleniyor</string>
+    <string name="error_list_not_loaded">Listeler yüklenemedi</string>
 </resources>

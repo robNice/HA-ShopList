@@ -13,7 +13,8 @@ import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
 class HaWebSocketRepository(
     baseUrl: String,
     token: String,
-    private val appContext: Context
+    private val appContext: Context,
+    private val todoEntity: String
 ) {
 
     private val client = HaWebSocketClient(baseUrl, token)
@@ -72,7 +73,7 @@ class HaWebSocketRepository(
                 client.send(
                     type = "todo/item/subscribe",
                     payload = JSONObject()
-                        .put("entity_id", "todo.einkaufsliste")
+                        .put("entity_id", todoEntity)
                 )
                 loadItems()
             }
@@ -156,7 +157,7 @@ class HaWebSocketRepository(
         client.send(
             type = "todo/item/list",
             payload = JSONObject()
-                .put("entity_id", "todo.einkaufsliste")
+                .put("entity_id", todoEntity)
         )
     }
 
@@ -170,7 +171,7 @@ class HaWebSocketRepository(
                 .put("domain", "todo")
                 .put("service", "add_item")
                 .put("target", JSONObject()
-                    .put("entity_id", "todo.einkaufsliste")
+                    .put("entity_id", todoEntity)
                 )
                 .put("return_response", false)
                 .put("service_data", JSONObject()
@@ -193,7 +194,7 @@ class HaWebSocketRepository(
                 .put("domain", "todo")
                 .put("service", "update_item")
                 .put("target", JSONObject()
-                    .put("entity_id", "todo.einkaufsliste")
+                    .put("entity_id", todoEntity)
                 )
                 .put("service_data", JSONObject()
                     .put("item", item.id)
@@ -211,7 +212,7 @@ class HaWebSocketRepository(
                 .put("domain", "todo")
                 .put("service", "update_item")
                 .put("target", JSONObject()
-                    .put("entity_id", "todo.einkaufsliste")
+                    .put("entity_id", todoEntity)
                 )
                 .put("service_data", JSONObject()
                     .put("item", item.id)
@@ -229,7 +230,7 @@ class HaWebSocketRepository(
         client.send(
             type = "todo/item/move",
             payload = JSONObject()
-                .put("entity_id", "todo.einkaufsliste")
+                .put("entity_id", todoEntity)
                 .put("uid", itemId)
                 .put("previous_uid", previousItemId ?: JSONObject.NULL)
         )
@@ -251,7 +252,7 @@ class HaWebSocketRepository(
                 .put("domain", "todo")
                 .put("service", "remove_item")
                 .put("target", JSONObject()
-                    .put("entity_id", "todo.einkaufsliste")
+                .put("entity_id", todoEntity)
                 )
                 .put("service_data", JSONObject()
                     .put("item", jsonArray)

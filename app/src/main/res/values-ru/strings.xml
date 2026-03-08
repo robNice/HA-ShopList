@@ -6,6 +6,7 @@
     <string name="ha_url">URL Home Assistant</string>
     <string name="notifications_enabled">Включить уведомления</string>
     <string name="long_token">Долгосрочный токен доступа</string>
+    <string name="todo_entity">Выбрать список</string>
     <string name="language">Язык</string>
     <string name="new_item">Новый элемент</string>
     <string name="add">Добавить</string>
@@ -29,4 +30,8 @@
     <string name="alwaysActiveMsg">Приложение всегда активно</string>
     <string name="appIsRunning">HA ShopList запущен</string>
     <string name="reconnected">Соединение восстановлено</string>
+    <string name="settings_list">Список</string>
+    <string name="loading_failed">Не удалось загрузить</string>
+    <string name="loading_lists">Загрузка списков</string>
+    <string name="error_list_not_loaded">Не удалось загрузить списки</string>
 </resources>

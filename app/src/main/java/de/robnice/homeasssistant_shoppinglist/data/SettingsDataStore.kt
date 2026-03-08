@@ -13,8 +13,9 @@ class SettingsDataStore(private val context: Context) {
     companion object {
         private val HA_URL = stringPreferencesKey("ha_url")
         private val HA_TOKEN = stringPreferencesKey("ha_token")
-
         private val KEY_NOTIFICATIONS = booleanPreferencesKey("notifications_enabled")
+        private val TODO_ENTITY = stringPreferencesKey("todo_entity")
+
     }
 
     val notificationsEnabled = context.dataStore.data
@@ -24,6 +25,9 @@ class SettingsDataStore(private val context: Context) {
 
     val haToken: Flow<String> = context.dataStore.data
         .map { it[HA_TOKEN] ?: "" }
+
+    val todoEntity: Flow<String> = context.dataStore.data
+        .map { it[TODO_ENTITY] ?: "todo.einkaufsliste" }
 
     suspend fun saveHaUrl(url: String) {
         context.dataStore.edit {
@@ -39,5 +43,11 @@ class SettingsDataStore(private val context: Context) {
 
     suspend fun setNotificationsEnabled(enabled: Boolean) {
         context.dataStore.edit { it[KEY_NOTIFICATIONS] = enabled }
+    }
+
+    suspend fun saveTodoEntity(entity: String) {
+        context.dataStore.edit {
+            it[TODO_ENTITY] = entity
+        }
     }
 }

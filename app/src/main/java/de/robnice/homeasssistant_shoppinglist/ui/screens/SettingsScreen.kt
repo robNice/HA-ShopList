@@ -29,11 +29,13 @@ import de.robnice.homeasssistant_shoppinglist.util.normalizeHaUrl
  * @todo: prevent screenshots
  * @todo: prevent autofill for token field
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController,
     context: Context = LocalContext.current
 ) {
+
 
     val dataStore = remember { SettingsDataStore(context) }
     val coroutineScope = rememberCoroutineScope()
@@ -41,16 +43,55 @@ fun SettingsScreen(
     val storedUrl by dataStore.haUrl.collectAsState(initial = "")
     val storedToken by dataStore.haToken.collectAsState(initial = "")
     var tokenVisible by remember { mutableStateOf(false) }
+    val storedTodoEntity by dataStore.todoEntity.collectAsState(initial = "todo.einkaufsliste")
 
     var url by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
+    var todoEntity by remember { mutableStateOf("") }
+    var todoOptions by remember { mutableStateOf<List<de.robnice.homeasssistant_shoppinglist.model.ShoppingList>>(emptyList()) }
+    var todoExpanded by remember { mutableStateOf(false) }
+    var todoLoading by remember { mutableStateOf(false) }
+    var todoLoadError by remember { mutableStateOf<String?>(null) }
 
-
-    LaunchedEffect(storedUrl, storedToken) {
+    LaunchedEffect(storedUrl, storedToken, storedTodoEntity) {
         url = storedUrl
         token = storedToken
+        todoEntity = storedTodoEntity
     }
+
+    LaunchedEffect(url, token) {
+        todoLoadError = null
+        todoOptions = emptyList()
+
+        val cleanedUrl = normalizeHaUrl(url)
+        val cleanedToken = token.trim()
+
+        if (cleanedUrl.isBlank() || cleanedToken.isBlank()) {
+            return@LaunchedEffect
+        }
+
+        todoLoading = true
+
+        try {
+            val api = de.robnice.homeasssistant_shoppinglist.data.HaServiceFactory.create(cleanedUrl)
+            val repo = de.robnice.homeasssistant_shoppinglist.data.HaTodoListRepository(api)
+            val loaded = repo.loadTodoLists(cleanedToken)
+
+            todoOptions = loaded
+
+            if (todoEntity.isBlank()) {
+                todoEntity = loaded.firstOrNull()?.id.orEmpty()
+            } else if (loaded.none { it.id == todoEntity }) {
+                todoEntity = loaded.firstOrNull()?.id.orEmpty()
+            }
+        } catch (e: Exception) {
+            todoLoadError = e.message ?: t(R.string.loading_failed)
+        } finally {
+            todoLoading = false
+        }
+    }
+
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(
             color = Color.Black
@@ -140,17 +181,93 @@ fun SettingsScreen(
                 )
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            when {
+                todoLoading -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(t(R.string.loading_lists))
+                    }
+                }
+
+                todoLoadError != null -> {
+                    Text(
+                        text = t(R.string.error_list_not_loaded),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                todoOptions.isNotEmpty() -> {
+                    ExposedDropdownMenuBox(
+                        expanded = todoExpanded,
+                        onExpandedChange = { todoExpanded = !todoExpanded }
+                    ) {
+                        val selectedName = todoOptions
+                            .firstOrNull { it.id == todoEntity }
+                            ?.name
+                            ?: todoEntity
+
+                        OutlinedTextField(
+                            value = selectedName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(t(R.string.settings_list )) },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = todoExpanded)
+                            },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurface,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            )
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = todoExpanded,
+                            onDismissRequest = { todoExpanded = false },
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ) {
+                            todoOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(
+                                        text = option.name,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    ) },
+                                    onClick = {
+                                        todoEntity = option.id
+                                        todoExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = {
+                val cleanedUrl = normalizeHaUrl(url)
+                val cleanedToken = token.trim()
+
                 coroutineScope.launch {
-
-                    val cleanedUrl = normalizeHaUrl(url)
-                    val cleanedToken = token.trim()
-
                     dataStore.saveHaUrl(cleanedUrl)
                     dataStore.saveHaToken(cleanedToken)
-
+                    dataStore.saveTodoEntity(todoEntity)
                     navController.popBackStack()
                 }
             }) {

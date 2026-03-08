@@ -3,6 +3,7 @@ package de.robnice.homeasssistant_shoppinglist.data
 import de.robnice.homeasssistant_shoppinglist.data.dto.UpdateItemRequest
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
 import de.robnice.homeasssistant_shoppinglist.data.dto.AddItemRequest
+import de.robnice.homeasssistant_shoppinglist.data.dto.HaStateDto
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -34,6 +35,11 @@ interface HaApi {
     suspend fun clearCompleted(
         @Header("Authorization") token: String
     )
+
+    @GET("api/states")
+    suspend fun getStates(
+        @Header("Authorization") token: String
+    ): List<HaStateDto>
 
 }
 
