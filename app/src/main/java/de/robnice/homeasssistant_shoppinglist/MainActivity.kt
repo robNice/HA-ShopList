@@ -217,6 +217,13 @@ fun ShoppingScreen(navController: NavController) {
     val connectionErrors by viewModel.connectionErrors.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
+    LaunchedEffect(repo, notificationsEnabled) {
+        if (notificationsEnabled) {
+            repo.setReconnectAllowed(true)
+            viewModel.ensureConnection()
+        }
+    }
+
     LaunchedEffect(repo) {
         repo.reconnected.collect { ts ->
             if (ts == 0L) return@collect
