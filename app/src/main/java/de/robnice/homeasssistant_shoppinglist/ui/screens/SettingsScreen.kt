@@ -86,7 +86,7 @@ fun SettingsScreen(
                 todoEntity = loaded.firstOrNull()?.id.orEmpty()
             }
         } catch (e: Exception) {
-            todoLoadError = e.message ?: t(R.string.loading_failed)
+            todoLoadError = e.message ?: context.getString(R.string.loading_failed)
         } finally {
             todoLoading = false
         }
