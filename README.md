@@ -7,6 +7,7 @@ Standalone Android app for **Home Assistant Todo Lists** with live updates via t
 ## Table of Contents
 
 - [Installation](#installation)
+- [Create a Long-Lived Access Token in Home Assistant](#create-a-long-lived-access-token-in-home-assistant)
 - [Configuration](#configuration)
 - [Rename Items](#rename-items)
 - [Sort Items](#sort-items)
@@ -20,14 +21,31 @@ Download the latest APK from **[Releases](https://github.com/robNice/HA-ShopList
 
 ---
 
+## Create a Long-Lived Access Token in Home Assistant
+
+The app requires a **Long-Lived Access Token** to connect to Home Assistant.
+
+To create one:
+
+1. Open your **Home Assistant interface**
+2. Click your **user profile** in the bottom left
+3. Scroll to the **Long-Lived Access Tokens** section
+4. Click **Create Token**
+5. Enter a name (e.g. `HA Shopping List`)
+6. Copy the generated token
+
+⚠️ The token is **only shown once**, so make sure to save it immediately.
+
+---
+
 ## Configuration
 
-When the app is launched for the first time, the **Settings screen** opens automatically.
+When the app is started for the first time, the **Settings screen** opens automatically.
 
 The following settings must be configured:
 
 ### Home Assistant URL
-The URL of your Home Assistant instance (including the port if necessary).
+The URL of your Home Assistant instance (including port if necessary).  
 The app automatically normalizes the URL.
 
 ### Token
@@ -79,7 +97,7 @@ Completed items can be removed in bulk.
 Steps:
 
 1. Scroll to the bottom area of the list
-2. Select **"Delete completed items"**
+2. Select **“Delete completed items”**
 3. Confirm the deletion in the dialog
 
 All completed items will then be removed from the list.
