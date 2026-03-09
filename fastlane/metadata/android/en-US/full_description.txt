@@ -1,0 +1,13 @@
+HA-ShopList is an Android app for managing Home Assistant shopping and todo lists on the go.
+
+The app connects directly to your Home Assistant instance and lets you open and manage a selected list from your phone. Changes are synchronized in real time, so updates made in Home Assistant or on another device appear without manual refresh.
+
+Features:
+- connect to a Home Assistant instance
+- use a selected shopping or todo list
+- add, check, uncheck, rename, sort, and delete items
+- receive live updates via Home Assistant WebSocket
+- simple interface focused on fast list usage while away from home
+
+The app stores the Home Assistant URL, access token, and selected list locally on the device in order to connect to your instance.
+No external cloud service is used.
