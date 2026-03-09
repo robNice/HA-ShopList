@@ -1,1 +1,1 @@
-Initial Build, F-Droid Fastlane-Files and Gradle fixes
+Initial F-Droid release, F-Droid Fastlane-Files and Gradle fixes
