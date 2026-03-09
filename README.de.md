@@ -7,6 +7,7 @@ Standalone-Android-App für die **Home Assistant Todo-Listen** mit Live-Updates 
 ## Inhaltsverzeichnis
 
 - [Installation](#installation)
+- [Long-Lived Access Token in Home Assistant erstellen](#long-lived-access-token-in-home-assistant-erstellen)
 - [Konfiguration](#konfiguration)
 - [Items umbenennen](#items-umbenennen)
 - [Items sortieren](#items-sortieren)
@@ -20,6 +21,23 @@ Lade die aktuelle APK aus den **[Releases](https://github.com/robNice/HA-ShopLis
 
 ---
 
+## Long-Lived Access Token in Home Assistant erstellen
+
+Damit sich die App mit Home Assistant verbinden kann, wird ein **Long-Lived Access Token** benötigt.
+
+So erstellst du ihn:
+
+1. Öffne deine **Home Assistant Oberfläche**
+2. Klicke unten links auf dein **Benutzerprofil**
+3. Scrolle zum Abschnitt **Long-Lived Access Tokens**
+4. Klicke auf **Create Token**
+5. Vergib einen Namen (z. B. `HA Shopping List`)
+6. Kopiere den erzeugten Token
+
+⚠️ Der Token wird **nur einmal angezeigt**. Speichere ihn daher direkt ab.
+
+---
+
 ## Konfiguration
 
 Beim ersten Start öffnet sich automatisch der **Settings-Screen**.
@@ -27,7 +45,7 @@ Beim ersten Start öffnet sich automatisch der **Settings-Screen**.
 Dort müssen folgende Einstellungen gesetzt werden:
 
 ### Home Assistant URL
-Die URL deiner Home Assistant Instanz (inkl. eventuellen Port).
+Die URL deiner Home Assistant Instanz (inkl. eventuellen Port).  
 Die App normalisiert die URL automatisch.
 
 ### Token
