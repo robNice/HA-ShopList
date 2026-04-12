@@ -6,6 +6,7 @@ import de.robnice.homeasssistant_shoppinglist.data.HaWebSocketRepository
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 class ShoppingViewModel(
@@ -15,11 +16,13 @@ class ShoppingViewModel(
     val items: StateFlow<List<ShoppingItem>> = repository.items
     val authFailed = repository.authFailed
     val connectionErrors = repository.connectionErrors
+    val isOffline = repository.isOffline
     val newItems = repository.newItems
 
 
-    val isLoading = repository.loaded
-        .map { loaded -> !loaded }
+    val isLoading = combine(repository.loaded, repository.items) { loaded, items ->
+        !loaded && items.isEmpty()
+    }
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
 
     fun addItem(name: String) {

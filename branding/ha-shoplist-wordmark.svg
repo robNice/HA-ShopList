@@ -1,0 +1,64 @@
+<svg width="980" height="220" viewBox="0 0 980 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>ShopList wordmark</title>
+  <defs>
+    <linearGradient id="sky" x1="78" y1="34" x2="78" y2="170" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8FD2FF"/>
+      <stop offset="1" stop-color="#2F86E8"/>
+    </linearGradient>
+    <linearGradient id="ice" x1="188" y1="52" x2="742" y2="162" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7FBFF"/>
+      <stop offset="0.42" stop-color="#DDF0FF"/>
+      <stop offset="1" stop-color="#9BD4FF"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="540" y1="54" x2="770" y2="166" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#59B7FF"/>
+      <stop offset="1" stop-color="#1F78E0"/>
+    </linearGradient>
+    <linearGradient id="cart" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFD36A"/>
+      <stop offset="1" stop-color="#FF9E1A"/>
+    </linearGradient>
+    <filter id="glow" x="0" y="0" width="980" height="220" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.22 0 0 0 0 0.60 0 0 0 0 1 0 0 0 0.18 0"/>
+      <feBlend in="SourceGraphic" in2="blur"/>
+    </filter>
+    <filter id="shadow" x="0" y="0" width="980" height="220" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feOffset dy="8"/>
+      <feGaussianBlur stdDeviation="8"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.04 0 0 0 0 0.10 0 0 0 0 0.20 0 0 0 0.24 0"/>
+      <feBlend in2="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <rect x="16" y="28" width="124" height="124" rx="36" fill="url(#sky)"/>
+  <path d="M46 100.5L78.8 70.8C80.8 69 83.8 69 85.8 70.8L118.6 100.5C121.3 103 119.6 107.5 115.9 107.5H109V131.5C109 134.5 106.5 137 103.5 137H61.1C58.1 137 55.6 134.5 55.6 131.5V107.5H48.7C45 107.5 43.3 103 46 100.5Z" fill="#F8FCFF"/>
+  <path d="M68 88C71.9 82.8 78.1 79.4 85 79.4C91.9 79.4 98.1 82.8 102 88" stroke="#66BCF9" stroke-width="5" stroke-linecap="round"/>
+  <path d="M73 97.5C75.7 94.1 80 91.8 84.9 91.8C89.8 91.8 94.1 94.1 96.8 97.5" stroke="#66BCF9" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="84.9" cy="105.8" r="3.8" fill="#66BCF9"/>
+
+  <g filter="url(#glow)">
+    <path d="M191 146L225 54H268L233 146H191Z" fill="url(#ice)"/>
+    <path d="M252 146L286 54H329L294 146H252Z" fill="url(#accent)"/>
+    <path d="M315 146L349 54H391L357 146H315Z" fill="url(#ice)"/>
+    <text x="404" y="128" fill="url(#ice)" font-family="Segoe UI, Arial, sans-serif" font-size="98" font-style="italic" font-weight="900" letter-spacing="-0.06em">Shop</text>
+    <text x="653" y="128" fill="url(#accent)" font-family="Segoe UI, Arial, sans-serif" font-size="98" font-style="italic" font-weight="900" letter-spacing="-0.06em">List</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <path d="M210 162H889" stroke="#4EA8F6" stroke-width="8" stroke-linecap="round" opacity="0.22"/>
+    <path d="M225 162H308" stroke="#FF8A00" stroke-width="8" stroke-linecap="round"/>
+    <path d="M329 162H382" stroke="#34C759" stroke-width="8" stroke-linecap="round"/>
+    <path d="M642 162H689" stroke="#FF8A00" stroke-width="8" stroke-linecap="round" opacity="0.95"/>
+  </g>
+
+  <g transform="translate(846 126)">
+    <path d="M6 2H22L28 21H54" stroke="#B5C2D8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M18 8H52L47 20H22" stroke="#7F8CA4" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="25" cy="29" r="4.2" fill="#5A667E"/>
+    <circle cx="47" cy="29" r="4.2" fill="#5A667E"/>
+    <path d="M29 5C31.2 2 35.9 0.3 39.8 3.2C43 5.6 41.7 10.9 37.6 12.4C33.7 13.8 29.5 9.9 29 5Z" fill="url(#cart)"/>
+    <path d="M40 6C42.5 3.4 47.2 3.7 49.2 6.9C51.5 10.6 48.3 15.1 43.9 14.7C39.9 14.2 37.9 9.4 40 6Z" fill="#F55B3D"/>
+    <path d="M53 6C56.9 8.9 59.6 13.2 60.7 18.1" stroke="#35BE67" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

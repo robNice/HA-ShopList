@@ -34,4 +34,21 @@
     <string name="loading_failed">Laden mislukt</string>
     <string name="loading_lists">Lijsten laden</string>
     <string name="error_list_not_loaded">Lijsten konden niet worden geladen</string>
+    <string name="error_no_lists_found">No todo lists were found on this Home Assistant instance.</string>
+    <string name="retry">Retry</string>
+    <string name="save_edit">Save edit</string>
+    <string name="delete_history_item">Delete suggestion</string>
+    <string name="product_history_title">Product history</string>
+    <string name="product_history_description">Stored products are used for autocomplete when adding new items.</string>
+    <string name="product_history_clear">Clear product history</string>
+    <string name="product_history_clear_title">Clear history</string>
+    <string name="product_history_clear_message">Delete all saved product suggestions on this device?</string>
+    <string name="product_history_clear_confirm">Clear</string>
+    <string name="offline_chip">Offline</string>
+    <string name="offline_dialog_title">Offline mode</string>
+    <string name="offline_dialog_text">The current list stays available and you can keep editing it. Your changes will sync automatically when Home Assistant is reachable again.</string>
+    <string name="offline_dialog_confirm">OK</string>
+    <string name="offline_empty_list">Offline. No cached list is available yet.</string>
+    <string name="privacy_policy">Privacybeleid</string>
+    <string name="close">Sluiten</string>
 </resources>

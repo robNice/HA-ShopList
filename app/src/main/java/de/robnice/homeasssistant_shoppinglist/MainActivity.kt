@@ -7,9 +7,12 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -21,6 +24,7 @@ import de.robnice.homeasssistant_shoppinglist.ui.theme.HomeAsssistantShoppingLis
 import de.robnice.homeasssistant_shoppinglist.ui.util.t
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,8 +34,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryEntity
+import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryRepository
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
@@ -46,18 +55,31 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.StrokeCap
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import de.robnice.homeasssistant_shoppinglist.util.Debug
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandBlue
+import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandGreen
+import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandOrange
+import androidx.compose.ui.graphics.Color
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -175,19 +197,44 @@ class MainActivity : androidx.activity.ComponentActivity() {
 fun ShoppingScreen(navController: NavController) {
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val dataStore = remember { SettingsDataStore(context) }
-    val haUrl by dataStore.haUrl.collectAsState(initial = "")
-    val haToken by dataStore.haToken.collectAsState(initial = "")
+    val productHistoryRepository = remember(context) { ProductHistoryRepository.getInstance(context) }
+    val configFlow = remember(dataStore) {
+        combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity) { url, token, entity ->
+            Triple(url, token, entity)
+        }
+    }
+    val config by configFlow.collectAsState(initial = null)
+    val haUrl = config?.first
+    val haToken = config?.second
+    val todoEntity = config?.third
     var editingItemId by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    var showOfflineInfo by remember { mutableStateOf(false) }
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
 
-    if (haUrl.isBlank() || haToken.isBlank()) {
+    if (config == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Missing configuration")
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
+        LaunchedEffect(Unit) {
+            navController.navigate(Screen.Settings.route) {
+                popUpTo(Screen.Shopping.route) { inclusive = true }
+            }
+        }
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
         }
         return
     }
@@ -195,12 +242,6 @@ fun ShoppingScreen(navController: NavController) {
 
     val repo = HaRuntime.repository
     if (repo == null) {
-        LaunchedEffect(Unit) {
-            navController.navigate(Screen.Settings.route) {
-                popUpTo(Screen.Shopping.route) { inclusive = true }
-            }
-        }
-
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -214,7 +255,7 @@ fun ShoppingScreen(navController: NavController) {
     val viewModel = remember(repo) { ShoppingViewModel(repo) }
 
     val authFailed by viewModel.authFailed.collectAsState()
-    val connectionErrors by viewModel.connectionErrors.collectAsState()
+    val isOffline by viewModel.isOffline.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(repo, notificationsEnabled) {
@@ -264,17 +305,7 @@ fun ShoppingScreen(navController: NavController) {
     val items by viewModel.items.collectAsState()
 
 
-    if (authFailed || connectionErrors) {
-        val errorTitle: String
-        val errorText: String
-        if (authFailed) {
-            errorTitle = t(R.string.auth_failed_title)
-            errorText = t(R.string.auth_failed_text)
-        } else {
-            errorTitle = t(R.string.connection_errors_title)
-            errorText = t(R.string.connection_errors_text)
-        }
-
+    if (authFailed) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -294,14 +325,14 @@ fun ShoppingScreen(navController: NavController) {
                 ) {
 
                     Text(
-                        text = errorTitle,
+                        text = t(R.string.auth_failed_title),
                         style = MaterialTheme.typography.titleMedium
                     )
 
                     Spacer(Modifier.height(12.dp))
 
                     Text(
-                        text = errorText,
+                        text = t(R.string.auth_failed_text),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -324,11 +355,63 @@ fun ShoppingScreen(navController: NavController) {
     }
 
     var newItem by remember { mutableStateOf("") }
+    val autocompleteFlow = remember(newItem, productHistoryRepository) {
+        if (newItem.isBlank()) {
+            flowOf(emptyList())
+        } else {
+            productHistoryRepository.observeSuggestions(newItem, limit = 5)
+        }
+    }
+    val autocompleteSuggestions by autocompleteFlow.collectAsState(initial = emptyList())
+    val listTitle = remember(todoEntity) { todoEntity.orEmpty().toDisplayListTitle() }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(t(R.string.app_name)) },
+                expandedHeight = 76.dp,
+                title = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(x = (-10).dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            HeaderWordmark(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                            )
+
+                            if (isOffline) {
+                                AssistChip(
+                                    onClick = { showOfflineInfo = true },
+                                    label = { Text(t(R.string.offline_chip)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.CloudOff,
+                                            contentDescription = null
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = listTitle,
+                            modifier = Modifier
+                                .padding(start = 2.dp)
+                                .offset(y = (-8).dp),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                },
                 actions = {
                     IconButton(
                         onClick = {
@@ -362,7 +445,7 @@ fun ShoppingScreen(navController: NavController) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp)
+                        .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp)
                         .pointerInput(editingItemId) {
                             detectTapGestures {
                                 editingItemId = null
@@ -374,51 +457,97 @@ fun ShoppingScreen(navController: NavController) {
                         modifier = Modifier.fillMaxWidth(),
                         elevation = CardDefaults.cardElevation(6.dp)
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedTextField(
+                                    value = newItem,
+                                    onValueChange = { newItem = it },
+                                    modifier = Modifier.weight(1f),
+                                    placeholder = { Text(t(R.string.new_item)) },
+                                    singleLine = true,
+                                    shape = MaterialTheme.shapes.large,
+                                    keyboardOptions = KeyboardOptions(
+                                        imeAction = ImeAction.Done
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onDone = {
+                                            if (newItem.isNotBlank()) {
+                                                viewModel.addItem(newItem.trim())
+                                                newItem = ""
+                                            }
+                                        }
+                                    )
+                                )
 
-                            OutlinedTextField(
-                                value = newItem,
-                                onValueChange = { newItem = it },
-                                modifier = Modifier.weight(1f),
-                                placeholder = { Text(t(R.string.new_item)) },
-                                singleLine = true,
-                                shape = MaterialTheme.shapes.large,
-                                keyboardOptions = KeyboardOptions(
-                                    imeAction = ImeAction.Done
-                                ),
-                                keyboardActions = KeyboardActions(
-                                    onDone = {
+                                Spacer(Modifier.width(12.dp))
+
+                                IconButton(
+                                    onClick = {
                                         if (newItem.isNotBlank()) {
-                                            viewModel.addItem(newItem.trim())
+                                            viewModel.addItem(newItem)
                                             newItem = ""
                                         }
-                                    }
-                                )
-                            )
+                                    },
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = t(R.string.add),
+                                        tint = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                            }
 
-                            Spacer(Modifier.width(12.dp))
+                            if (newItem.isNotBlank() && autocompleteSuggestions.isNotEmpty()) {
+                                val currentItemNames = items
+                                    .map { ProductHistoryRepository.normalizeName(it.name) }
+                                    .toSet()
 
-                            IconButton(
-                                onClick = {
-                                    if (newItem.isNotBlank()) {
-                                        viewModel.addItem(newItem)
-                                        newItem = ""
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .border(
+                                            width = 1.dp,
+                                            color = MaterialTheme.colorScheme.outlineVariant,
+                                            shape = RoundedCornerShape(18.dp)
+                                        )
+                                        .background(MaterialTheme.colorScheme.surface)
+                                        .padding(vertical = 4.dp)
+                                ) {
+                                    autocompleteSuggestions.forEachIndexed { index, suggestion ->
+                                        HistorySuggestionRow(
+                                            suggestion = suggestion,
+                                            canDelete = suggestion.normalizedName !in currentItemNames,
+                                            onSelect = {
+                                                viewModel.addItem(suggestion.displayName)
+                                                newItem = ""
+                                            },
+                                            onDelete = {
+                                                coroutineScope.launch {
+                                                    productHistoryRepository.deleteProduct(suggestion.normalizedName)
+                                                }
+                                            }
+                                        )
+
+                                        if (index < autocompleteSuggestions.lastIndex) {
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 12.dp),
+                                                thickness = 1.dp,
+                                                color = MaterialTheme.colorScheme.outlineVariant
+                                            )
+                                        }
                                     }
-                                },
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = t(R.string.add),
-                                    tint = MaterialTheme.colorScheme.onPrimary
-                                )
+                                }
                             }
                         }
                     }
@@ -431,7 +560,14 @@ fun ShoppingScreen(navController: NavController) {
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(t(R.string.no_items))
+                            Text(
+                                text = if (isOffline) {
+                                    t(R.string.offline_empty_list)
+                                } else {
+                                    t(R.string.no_items)
+                                },
+                                textAlign = TextAlign.Center
+                            )
                         }
                     } else {
                     val openItems = items.filter { !it.complete }
@@ -619,12 +755,24 @@ fun ShoppingScreen(navController: NavController) {
                                 .height(52.dp),
 
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                containerColor = if (isSystemInDarkTheme()) {
+                                    Color(0xFF5A2C33)
+                                } else {
+                                    Color(0xFFF1D8DD)
+                                },
+                                contentColor = if (isSystemInDarkTheme()) {
+                                    Color(0xFFFFE7EA)
+                                } else {
+                                    Color(0xFF6A2831)
+                                }
                             ),
                             border = BorderStroke(
                                 1.dp,
-                                MaterialTheme.colorScheme.error.copy(alpha = 0.35f)
+                                if (isSystemInDarkTheme()) {
+                                    Color(0xFFD96C7C).copy(alpha = 0.42f)
+                                } else {
+                                    Color(0xFFC46A78).copy(alpha = 0.38f)
+                                }
                             ),
                             shape = RoundedCornerShape(14.dp)
                         ) {
@@ -669,6 +817,154 @@ fun ShoppingScreen(navController: NavController) {
                 }
             }
         )
+    }
+
+    if (showOfflineInfo) {
+        AlertDialog(
+            onDismissRequest = { showOfflineInfo = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null
+                )
+            },
+            title = { Text(t(R.string.offline_dialog_title)) },
+            text = { Text(t(R.string.offline_dialog_text)) },
+            confirmButton = {
+                TextButton(
+                    onClick = { showOfflineInfo = false }
+                ) {
+                    Text(t(R.string.offline_dialog_confirm))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun HeaderWordmark(modifier: Modifier = Modifier) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val assetName = if (isDarkTheme) {
+        "ha-shoplist-wordmark.svg"
+    } else {
+        "ha-shoplist-wordmark-light.svg"
+    }
+    val cartAssetName = if (isDarkTheme) {
+        "ha-shoplist-cart-dark.svg"
+    } else {
+        "ha-shoplist-cart-light.svg"
+    }
+    Box(modifier = modifier) {
+        Canvas(modifier = Modifier.matchParentSize()) {
+            val y = size.height * 0.80f
+            val stroke = 4.dp.toPx()
+            val cartStart = size.width - 34.dp.toPx()
+            drawLine(
+                color = BrandBlue.copy(alpha = if (isDarkTheme) 0.34f else 0.22f),
+                start = Offset(22.dp.toPx(), y),
+                end = Offset(size.width, y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = BrandOrange,
+                start = Offset(42.dp.toPx(), y),
+                end = Offset(108.dp.toPx(), y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = BrandGreen,
+                start = Offset(126.dp.toPx(), y),
+                end = Offset(156.dp.toPx(), y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = BrandOrange,
+                start = Offset(244.dp.toPx(), y),
+                end = Offset(310.dp.toPx(), y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = BrandOrange,
+                start = Offset(cartStart - 74.dp.toPx(), y),
+                end = Offset(cartStart - 14.dp.toPx(), y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+        }
+        AsyncImage(
+            modifier = Modifier.matchParentSize(),
+            model = "file:///android_asset/$assetName",
+            contentDescription = "ShopList wordmark",
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.CenterStart
+        )
+        AsyncImage(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .offset(x = 8.dp, y = 2.dp)
+                .size(width = 42.dp, height = 28.dp),
+            model = "file:///android_asset/$cartAssetName",
+            contentDescription = "Shopping cart",
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.Center
+        )
+    }
+}
+
+private fun String.toDisplayListTitle(): String {
+    val rawName = substringAfter("todo.", this)
+        .replace('_', ' ')
+        .replace('-', ' ')
+        .trim()
+
+    if (rawName.isBlank()) {
+        return "Shopping List"
+    }
+
+    return rawName
+        .split(' ')
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { word ->
+            word.replaceFirstChar { char ->
+                if (char.isLowerCase()) char.titlecase() else char.toString()
+            }
+        }
+}
+
+@Composable
+private fun HistorySuggestionRow(
+    suggestion: ProductHistoryEntity,
+    canDelete: Boolean,
+    onSelect: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onSelect)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = suggestion.displayName,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        if (canDelete) {
+            IconButton(
+                onClick = onDelete
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = t(R.string.delete_history_item)
+                )
+            }
+        }
     }
 }
 
@@ -732,6 +1028,7 @@ fun ShoppingRow(
                     checkedColor = MaterialTheme.colorScheme.primary
                 ),
                 onCheckedChange = {
+                    onStopEdit()
                     localChecked = it
                     scope.launch {
                         viewModel.toggleItem(item)
@@ -741,6 +1038,13 @@ fun ShoppingRow(
 
 
             if (isEditing) {
+
+                val saveEdit = {
+                    if (editText.isNotBlank() && editText != item.name) {
+                        viewModel.renameItem(item, editText)
+                    }
+                    onStopEdit()
+                }
 
                 OutlinedTextField(
                     value = editText,
@@ -754,12 +1058,20 @@ fun ShoppingRow(
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
-                            if (editText.isNotBlank() && editText != item.name) {
-                                viewModel.renameItem(item, editText)
-                            }
-                            onStopEdit()
+                            saveEdit()
                         }
-                    )
+                    ),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = saveEdit,
+                            enabled = editText.isNotBlank()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = t(R.string.save_edit)
+                            )
+                        }
+                    }
                 )
 
 

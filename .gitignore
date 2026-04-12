@@ -57,3 +57,4 @@ out/
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
 /app/src/androidTest/
+/ToDo.md

@@ -1,5 +1,3 @@
-# Privacy Policy
-
 ## 1. General
 This app is intended solely for use as a shopping list in combination with Home Assistant.
 
