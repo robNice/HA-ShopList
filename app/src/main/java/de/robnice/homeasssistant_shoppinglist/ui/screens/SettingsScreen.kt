@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import de.robnice.homeasssistant_shoppinglist.data.SettingsDataStore
+import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryRepository
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -38,6 +39,7 @@ fun SettingsScreen(
 
 
     val dataStore = remember { SettingsDataStore(context) }
+    val productHistoryRepository = remember(context) { ProductHistoryRepository.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
 
     val storedUrl by dataStore.haUrl.collectAsState(initial = "")
@@ -54,6 +56,7 @@ fun SettingsScreen(
     var todoLoading by remember { mutableStateOf(false) }
     var todoLoadError by remember { mutableStateOf<String?>(null) }
     var todoReloadKey by remember { mutableStateOf(0) }
+    var showHistoryClearDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(storedUrl, storedToken, storedTodoEntity) {
         url = storedUrl
@@ -280,6 +283,33 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            HorizontalDivider()
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = t(R.string.product_history_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = t(R.string.product_history_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = { showHistoryClearDialog = true }
+            ) {
+                Text(t(R.string.product_history_clear))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Button(onClick = {
                 val cleanedUrl = normalizeHaUrl(url)
                 val cleanedToken = token.trim()
@@ -294,6 +324,33 @@ fun SettingsScreen(
                 Text(t(R.string.save))
             }
         }
+    }
+
+    if (showHistoryClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showHistoryClearDialog = false },
+            title = { Text(t(R.string.product_history_clear_title)) },
+            text = { Text(t(R.string.product_history_clear_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showHistoryClearDialog = false
+                        coroutineScope.launch {
+                            productHistoryRepository.clearAll()
+                        }
+                    }
+                ) {
+                    Text(t(R.string.product_history_clear_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showHistoryClearDialog = false }
+                ) {
+                    Text(t(R.string.clear_completed_confirm_btn_cancel))
+                }
+            }
+        )
     }
 }
 

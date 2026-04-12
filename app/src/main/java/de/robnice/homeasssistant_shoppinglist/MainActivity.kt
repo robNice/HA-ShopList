@@ -33,8 +33,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryEntity
+import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryRepository
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
@@ -57,6 +60,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -65,6 +69,7 @@ import androidx.compose.ui.text.style.TextAlign
 import de.robnice.homeasssistant_shoppinglist.util.Debug
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -182,7 +187,9 @@ class MainActivity : androidx.activity.ComponentActivity() {
 fun ShoppingScreen(navController: NavController) {
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val dataStore = remember { SettingsDataStore(context) }
+    val productHistoryRepository = remember(context) { ProductHistoryRepository.getInstance(context) }
     val haUrl by dataStore.haUrl.collectAsState(initial = "")
     val haToken by dataStore.haToken.collectAsState(initial = "")
     val todoEntity by dataStore.todoEntity.collectAsState(initial = "")
@@ -323,6 +330,14 @@ fun ShoppingScreen(navController: NavController) {
     }
 
     var newItem by remember { mutableStateOf("") }
+    val autocompleteFlow = remember(newItem, productHistoryRepository) {
+        if (newItem.isBlank()) {
+            flowOf(emptyList())
+        } else {
+            productHistoryRepository.observeSuggestions(newItem, limit = 5)
+        }
+    }
+    val autocompleteSuggestions by autocompleteFlow.collectAsState(initial = emptyList())
     val listTitle = remember(todoEntity) { todoEntity.toDisplayListTitle() }
 
     Scaffold(
@@ -431,51 +446,97 @@ fun ShoppingScreen(navController: NavController) {
                         modifier = Modifier.fillMaxWidth(),
                         elevation = CardDefaults.cardElevation(6.dp)
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedTextField(
+                                    value = newItem,
+                                    onValueChange = { newItem = it },
+                                    modifier = Modifier.weight(1f),
+                                    placeholder = { Text(t(R.string.new_item)) },
+                                    singleLine = true,
+                                    shape = MaterialTheme.shapes.large,
+                                    keyboardOptions = KeyboardOptions(
+                                        imeAction = ImeAction.Done
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onDone = {
+                                            if (newItem.isNotBlank()) {
+                                                viewModel.addItem(newItem.trim())
+                                                newItem = ""
+                                            }
+                                        }
+                                    )
+                                )
 
-                            OutlinedTextField(
-                                value = newItem,
-                                onValueChange = { newItem = it },
-                                modifier = Modifier.weight(1f),
-                                placeholder = { Text(t(R.string.new_item)) },
-                                singleLine = true,
-                                shape = MaterialTheme.shapes.large,
-                                keyboardOptions = KeyboardOptions(
-                                    imeAction = ImeAction.Done
-                                ),
-                                keyboardActions = KeyboardActions(
-                                    onDone = {
+                                Spacer(Modifier.width(12.dp))
+
+                                IconButton(
+                                    onClick = {
                                         if (newItem.isNotBlank()) {
-                                            viewModel.addItem(newItem.trim())
+                                            viewModel.addItem(newItem)
                                             newItem = ""
                                         }
-                                    }
-                                )
-                            )
+                                    },
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = t(R.string.add),
+                                        tint = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                            }
 
-                            Spacer(Modifier.width(12.dp))
+                            if (newItem.isNotBlank() && autocompleteSuggestions.isNotEmpty()) {
+                                val currentItemNames = items
+                                    .map { ProductHistoryRepository.normalizeName(it.name) }
+                                    .toSet()
 
-                            IconButton(
-                                onClick = {
-                                    if (newItem.isNotBlank()) {
-                                        viewModel.addItem(newItem)
-                                        newItem = ""
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .border(
+                                            width = 1.dp,
+                                            color = MaterialTheme.colorScheme.outlineVariant,
+                                            shape = RoundedCornerShape(18.dp)
+                                        )
+                                        .background(MaterialTheme.colorScheme.surface)
+                                        .padding(vertical = 4.dp)
+                                ) {
+                                    autocompleteSuggestions.forEachIndexed { index, suggestion ->
+                                        HistorySuggestionRow(
+                                            suggestion = suggestion,
+                                            canDelete = suggestion.normalizedName !in currentItemNames,
+                                            onSelect = {
+                                                viewModel.addItem(suggestion.displayName)
+                                                newItem = ""
+                                            },
+                                            onDelete = {
+                                                coroutineScope.launch {
+                                                    productHistoryRepository.deleteProduct(suggestion.normalizedName)
+                                                }
+                                            }
+                                        )
+
+                                        if (index < autocompleteSuggestions.lastIndex) {
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 12.dp),
+                                                thickness = 1.dp,
+                                                color = MaterialTheme.colorScheme.outlineVariant
+                                            )
+                                        }
                                     }
-                                },
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = t(R.string.add),
-                                    tint = MaterialTheme.colorScheme.onPrimary
-                                )
+                                }
                             }
                         }
                     }
@@ -775,6 +836,39 @@ private fun String.toDisplayListTitle(): String {
                 if (char.isLowerCase()) char.titlecase() else char.toString()
             }
         }
+}
+
+@Composable
+private fun HistorySuggestionRow(
+    suggestion: ProductHistoryEntity,
+    canDelete: Boolean,
+    onSelect: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onSelect)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = suggestion.displayName,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        if (canDelete) {
+            IconButton(
+                onClick = onDelete
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = t(R.string.delete_history_item)
+                )
+            }
+        }
+    }
 }
 
 

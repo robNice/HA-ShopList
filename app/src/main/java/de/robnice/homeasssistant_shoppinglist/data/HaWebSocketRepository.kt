@@ -1,6 +1,7 @@
 package de.robnice.homeasssistant_shoppinglist.data
 
 import android.content.Context
+import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryRepository
 import de.robnice.homeasssistant_shoppinglist.data.websocket.HaWebSocketClient
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
 import de.robnice.homeasssistant_shoppinglist.util.Debug
@@ -48,6 +49,7 @@ class HaWebSocketRepository(
     )
 
     private val client = HaWebSocketClient(baseUrl, token)
+    private val productHistoryRepository = ProductHistoryRepository.getInstance(appContext)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val lock = Any()
     private val tempIdCounter = AtomicLong(1)
@@ -205,6 +207,12 @@ class HaWebSocketRepository(
         _items.value = finalItems
         _loaded.value = true
 
+        scope.launch {
+            finalItems.forEach { item ->
+                productHistoryRepository.rememberProduct(item.name)
+            }
+        }
+
         if (client.isReady()) {
             scope.launch {
                 flushPendingChanges()
@@ -304,6 +312,9 @@ class HaWebSocketRepository(
 
         if (client.isReady()) {
             locallyAddedItemNames.add(trimmed)
+            scope.launch {
+                productHistoryRepository.recordProductUse(trimmed)
+            }
             sendAddItem(trimmed)
             return
         }
@@ -325,6 +336,9 @@ class HaWebSocketRepository(
         }
         _isOffline.value = true
         _loaded.value = true
+        scope.launch {
+            productHistoryRepository.recordProductUse(trimmed)
+        }
     }
 
     fun toggleItem(item: ShoppingItem) {
@@ -353,6 +367,9 @@ class HaWebSocketRepository(
 
         updateLocalItem(item.id) { current ->
             current.copy(name = trimmed)
+        }
+        scope.launch {
+            productHistoryRepository.recordProductUse(trimmed)
         }
 
         if (item.id.startsWith(LOCAL_ID_PREFIX)) {

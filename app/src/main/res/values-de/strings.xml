@@ -37,6 +37,13 @@
     <string name="error_no_lists_found">Auf dieser Home-Assistant-Instanz wurden keine Todo-Listen gefunden.</string>
     <string name="retry">Erneut laden</string>
     <string name="save_edit">Bearbeitung speichern</string>
+    <string name="delete_history_item">Vorschlag löschen</string>
+    <string name="product_history_title">Produkthistorie</string>
+    <string name="product_history_description">Gespeicherte Produkte werden für Autocomplete beim Hinzufügen neuer Einträge verwendet.</string>
+    <string name="product_history_clear">Produkthistorie löschen</string>
+    <string name="product_history_clear_title">Historie löschen</string>
+    <string name="product_history_clear_message">Alle gespeicherten Produktvorschläge auf diesem Gerät löschen?</string>
+    <string name="product_history_clear_confirm">Löschen</string>
     <string name="offline_chip">Offline</string>
     <string name="offline_dialog_title">Offline-Modus</string>
     <string name="offline_dialog_text">Die aktuelle Liste bleibt sichtbar und kann weiter bearbeitet werden. Sobald Home Assistant wieder erreichbar ist, werden die Änderungen automatisch synchronisiert.</string>
