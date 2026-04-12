@@ -15,7 +15,7 @@
     <string name="ha_token">Long-Lived Token</string>
     <string name="shopping_title">Shopping List</string>
     <string name="list">List</string>
-    <string name="loading">Loading…</string>
+    <string name="loading">Loadingâ€¦</string>
     <string name="no_items">No items</string>
     <string name="completed">Completed</string>
     <string name="clear_completed">Clear completed</string>
@@ -46,6 +46,17 @@
     <string name="product_history_clear_confirm">Clear</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="close">Close</string>
+    <string name="help_link_label">Help</string>
+    <string name="help_notifications_title">Notifications</string>
+    <string name="help_notifications_text">Enable notifications so the app can react to changes from Home Assistant in the background. Disable this if you do not want reminders or background updates.</string>
+    <string name="help_ha_url_title">Home Assistant URL</string>
+    <string name="help_ha_url_text">Enter the full address of your Home Assistant instance, including https:// or http:// and an optional port. Example: https://homeassistant.local:8123</string>
+    <string name="help_token_title">Long-Lived Token</string>
+    <string name="help_token_text">1. Open your profile in Home Assistant.\n2. Open the Security tab.\n3. Scroll down to Long-Lived Access Tokens.\n4. Create a new token.\n5. Copy the token immediately and paste it here.\n\nThe token is shown only once and is required so the app can securely load and update your shopping list.</string>
+    <string name="help_list_selection_title">List selection</string>
+    <string name="help_list_selection_text">Choose which Home Assistant todo list this app should use. Lists are only loaded after a valid URL and token have been entered.</string>
+    <string name="help_product_history_title">Product history</string>
+    <string name="help_product_history_text">The app stores previously used product names on this device to offer autocomplete when you add new items. Clearing the history removes these local suggestions.</string>
     <string name="offline_chip">Offline</string>
     <string name="offline_dialog_title">Offline mode</string>
     <string name="offline_dialog_text">The current list stays available and you can keep editing it. Your changes will sync automatically when Home Assistant is reachable again.</string>

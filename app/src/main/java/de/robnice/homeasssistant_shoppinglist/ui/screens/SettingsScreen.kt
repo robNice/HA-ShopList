@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -60,6 +61,17 @@ private sealed interface MarkdownBlock {
     data object Spacer : MarkdownBlock
 }
 
+private enum class SettingsHelpTopic(
+    val titleRes: Int,
+    val textRes: Int
+) {
+    Notifications(R.string.help_notifications_title, R.string.help_notifications_text),
+    HaUrl(R.string.help_ha_url_title, R.string.help_ha_url_text),
+    Token(R.string.help_token_title, R.string.help_token_text),
+    ListSelection(R.string.help_list_selection_title, R.string.help_list_selection_text),
+    ProductHistory(R.string.help_product_history_title, R.string.help_product_history_text)
+}
+
 /**
  * @todo: prevent copying token
  * @todo: prevent screenshots
@@ -91,6 +103,7 @@ fun SettingsScreen(
     var todoReloadKey by remember { mutableStateOf(0) }
     var showHistoryClearDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
+    var selectedHelpTopic by remember { mutableStateOf<SettingsHelpTopic?>(null) }
     var privacyText by remember { mutableStateOf("") }
 
     LaunchedEffect(storedUrl, storedToken, storedTodoEntity) {
@@ -168,9 +181,10 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
+                    SettingLabelWithHelp(
                         text = t(R.string.notifications_enabled),
-                        style = MaterialTheme.typography.bodyLarge
+                        onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Notifications },
+                        modifier = Modifier.weight(1f)
                     )
 
                     Switch(
@@ -185,20 +199,28 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                SettingFieldHeader(
+                    text = t(R.string.ha_url),
+                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.HaUrl }
+                )
+
                 OutlinedTextField(
                     value = url,
                     onValueChange = { url = it },
-                    label = { Text(t(R.string.ha_url)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = settingsTextFieldColors()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                SettingFieldHeader(
+                    text = t(R.string.ha_token),
+                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Token }
+                )
+
                 OutlinedTextField(
                     value = token,
                     onValueChange = { token = it },
-                    label = { Text(t(R.string.ha_token)) },
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = if (tokenVisible) {
                         VisualTransformation.None
@@ -223,6 +245,11 @@ fun SettingsScreen(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+                SettingFieldHeader(
+                    text = t(R.string.settings_list),
+                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListSelection }
+                )
 
                 when {
                     todoLoading -> {
@@ -253,7 +280,6 @@ fun SettingsScreen(
                                 value = selectedName,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text(t(R.string.settings_list)) },
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = todoExpanded)
                                 },
@@ -346,9 +372,9 @@ fun SettingsScreen(
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
+                SectionHeaderWithHelp(
                     text = t(R.string.product_history_title),
-                    style = MaterialTheme.typography.titleMedium
+                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ProductHistory }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -425,6 +451,88 @@ fun SettingsScreen(
             markdown = privacyText,
             onDismiss = { showPrivacyDialog = false }
         )
+    }
+
+    selectedHelpTopic?.let { topic ->
+        AlertDialog(
+            onDismissRequest = { selectedHelpTopic = null },
+            title = { Text(t(topic.titleRes)) },
+            text = { Text(t(topic.textRes)) },
+            confirmButton = {
+                TextButton(onClick = { selectedHelpTopic = null }) {
+                    Text(t(R.string.close))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun SettingFieldHeader(
+    text: String,
+    onHelpClick: () -> Unit
+) {
+    SettingLabelWithHelp(
+        text = text,
+        onHelpClick = onHelpClick,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(4.dp))
+}
+
+@Composable
+private fun SettingLabelWithHelp(
+    text: String,
+    onHelpClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+
+        IconButton(
+            onClick = onHelpClick,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Info,
+                contentDescription = t(R.string.help_link_label)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionHeaderWithHelp(
+    text: String,
+    onHelpClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f)
+        )
+
+        IconButton(
+            onClick = onHelpClick,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Info,
+                contentDescription = t(R.string.help_link_label)
+            )
+        }
     }
 }
 
