@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -23,6 +24,7 @@ import de.robnice.homeasssistant_shoppinglist.ui.theme.HomeAsssistantShoppingLis
 import de.robnice.homeasssistant_shoppinglist.ui.util.t
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -32,6 +34,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,6 +55,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.StrokeCap
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -70,6 +74,12 @@ import de.robnice.homeasssistant_shoppinglist.util.Debug
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandBlue
+import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandGreen
+import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandOrange
+import androidx.compose.ui.graphics.Color
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -190,20 +200,41 @@ fun ShoppingScreen(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val dataStore = remember { SettingsDataStore(context) }
     val productHistoryRepository = remember(context) { ProductHistoryRepository.getInstance(context) }
-    val haUrl by dataStore.haUrl.collectAsState(initial = "")
-    val haToken by dataStore.haToken.collectAsState(initial = "")
-    val todoEntity by dataStore.todoEntity.collectAsState(initial = "")
+    val configFlow = remember(dataStore) {
+        combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity) { url, token, entity ->
+            Triple(url, token, entity)
+        }
+    }
+    val config by configFlow.collectAsState(initial = null)
+    val haUrl = config?.first
+    val haToken = config?.second
+    val todoEntity = config?.third
     var editingItemId by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showOfflineInfo by remember { mutableStateOf(false) }
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
 
-    if (haUrl.isBlank() || haToken.isBlank()) {
+    if (config == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Missing configuration")
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
+        LaunchedEffect(Unit) {
+            navController.navigate(Screen.Settings.route) {
+                popUpTo(Screen.Shopping.route) { inclusive = true }
+            }
+        }
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
         }
         return
     }
@@ -211,12 +242,6 @@ fun ShoppingScreen(navController: NavController) {
 
     val repo = HaRuntime.repository
     if (repo == null) {
-        LaunchedEffect(Unit) {
-            navController.navigate(Screen.Settings.route) {
-                popUpTo(Screen.Shopping.route) { inclusive = true }
-            }
-        }
-
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -338,46 +363,29 @@ fun ShoppingScreen(navController: NavController) {
         }
     }
     val autocompleteSuggestions by autocompleteFlow.collectAsState(initial = emptyList())
-    val listTitle = remember(todoEntity) { todoEntity.toDisplayListTitle() }
+    val listTitle = remember(todoEntity) { todoEntity.orEmpty().toDisplayListTitle() }
 
     Scaffold(
         topBar = {
             TopAppBar(
+                expandedHeight = 76.dp,
                 title = {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
                         Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(x = (-10).dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary)
-                                        .padding(horizontal = 8.dp, vertical = 3.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "HA",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-
-                                Text(
-                                    text = "ShopList",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
+                            HeaderWordmark(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                            )
 
                             if (isOffline) {
                                 AssistChip(
@@ -395,7 +403,10 @@ fun ShoppingScreen(navController: NavController) {
 
                         Text(
                             text = listTitle,
-                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier
+                                .padding(start = 2.dp)
+                                .offset(y = (-8).dp),
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -434,7 +445,7 @@ fun ShoppingScreen(navController: NavController) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp)
+                        .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp)
                         .pointerInput(editingItemId) {
                             detectTapGestures {
                                 editingItemId = null
@@ -744,12 +755,24 @@ fun ShoppingScreen(navController: NavController) {
                                 .height(52.dp),
 
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                containerColor = if (isSystemInDarkTheme()) {
+                                    Color(0xFF5A2C33)
+                                } else {
+                                    Color(0xFFF1D8DD)
+                                },
+                                contentColor = if (isSystemInDarkTheme()) {
+                                    Color(0xFFFFE7EA)
+                                } else {
+                                    Color(0xFF6A2831)
+                                }
                             ),
                             border = BorderStroke(
                                 1.dp,
-                                MaterialTheme.colorScheme.error.copy(alpha = 0.35f)
+                                if (isSystemInDarkTheme()) {
+                                    Color(0xFFD96C7C).copy(alpha = 0.42f)
+                                } else {
+                                    Color(0xFFC46A78).copy(alpha = 0.38f)
+                                }
                             ),
                             shape = RoundedCornerShape(14.dp)
                         ) {
@@ -814,6 +837,80 @@ fun ShoppingScreen(navController: NavController) {
                     Text(t(R.string.offline_dialog_confirm))
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun HeaderWordmark(modifier: Modifier = Modifier) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val assetName = if (isDarkTheme) {
+        "ha-shoplist-wordmark.svg"
+    } else {
+        "ha-shoplist-wordmark-light.svg"
+    }
+    val cartAssetName = if (isDarkTheme) {
+        "ha-shoplist-cart-dark.svg"
+    } else {
+        "ha-shoplist-cart-light.svg"
+    }
+    Box(modifier = modifier) {
+        Canvas(modifier = Modifier.matchParentSize()) {
+            val y = size.height * 0.80f
+            val stroke = 4.dp.toPx()
+            val cartStart = size.width - 34.dp.toPx()
+            drawLine(
+                color = BrandBlue.copy(alpha = if (isDarkTheme) 0.34f else 0.22f),
+                start = Offset(22.dp.toPx(), y),
+                end = Offset(size.width, y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = BrandOrange,
+                start = Offset(42.dp.toPx(), y),
+                end = Offset(108.dp.toPx(), y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = BrandGreen,
+                start = Offset(126.dp.toPx(), y),
+                end = Offset(156.dp.toPx(), y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = BrandOrange,
+                start = Offset(244.dp.toPx(), y),
+                end = Offset(310.dp.toPx(), y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = BrandOrange,
+                start = Offset(cartStart - 74.dp.toPx(), y),
+                end = Offset(cartStart - 14.dp.toPx(), y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+        }
+        AsyncImage(
+            modifier = Modifier.matchParentSize(),
+            model = "file:///android_asset/$assetName",
+            contentDescription = "ShopList wordmark",
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.CenterStart
+        )
+        AsyncImage(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .offset(x = 8.dp, y = 2.dp)
+                .size(width = 42.dp, height = 28.dp),
+            model = "file:///android_asset/$cartAssetName",
+            contentDescription = "Shopping cart",
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.Center
         )
     }
 }

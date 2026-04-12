@@ -49,4 +49,6 @@
     <string name="offline_dialog_text">The current list stays available and you can keep editing it. Your changes will sync automatically when Home Assistant is reachable again.</string>
     <string name="offline_dialog_confirm">OK</string>
     <string name="offline_empty_list">Offline. No cached list is available yet.</string>
+    <string name="privacy_policy">Gizlilik politikası</string>
+    <string name="close">Kapat</string>
 </resources>

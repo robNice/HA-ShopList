@@ -44,9 +44,11 @@
     <string name="product_history_clear_title">Historie löschen</string>
     <string name="product_history_clear_message">Alle gespeicherten Produktvorschläge auf diesem Gerät löschen?</string>
     <string name="product_history_clear_confirm">Löschen</string>
+    <string name="privacy_policy">Datenschutzerklärung</string>
+    <string name="close">Schließen</string>
     <string name="offline_chip">Offline</string>
     <string name="offline_dialog_title">Offline-Modus</string>
     <string name="offline_dialog_text">Die aktuelle Liste bleibt sichtbar und kann weiter bearbeitet werden. Sobald Home Assistant wieder erreichbar ist, werden die Änderungen automatisch synchronisiert.</string>
     <string name="offline_dialog_confirm">OK</string>
-    <string name="offline_empty_list">Offline. Es ist noch keine zwischengespeicherte Liste verfÃ¼gbar.</string>
+    <string name="offline_empty_list">Offline. Es ist noch keine zwischengespeicherte Liste verfügbar.</string>
 </resources>

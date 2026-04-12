@@ -1,5 +1,3 @@
-# Datenschutzerklärung
-
 ## 1. Allgemeines
 Diese App dient ausschließlich als Einkaufsliste im Verbund mit Home Assistant.
 

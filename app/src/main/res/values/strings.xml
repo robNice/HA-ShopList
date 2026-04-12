@@ -44,6 +44,8 @@
     <string name="product_history_clear_title">Clear history</string>
     <string name="product_history_clear_message">Delete all saved product suggestions on this device?</string>
     <string name="product_history_clear_confirm">Clear</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="close">Close</string>
     <string name="offline_chip">Offline</string>
     <string name="offline_dialog_title">Offline mode</string>
     <string name="offline_dialog_text">The current list stays available and you can keep editing it. Your changes will sync automatically when Home Assistant is reachable again.</string>
