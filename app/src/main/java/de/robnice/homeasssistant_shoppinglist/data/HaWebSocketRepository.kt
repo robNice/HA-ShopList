@@ -59,6 +59,7 @@ class HaWebSocketRepository(
     private val _connectionErrors = MutableStateFlow(false)
     private val _isOffline = MutableStateFlow(false)
     private val _newItems = MutableSharedFlow<ShoppingItem>(replay = 1)
+    private val _remoteActivity = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     private val _loaded = MutableStateFlow(false)
     private val _reconnected = MutableStateFlow(0L)
 
@@ -68,6 +69,7 @@ class HaWebSocketRepository(
     val isOffline = _isOffline.asStateFlow()
     val items = _items.asStateFlow()
     val newItems = _newItems.asSharedFlow()
+    val remoteActivity = _remoteActivity.asSharedFlow()
     val reconnected = _reconnected.asStateFlow()
 
     private val locallyAddedItemNames = mutableSetOf<String>()
@@ -131,11 +133,17 @@ class HaWebSocketRepository(
                     _reconnected.value = System.currentTimeMillis()
                 }
 
-                client.send(
+                val subscribeSent = client.send(
                     type = "todo/item/subscribe",
                     payload = JSONObject()
                         .put("entity_id", todoEntity)
                 )
+                if (!subscribeSent) {
+                    Debug.log("REPOSITORY: subscribe send failed after ready -> reconnect")
+                    _isOffline.value = true
+                    client.ensureConnected()
+                    return@collect
+                }
 
                 scope.launch {
                     flushPendingChanges()
@@ -163,7 +171,10 @@ class HaWebSocketRepository(
                         "event" -> {
                             val event = json.optJSONObject("event")
                             if (event != null && event.has("items")) {
-                                parseItemsFromArray(event.getJSONArray("items"))
+                                parseItemsFromArray(
+                                    array = event.getJSONArray("items"),
+                                    isRealtimeEvent = true
+                                )
                             }
                         }
                     }
@@ -176,10 +187,16 @@ class HaWebSocketRepository(
 
     private fun parseItemsFromResult(resultObj: JSONObject) {
         if (!resultObj.has("items")) return
-        parseItemsFromArray(resultObj.getJSONArray("items"))
+        parseItemsFromArray(
+            array = resultObj.getJSONArray("items"),
+            isRealtimeEvent = false
+        )
     }
 
-    private fun parseItemsFromArray(array: JSONArray) {
+    private fun parseItemsFromArray(
+        array: JSONArray,
+        isRealtimeEvent: Boolean
+    ) {
         val parsedRemote = mutableListOf<ShoppingItem>()
 
         for (i in 0 until array.length()) {
@@ -203,8 +220,12 @@ class HaWebSocketRepository(
             withPendingOrderApplied + pendingLocalAdds.values.map { it.toShoppingItem() }
         }
 
-        emitNotifications(previousItems = _items.value, newItems = finalItems)
+        val previousItems = _items.value
+        emitNotifications(previousItems = previousItems, newItems = finalItems)
         _items.value = finalItems
+        if (isRealtimeEvent && previousItems != finalItems && _loaded.value) {
+            _remoteActivity.tryEmit(Unit)
+        }
         _loaded.value = true
 
         scope.launch {
@@ -297,11 +318,16 @@ class HaWebSocketRepository(
             return
         }
 
-        client.send(
+        val sent = client.send(
             type = "todo/item/list",
             payload = JSONObject()
                 .put("entity_id", todoEntity)
         )
+        if (!sent) {
+            Debug.log("REPOSITORY: loadItems send failed -> reconnect")
+            _isOffline.value = true
+            client.ensureConnected()
+        }
     }
 
     fun addItem(name: String) {
@@ -462,7 +488,7 @@ class HaWebSocketRepository(
     }
 
     private fun enqueueOrSendUpdate(itemId: String, name: String, complete: Boolean) {
-        val sentToServer = client.isReady()
+        val sentToServer = client.isReady() && sendUpdateItem(itemId, name, complete)
 
         synchronized(lock) {
             pendingActions.removeAll { action ->
@@ -476,30 +502,28 @@ class HaWebSocketRepository(
             )
         }
 
-        if (sentToServer) {
-            sendUpdateItem(itemId, name, complete)
-        } else {
+        if (!sentToServer) {
             _isOffline.value = true
+            client.ensureConnected()
         }
     }
 
     private fun enqueueOrSendOpenOrder() {
-        val sentToServer = client.isReady()
+        val sentToServer = client.isReady() && sendOpenItemOrder()
 
         synchronized(lock) {
             pendingOpenOrder = currentOpenOrderIds()
             pendingOpenOrderSentToServer = sentToServer
         }
 
-        if (sentToServer) {
-            sendOpenItemOrder()
-        } else {
+        if (!sentToServer) {
             _isOffline.value = true
+            client.ensureConnected()
         }
     }
 
     private fun enqueueOrSendRemove(itemId: String) {
-        val sentToServer = client.isReady()
+        val sentToServer = client.isReady() && sendRemoveItem(itemId)
 
         synchronized(lock) {
             pendingActions.removeAll { action ->
@@ -514,10 +538,9 @@ class HaWebSocketRepository(
             )
         }
 
-        if (sentToServer) {
-            sendRemoveItem(itemId)
-        } else {
+        if (!sentToServer) {
             _isOffline.value = true
+            client.ensureConnected()
         }
     }
 
@@ -538,32 +561,20 @@ class HaWebSocketRepository(
                 localAdds = pendingLocalAdds.values.toList()
                 queuedActions = pendingActions.toList()
                 openOrderToSend = pendingOpenOrder
-                localAdds
-                    .filterNot { it.sentToServer }
-                    .forEach { add ->
-                        pendingLocalAdds[add.tempId] = add.copy(sentToServer = true)
-                    }
-                pendingActions.replaceAll { action ->
-                    when (action) {
-                        is PendingAction.Remove -> {
-                            if (action.sentToServer) action else action.copy(sentToServer = true)
-                        }
-                        is PendingAction.Update -> {
-                            if (action.sentToServer) action else action.copy(sentToServer = true)
-                        }
-                    }
-                }
-                if (pendingOpenOrder != null) {
-                    pendingOpenOrderSentToServer = true
-                }
             }
+
+            val sentLocalAddIds = mutableSetOf<String>()
+            val sentUpdateIds = mutableSetOf<String>()
+            val sentRemoveIds = mutableSetOf<String>()
 
             localAdds
                 .filterNot { it.sentToServer }
                 .forEach { add ->
-                locallyAddedItemNames.add(add.name.trim())
-                sendAddItem(add.name)
-            }
+                    locallyAddedItemNames.add(add.name.trim())
+                    if (sendAddItem(add.name)) {
+                        sentLocalAddIds += add.tempId
+                    }
+                }
 
             queuedActions
                 .filterNot { action ->
@@ -573,21 +584,66 @@ class HaWebSocketRepository(
                     }
                 }
                 .forEach { action ->
-                when (action) {
-                    is PendingAction.Remove -> sendRemoveItem(
-                        itemId = resolveRemoteId(action.itemId) ?: action.itemId
-                    )
+                    when (action) {
+                        is PendingAction.Remove -> {
+                            val resolvedId = resolveRemoteId(action.itemId) ?: action.itemId
+                            if (sendRemoveItem(itemId = resolvedId)) {
+                                sentRemoveIds += action.itemId
+                            }
+                        }
 
-                    is PendingAction.Update -> sendUpdateItem(
-                        itemId = resolveRemoteId(action.itemId) ?: action.itemId,
-                        name = action.name,
-                        complete = action.complete
-                    )
+                        is PendingAction.Update -> {
+                            val resolvedId = resolveRemoteId(action.itemId) ?: action.itemId
+                            if (
+                                sendUpdateItem(
+                                    itemId = resolvedId,
+                                    name = action.name,
+                                    complete = action.complete
+                                )
+                            ) {
+                                sentUpdateIds += action.itemId
+                            }
+                        }
+                    }
+                }
+
+            val openOrderSent =
+                if (openOrderToSend != null && openOrderToSend.none { it.startsWith(LOCAL_ID_PREFIX) }) {
+                    sendOpenItemOrder()
+                } else {
+                    false
+                }
+
+            synchronized(lock) {
+                sentLocalAddIds.forEach { tempId ->
+                    pendingLocalAdds[tempId]?.let { add ->
+                        pendingLocalAdds[tempId] = add.copy(sentToServer = true)
+                    }
+                }
+                pendingActions.replaceAll { action ->
+                    when (action) {
+                        is PendingAction.Remove -> {
+                            if (action.itemId in sentRemoveIds) action.copy(sentToServer = true) else action
+                        }
+
+                        is PendingAction.Update -> {
+                            if (action.itemId in sentUpdateIds) action.copy(sentToServer = true) else action
+                        }
+                    }
+                }
+                if (openOrderSent) {
+                    pendingOpenOrderSentToServer = true
                 }
             }
 
-            if (openOrderToSend != null && openOrderToSend.none { it.startsWith(LOCAL_ID_PREFIX) }) {
-                sendOpenItemOrder()
+            if (
+                sentLocalAddIds.size != localAdds.count { !it.sentToServer } ||
+                sentUpdateIds.size != queuedActions.count { it is PendingAction.Update && !it.sentToServer } ||
+                sentRemoveIds.size != queuedActions.count { it is PendingAction.Remove && !it.sentToServer } ||
+                (openOrderToSend != null && openOrderToSend.none { it.startsWith(LOCAL_ID_PREFIX) } && !openOrderSent)
+            ) {
+                _isOffline.value = true
+                client.ensureConnected()
             }
 
             delay(150)
@@ -642,8 +698,8 @@ class HaWebSocketRepository(
         }
     }
 
-    private fun sendAddItem(name: String) {
-        client.send(
+    private fun sendAddItem(name: String): Boolean {
+        return client.send(
             type = "call_service",
             payload = JSONObject()
                 .put("domain", "todo")
@@ -658,8 +714,8 @@ class HaWebSocketRepository(
         )
     }
 
-    private fun sendUpdateItem(itemId: String, name: String, complete: Boolean) {
-        client.send(
+    private fun sendUpdateItem(itemId: String, name: String, complete: Boolean): Boolean {
+        return client.send(
             type = "call_service",
             payload = JSONObject()
                 .put("domain", "todo")
@@ -676,23 +732,25 @@ class HaWebSocketRepository(
         )
     }
 
-    private fun sendOpenItemOrder() {
+    private fun sendOpenItemOrder(): Boolean {
         val orderToSend = synchronized(lock) {
             pendingOpenOrder
                 ?.mapNotNull { resolveRemoteId(it) }
                 ?.takeIf { it.isNotEmpty() }
-        } ?: return
+        } ?: return false
 
+        var allSent = true
         orderToSend.forEachIndexed { index, itemId ->
-            sendMoveItem(
+            allSent = sendMoveItem(
                 itemId = itemId,
                 previousItemId = orderToSend.getOrNull(index - 1)
-            )
+            ) && allSent
         }
+        return allSent
     }
 
-    private fun sendMoveItem(itemId: String, previousItemId: String?) {
-        client.send(
+    private fun sendMoveItem(itemId: String, previousItemId: String?): Boolean {
+        return client.send(
             type = "todo/item/move",
             payload = JSONObject()
                 .put("entity_id", todoEntity)
@@ -701,8 +759,8 @@ class HaWebSocketRepository(
         )
     }
 
-    private fun sendRemoveItem(itemId: String) {
-        client.send(
+    private fun sendRemoveItem(itemId: String): Boolean {
+        return client.send(
             type = "call_service",
             payload = JSONObject()
                 .put("domain", "todo")

@@ -45,6 +45,8 @@ import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryReposit
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -261,6 +263,11 @@ fun ShoppingScreen(navController: NavController) {
     val authFailed by viewModel.authFailed.collectAsState()
     val isOffline by viewModel.isOffline.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    var headerPulseKey by remember { mutableStateOf(0) }
+
+    val triggerHeaderPulse = {
+        headerPulseKey += 1
+    }
 
     LaunchedEffect(repo, notificationsEnabled) {
         if (notificationsEnabled) {
@@ -278,6 +285,12 @@ fun ShoppingScreen(navController: NavController) {
                 context.getString(R.string.reconnected),
                 Toast.LENGTH_SHORT
             ).show()
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.remoteActivity.collect {
+            headerPulseKey += 1
         }
     }
 
@@ -388,7 +401,8 @@ fun ShoppingScreen(navController: NavController) {
                             HeaderWordmark(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(44.dp)
+                                    .height(44.dp),
+                                pulseKey = headerPulseKey
                             )
 
                             if (isOffline) {
@@ -483,6 +497,7 @@ fun ShoppingScreen(navController: NavController) {
                                     keyboardActions = KeyboardActions(
                                         onDone = {
                                             if (newItem.isNotBlank()) {
+                                                triggerHeaderPulse()
                                                 viewModel.addItem(newItem.trim())
                                                 newItem = ""
                                             }
@@ -495,6 +510,7 @@ fun ShoppingScreen(navController: NavController) {
                                 IconButton(
                                     onClick = {
                                         if (newItem.isNotBlank()) {
+                                            triggerHeaderPulse()
                                             viewModel.addItem(newItem)
                                             newItem = ""
                                         }
@@ -533,6 +549,7 @@ fun ShoppingScreen(navController: NavController) {
                                             suggestion = suggestion,
                                             canDelete = suggestion.normalizedName !in currentItemNames,
                                             onSelect = {
+                                                triggerHeaderPulse()
                                                 viewModel.addItem(suggestion.displayName)
                                                 newItem = ""
                                             },
@@ -737,6 +754,7 @@ fun ShoppingScreen(navController: NavController) {
                                                 val movedItem = localOpenItems[endIndex]
                                                 if (startIndex != null && startIndex != endIndex) {
                                                     droppedItemId = movedItem.id
+                                                    triggerHeaderPulse()
                                                 }
                                                 val previousItemId =
                                                     if (endIndex > 0) localOpenItems[endIndex - 1].id else null
@@ -772,7 +790,8 @@ fun ShoppingScreen(navController: NavController) {
                                                 editingItemId = clickedId
                                             },
                                             onStopEdit = { editingItemId = null },
-                                            viewModel = viewModel
+                                            viewModel = viewModel,
+                                            onServerInteraction = triggerHeaderPulse
                                         )
                                     }
                                 }
@@ -856,6 +875,7 @@ fun ShoppingScreen(navController: NavController) {
                                             },
                                             onStopEdit = { editingItemId = null },
                                             viewModel = viewModel,
+                                            onServerInteraction = triggerHeaderPulse,
                                             animateVisibility = false,
                                             modifier = Modifier.padding(horizontal = 4.dp)
                                         )
@@ -933,6 +953,7 @@ fun ShoppingScreen(navController: NavController) {
                 TextButton(
                     onClick = {
                         showConfirmDialog = false
+                        triggerHeaderPulse()
                         viewModel.clearCompleted()
                     }
                 ) {
@@ -971,8 +992,19 @@ fun ShoppingScreen(navController: NavController) {
     }
 }
 
+private data class HeaderLineSegment(
+    val startPx: Float,
+    val endPx: Float,
+    val color: Color,
+    val laps: Int,
+    val durationMillis: Int
+)
+
 @Composable
-private fun HeaderWordmark(modifier: Modifier = Modifier) {
+private fun HeaderWordmark(
+    modifier: Modifier = Modifier,
+    pulseKey: Int = 0
+) {
     val isDarkTheme = isSystemInDarkTheme()
     val assetName = if (isDarkTheme) {
         "ha-shoplist-wordmark.svg"
@@ -984,46 +1016,108 @@ private fun HeaderWordmark(modifier: Modifier = Modifier) {
     } else {
         "ha-shoplist-cart-light.svg"
     }
+    val segmentProgress = remember {
+        listOf(
+            Animatable(0f),
+            Animatable(0f),
+            Animatable(0f),
+            Animatable(0f)
+        )
+    }
+
+    LaunchedEffect(pulseKey) {
+        if (pulseKey == 0) {
+            return@LaunchedEffect
+        }
+
+        segmentProgress.forEach { it.snapTo(0f) }
+        launch {
+            segmentProgress[0].animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1680, easing = LinearEasing)
+            )
+            segmentProgress[0].snapTo(0f)
+        }
+        launch {
+            segmentProgress[1].animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 980, easing = LinearEasing)
+            )
+            segmentProgress[1].snapTo(0f)
+        }
+        launch {
+            segmentProgress[2].animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1320, easing = LinearEasing)
+            )
+            segmentProgress[2].snapTo(0f)
+        }
+        launch {
+            segmentProgress[3].animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 860, easing = LinearEasing)
+            )
+            segmentProgress[3].snapTo(0f)
+        }
+    }
+
     Box(modifier = modifier) {
         Canvas(modifier = Modifier.matchParentSize()) {
             val y = size.height * 0.80f
             val stroke = 4.dp.toPx()
+            val backgroundStart = 22.dp.toPx()
+            val backgroundEnd = size.width
+            val trackLength = backgroundEnd - backgroundStart
             val cartStart = size.width - 34.dp.toPx()
             drawLine(
                 color = BrandBlue.copy(alpha = if (isDarkTheme) 0.34f else 0.22f),
-                start = Offset(22.dp.toPx(), y),
-                end = Offset(size.width, y),
+                start = Offset(backgroundStart, y),
+                end = Offset(backgroundEnd, y),
                 strokeWidth = stroke,
                 cap = StrokeCap.Round
             )
-            drawLine(
-                color = BrandOrange,
-                start = Offset(42.dp.toPx(), y),
-                end = Offset(108.dp.toPx(), y),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
+            val segments = listOf(
+                HeaderLineSegment(
+                    startPx = 42.dp.toPx(),
+                    endPx = 108.dp.toPx(),
+                    color = BrandOrange,
+                    laps = 1,
+                    durationMillis = 1680
+                ),
+                HeaderLineSegment(
+                    startPx = 126.dp.toPx(),
+                    endPx = 156.dp.toPx(),
+                    color = BrandGreen,
+                    laps = 2,
+                    durationMillis = 980
+                ),
+                HeaderLineSegment(
+                    startPx = 244.dp.toPx(),
+                    endPx = 310.dp.toPx(),
+                    color = BrandOrange,
+                    laps = 1,
+                    durationMillis = 1320
+                ),
+                HeaderLineSegment(
+                    startPx = cartStart - 74.dp.toPx(),
+                    endPx = cartStart - 14.dp.toPx(),
+                    color = BrandOrange,
+                    laps = 2,
+                    durationMillis = 860
+                )
             )
-            drawLine(
-                color = BrandGreen,
-                start = Offset(126.dp.toPx(), y),
-                end = Offset(156.dp.toPx(), y),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
-            drawLine(
-                color = BrandOrange,
-                start = Offset(244.dp.toPx(), y),
-                end = Offset(310.dp.toPx(), y),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
-            drawLine(
-                color = BrandOrange,
-                start = Offset(cartStart - 74.dp.toPx(), y),
-                end = Offset(cartStart - 14.dp.toPx(), y),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
+
+            segments.forEachIndexed { index, segment ->
+                val offsetPx = (segmentProgress[index].value * segment.laps * trackLength) % trackLength
+                drawWrappedHeaderSegment(
+                    trackStart = backgroundStart,
+                    trackLength = trackLength,
+                    y = y,
+                    strokeWidth = stroke,
+                    segment = segment,
+                    offsetPx = offsetPx
+                )
+            }
         }
         AsyncImage(
             modifier = Modifier.matchParentSize(),
@@ -1043,6 +1137,45 @@ private fun HeaderWordmark(modifier: Modifier = Modifier) {
             alignment = Alignment.Center
         )
     }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawWrappedHeaderSegment(
+    trackStart: Float,
+    trackLength: Float,
+    y: Float,
+    strokeWidth: Float,
+    segment: HeaderLineSegment,
+    offsetPx: Float
+) {
+    val segmentWidth = segment.endPx - segment.startPx
+    val shiftedStart = ((segment.startPx - trackStart) + offsetPx) % trackLength
+    val shiftedEnd = shiftedStart + segmentWidth
+
+    if (shiftedEnd <= trackLength) {
+        drawLine(
+            color = segment.color,
+            start = Offset(trackStart + shiftedStart, y),
+            end = Offset(trackStart + shiftedEnd, y),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+        return
+    }
+
+    drawLine(
+        color = segment.color,
+        start = Offset(trackStart + shiftedStart, y),
+        end = Offset(trackStart + trackLength, y),
+        strokeWidth = strokeWidth,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = segment.color,
+        start = Offset(trackStart, y),
+        end = Offset(trackStart + (shiftedEnd - trackLength), y),
+        strokeWidth = strokeWidth,
+        cap = StrokeCap.Round
+    )
 }
 
 private fun String.toDisplayListTitle(): String {
@@ -1107,6 +1240,7 @@ fun ShoppingRow(
     onStartEdit: (String) -> Unit,
     onStopEdit: () -> Unit,
     viewModel: ShoppingViewModel,
+    onServerInteraction: () -> Unit = {},
     modifier: Modifier = Modifier,
     animateVisibility: Boolean = true
 ) {
@@ -1168,6 +1302,7 @@ fun ShoppingRow(
                 onCheckedChange = {
                     onStopEdit()
                     localChecked = it
+                    onServerInteraction()
                     scope.launch {
                         viewModel.toggleItem(item)
                     }
@@ -1179,6 +1314,7 @@ fun ShoppingRow(
 
                 val saveEdit = {
                     if (editText.isNotBlank() && editText != item.name) {
+                        onServerInteraction()
                         viewModel.renameItem(item, editText)
                     }
                     onStopEdit()
