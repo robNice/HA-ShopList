@@ -101,3 +101,10 @@ Steps:
 3. Confirm the deletion in the dialog
 
 All completed items will then be removed from the list.
+
+
+## Screenshots
+<img src="docs/list_dark.png" alt="List dark mode" width="250">
+<img src="docs/list_dark2.png" alt="List dark mode" width="250">
+<img src="docs/list_light.png" alt="List light mode" width="250">
+<img src="docs/list_light2.png" alt="List light mode" width="250">
