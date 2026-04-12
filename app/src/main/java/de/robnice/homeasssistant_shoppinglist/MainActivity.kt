@@ -39,11 +39,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryEntity
 import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryRepository
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -69,6 +72,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
 import de.robnice.homeasssistant_shoppinglist.util.Debug
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
@@ -77,9 +81,11 @@ import kotlinx.coroutines.flow.flowOf
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandBlue
+import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandBlueGlow
 import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandGreen
 import de.robnice.homeasssistant_shoppinglist.ui.theme.BrandOrange
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -257,6 +263,11 @@ fun ShoppingScreen(navController: NavController) {
     val authFailed by viewModel.authFailed.collectAsState()
     val isOffline by viewModel.isOffline.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    var headerPulseKey by remember { mutableStateOf(0) }
+
+    val triggerHeaderPulse = {
+        headerPulseKey += 1
+    }
 
     LaunchedEffect(repo, notificationsEnabled) {
         if (notificationsEnabled) {
@@ -274,6 +285,12 @@ fun ShoppingScreen(navController: NavController) {
                 context.getString(R.string.reconnected),
                 Toast.LENGTH_SHORT
             ).show()
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.remoteActivity.collect {
+            headerPulseKey += 1
         }
     }
 
@@ -384,7 +401,8 @@ fun ShoppingScreen(navController: NavController) {
                             HeaderWordmark(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(44.dp)
+                                    .height(44.dp),
+                                pulseKey = headerPulseKey
                             )
 
                             if (isOffline) {
@@ -479,6 +497,7 @@ fun ShoppingScreen(navController: NavController) {
                                     keyboardActions = KeyboardActions(
                                         onDone = {
                                             if (newItem.isNotBlank()) {
+                                                triggerHeaderPulse()
                                                 viewModel.addItem(newItem.trim())
                                                 newItem = ""
                                             }
@@ -491,6 +510,7 @@ fun ShoppingScreen(navController: NavController) {
                                 IconButton(
                                     onClick = {
                                         if (newItem.isNotBlank()) {
+                                            triggerHeaderPulse()
                                             viewModel.addItem(newItem)
                                             newItem = ""
                                         }
@@ -529,6 +549,7 @@ fun ShoppingScreen(navController: NavController) {
                                             suggestion = suggestion,
                                             canDelete = suggestion.normalizedName !in currentItemNames,
                                             onSelect = {
+                                                triggerHeaderPulse()
                                                 viewModel.addItem(suggestion.displayName)
                                                 newItem = ""
                                             },
@@ -592,10 +613,37 @@ fun ShoppingScreen(navController: NavController) {
                     val lazyListState = rememberLazyListState()
 
                     var draggingOpenKey by remember { mutableStateOf<String?>(null) }
+                    var dragStartIndex by remember { mutableStateOf<Int?>(null) }
+                    var droppedItemId by remember { mutableStateOf<String?>(null) }
 
                     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
                         localOpenItems = localOpenItems.toMutableList().apply {
                             add(to.index, removeAt(from.index))
+                        }
+                    }
+
+                    val currentDragIndex = remember(draggingOpenKey, localOpenItems) {
+                        val draggedId = draggingOpenKey?.removePrefix("open_") ?: return@remember -1
+                        localOpenItems.indexOfFirst { it.id == draggedId }
+                    }
+                    val hasActiveDropPreview =
+                        draggingOpenKey != null &&
+                            dragStartIndex != null &&
+                            currentDragIndex >= 0 &&
+                            currentDragIndex != dragStartIndex
+                    val insertLineBeforeIndex =
+                        if (hasActiveDropPreview && currentDragIndex < localOpenItems.lastIndex) {
+                            currentDragIndex + 1
+                        } else {
+                            null
+                        }
+                    val showInsertLineAtEnd =
+                        hasActiveDropPreview && currentDragIndex == localOpenItems.lastIndex
+
+                    LaunchedEffect(droppedItemId) {
+                        if (droppedItemId != null) {
+                            kotlinx.coroutines.delay(650)
+                            droppedItemId = null
                         }
                     }
 
@@ -615,14 +663,49 @@ fun ShoppingScreen(navController: NavController) {
                             .fillMaxWidth()
                     ) {
 
-                        items(
+                        itemsIndexed(
                             items = localOpenItems,
-                            key = { "open_${it.id}" }
-                        ) { item ->
+                            key = { _, openItem -> "open_${openItem.id}" }
+                        ) { index, item ->
 
                             val openKey = "open_${item.id}"
 
                             ReorderableItem(reorderState, key = openKey) { isDragging ->
+                                val isJustDropped = droppedItemId == item.id
+                                val baseContainer = MaterialTheme.colorScheme.surfaceVariant
+                                val targetContainer = when {
+                                    isDragging -> lerp(
+                                        baseContainer,
+                                        if (isSystemInDarkTheme()) BrandBlueGlow else BrandBlue,
+                                        if (isSystemInDarkTheme()) 0.22f else 0.12f
+                                    )
+                                    isJustDropped -> lerp(
+                                        baseContainer,
+                                        BrandGreen,
+                                        if (isSystemInDarkTheme()) 0.18f else 0.12f
+                                    )
+                                    else -> baseContainer
+                                }
+                                val containerColor by animateColorAsState(
+                                    targetValue = targetContainer,
+                                    label = "dragCardColor"
+                                )
+                                val borderColor by animateColorAsState(
+                                    targetValue = when {
+                                        isDragging -> BrandBlue
+                                        isJustDropped -> BrandGreen
+                                        else -> Color.Transparent
+                                    },
+                                    label = "dragCardBorderColor"
+                                )
+                                val borderWidth by animateDpAsState(
+                                    targetValue = when {
+                                        isDragging -> 1.5.dp
+                                        isJustDropped -> 1.dp
+                                        else -> 0.dp
+                                    },
+                                    label = "dragCardBorderWidth"
+                                )
 
                                 val elevation by animateDpAsState(
                                     targetValue = if (isDragging) 16.dp else 2.dp,
@@ -637,8 +720,13 @@ fun ShoppingScreen(navController: NavController) {
                                 Card(
                                     elevation = CardDefaults.cardElevation(elevation),
                                     shape = MaterialTheme.shapes.large,
+                                    border = if (borderWidth > 0.dp) {
+                                        BorderStroke(borderWidth, borderColor)
+                                    } else {
+                                        null
+                                    },
                                     colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                        containerColor = containerColor
                                     ),
                                     modifier = Modifier
                                         .graphicsLayer {
@@ -647,17 +735,27 @@ fun ShoppingScreen(navController: NavController) {
                                         }
                                         .fillMaxWidth()
                                         .longPressDraggableHandle(
-                                            onDragStarted = { draggingOpenKey = openKey },
+                                            onDragStarted = {
+                                                draggingOpenKey = openKey
+                                                dragStartIndex = index
+                                                droppedItemId = null
+                                            },
                                             onDragStopped = {
                                                 val id = draggingOpenKey?.removePrefix("open_")
                                                     ?: return@longPressDraggableHandle
+                                                val startIndex = dragStartIndex
                                                 draggingOpenKey = null
+                                                dragStartIndex = null
 
                                                 val endIndex =
                                                     localOpenItems.indexOfFirst { it.id == id }
                                                 if (endIndex < 0) return@longPressDraggableHandle
 
                                                 val movedItem = localOpenItems[endIndex]
+                                                if (startIndex != null && startIndex != endIndex) {
+                                                    droppedItemId = movedItem.id
+                                                    triggerHeaderPulse()
+                                                }
                                                 val previousItemId =
                                                     if (endIndex > 0) localOpenItems[endIndex - 1].id else null
 
@@ -665,22 +763,53 @@ fun ShoppingScreen(navController: NavController) {
                                             }
                                         )
                                 ) {
-                                    ShoppingRow(
-                                        item = item,
-                                        isEditing = editingItemId == item.id,
-                                        onStartEdit = { clickedId ->
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                        if (insertLineBeforeIndex == index) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(4.dp)
+                                                    .padding(horizontal = 18.dp, vertical = 2.dp)
+                                                    .background(
+                                                        color = BrandOrange,
+                                                        shape = RoundedCornerShape(999.dp)
+                                                    )
+                                            )
+                                        }
 
-                                            if (editingItemId != null && editingItemId != clickedId) {
-                                                editingItemId = null
-                                                return@ShoppingRow
-                                            }
+                                        ShoppingRow(
+                                            item = item,
+                                            isEditing = editingItemId == item.id,
+                                            onStartEdit = { clickedId ->
 
-                                            editingItemId = clickedId
-                                        },
-                                        onStopEdit = { editingItemId = null },
-                                        viewModel = viewModel
-                                    )
+                                                if (editingItemId != null && editingItemId != clickedId) {
+                                                    editingItemId = null
+                                                    return@ShoppingRow
+                                                }
+
+                                                editingItemId = clickedId
+                                            },
+                                            onStopEdit = { editingItemId = null },
+                                            viewModel = viewModel,
+                                            onServerInteraction = triggerHeaderPulse
+                                        )
+                                    }
                                 }
+                            }
+                        }
+
+                        if (showInsertLineAtEnd) {
+                            item(key = "open_drop_indicator_end") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(4.dp)
+                                        .padding(horizontal = 18.dp, vertical = 2.dp)
+                                        .background(
+                                            color = BrandOrange,
+                                            shape = RoundedCornerShape(999.dp)
+                                        )
+                                )
                             }
                         }
 
@@ -692,18 +821,22 @@ fun ShoppingScreen(navController: NavController) {
                                 Spacer(Modifier.height(16.dp))
                                 HorizontalDivider(
                                     thickness = 1.dp,
-                                    color = MaterialTheme.colorScheme.outlineVariant
+                                    color = BrandOrange.copy(alpha = if (isSystemInDarkTheme()) 0.45f else 0.35f)
                                 )
                                 Spacer(Modifier.height(8.dp))
 
                                 TextButton(
                                     onClick = {
                                         completedExpanded = !completedExpanded
-                                    }
+                                    },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = BrandOrange
+                                    )
                                 ) {
                                     Text(
                                         text = "${t(R.string.completed)} (${completedItems.size})",
-                                        style = MaterialTheme.typography.titleMedium
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                     Text(if (completedExpanded) "▲" else "▼")
                                 }
@@ -714,22 +847,39 @@ fun ShoppingScreen(navController: NavController) {
                                     items = completedItems,
                                     key = { "completed_${it.id}" }
                                 ) { item ->
-                                    ShoppingRow(
-                                        item = item,
-                                        isEditing = editingItemId == item.id,
-                                        onStartEdit = { clickedId ->
+                                    Card(
+                                        shape = MaterialTheme.shapes.large,
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = lerp(
+                                                MaterialTheme.colorScheme.surfaceVariant,
+                                                BrandGreen,
+                                                if (isSystemInDarkTheme()) 0.14f else 0.10f
+                                            )
+                                        ),
+                                        border = BorderStroke(
+                                            1.dp,
+                                            BrandGreen.copy(alpha = if (isSystemInDarkTheme()) 0.36f else 0.24f)
+                                        )
+                                    ) {
+                                        ShoppingRow(
+                                            item = item,
+                                            isEditing = editingItemId == item.id,
+                                            onStartEdit = { clickedId ->
 
-                                            if (editingItemId != null && editingItemId != clickedId) {
-                                                editingItemId = null
-                                                return@ShoppingRow
-                                            }
+                                                if (editingItemId != null && editingItemId != clickedId) {
+                                                    editingItemId = null
+                                                    return@ShoppingRow
+                                                }
 
-                                            editingItemId = clickedId
-                                        },
-                                        onStopEdit = { editingItemId = null },
-                                        viewModel = viewModel,
-                                        animateVisibility = false
-                                    )
+                                                editingItemId = clickedId
+                                            },
+                                            onStopEdit = { editingItemId = null },
+                                            viewModel = viewModel,
+                                            onServerInteraction = triggerHeaderPulse,
+                                            animateVisibility = false,
+                                            modifier = Modifier.padding(horizontal = 4.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -756,22 +906,22 @@ fun ShoppingScreen(navController: NavController) {
 
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isSystemInDarkTheme()) {
-                                    Color(0xFF5A2C33)
+                                    BrandOrange.copy(alpha = 0.24f)
                                 } else {
-                                    Color(0xFFF1D8DD)
+                                    BrandOrange.copy(alpha = 0.18f)
                                 },
                                 contentColor = if (isSystemInDarkTheme()) {
-                                    Color(0xFFFFE7EA)
+                                    Color(0xFFFFE7C2)
                                 } else {
-                                    Color(0xFF6A2831)
+                                    Color(0xFF7A4A00)
                                 }
                             ),
                             border = BorderStroke(
                                 1.dp,
                                 if (isSystemInDarkTheme()) {
-                                    Color(0xFFD96C7C).copy(alpha = 0.42f)
+                                    BrandOrange.copy(alpha = 0.48f)
                                 } else {
-                                    Color(0xFFC46A78).copy(alpha = 0.38f)
+                                    BrandOrange.copy(alpha = 0.38f)
                                 }
                             ),
                             shape = RoundedCornerShape(14.dp)
@@ -803,6 +953,7 @@ fun ShoppingScreen(navController: NavController) {
                 TextButton(
                     onClick = {
                         showConfirmDialog = false
+                        triggerHeaderPulse()
                         viewModel.clearCompleted()
                     }
                 ) {
@@ -841,8 +992,19 @@ fun ShoppingScreen(navController: NavController) {
     }
 }
 
+private data class HeaderLineSegment(
+    val startPx: Float,
+    val endPx: Float,
+    val color: Color,
+    val laps: Int,
+    val durationMillis: Int
+)
+
 @Composable
-private fun HeaderWordmark(modifier: Modifier = Modifier) {
+private fun HeaderWordmark(
+    modifier: Modifier = Modifier,
+    pulseKey: Int = 0
+) {
     val isDarkTheme = isSystemInDarkTheme()
     val assetName = if (isDarkTheme) {
         "ha-shoplist-wordmark.svg"
@@ -854,46 +1016,108 @@ private fun HeaderWordmark(modifier: Modifier = Modifier) {
     } else {
         "ha-shoplist-cart-light.svg"
     }
+    val segmentProgress = remember {
+        listOf(
+            Animatable(0f),
+            Animatable(0f),
+            Animatable(0f),
+            Animatable(0f)
+        )
+    }
+
+    LaunchedEffect(pulseKey) {
+        if (pulseKey == 0) {
+            return@LaunchedEffect
+        }
+
+        segmentProgress.forEach { it.snapTo(0f) }
+        launch {
+            segmentProgress[0].animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1680, easing = LinearEasing)
+            )
+            segmentProgress[0].snapTo(0f)
+        }
+        launch {
+            segmentProgress[1].animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 980, easing = LinearEasing)
+            )
+            segmentProgress[1].snapTo(0f)
+        }
+        launch {
+            segmentProgress[2].animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1320, easing = LinearEasing)
+            )
+            segmentProgress[2].snapTo(0f)
+        }
+        launch {
+            segmentProgress[3].animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 860, easing = LinearEasing)
+            )
+            segmentProgress[3].snapTo(0f)
+        }
+    }
+
     Box(modifier = modifier) {
         Canvas(modifier = Modifier.matchParentSize()) {
             val y = size.height * 0.80f
             val stroke = 4.dp.toPx()
+            val backgroundStart = 22.dp.toPx()
+            val backgroundEnd = size.width
+            val trackLength = backgroundEnd - backgroundStart
             val cartStart = size.width - 34.dp.toPx()
             drawLine(
                 color = BrandBlue.copy(alpha = if (isDarkTheme) 0.34f else 0.22f),
-                start = Offset(22.dp.toPx(), y),
-                end = Offset(size.width, y),
+                start = Offset(backgroundStart, y),
+                end = Offset(backgroundEnd, y),
                 strokeWidth = stroke,
                 cap = StrokeCap.Round
             )
-            drawLine(
-                color = BrandOrange,
-                start = Offset(42.dp.toPx(), y),
-                end = Offset(108.dp.toPx(), y),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
+            val segments = listOf(
+                HeaderLineSegment(
+                    startPx = 42.dp.toPx(),
+                    endPx = 108.dp.toPx(),
+                    color = BrandOrange,
+                    laps = 1,
+                    durationMillis = 1680
+                ),
+                HeaderLineSegment(
+                    startPx = 126.dp.toPx(),
+                    endPx = 156.dp.toPx(),
+                    color = BrandGreen,
+                    laps = 2,
+                    durationMillis = 980
+                ),
+                HeaderLineSegment(
+                    startPx = 244.dp.toPx(),
+                    endPx = 310.dp.toPx(),
+                    color = BrandOrange,
+                    laps = 1,
+                    durationMillis = 1320
+                ),
+                HeaderLineSegment(
+                    startPx = cartStart - 74.dp.toPx(),
+                    endPx = cartStart - 14.dp.toPx(),
+                    color = BrandOrange,
+                    laps = 2,
+                    durationMillis = 860
+                )
             )
-            drawLine(
-                color = BrandGreen,
-                start = Offset(126.dp.toPx(), y),
-                end = Offset(156.dp.toPx(), y),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
-            drawLine(
-                color = BrandOrange,
-                start = Offset(244.dp.toPx(), y),
-                end = Offset(310.dp.toPx(), y),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
-            drawLine(
-                color = BrandOrange,
-                start = Offset(cartStart - 74.dp.toPx(), y),
-                end = Offset(cartStart - 14.dp.toPx(), y),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
+
+            segments.forEachIndexed { index, segment ->
+                val offsetPx = (segmentProgress[index].value * segment.laps * trackLength) % trackLength
+                drawWrappedHeaderSegment(
+                    trackStart = backgroundStart,
+                    trackLength = trackLength,
+                    y = y,
+                    strokeWidth = stroke,
+                    segment = segment,
+                    offsetPx = offsetPx
+                )
+            }
         }
         AsyncImage(
             modifier = Modifier.matchParentSize(),
@@ -913,6 +1137,45 @@ private fun HeaderWordmark(modifier: Modifier = Modifier) {
             alignment = Alignment.Center
         )
     }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawWrappedHeaderSegment(
+    trackStart: Float,
+    trackLength: Float,
+    y: Float,
+    strokeWidth: Float,
+    segment: HeaderLineSegment,
+    offsetPx: Float
+) {
+    val segmentWidth = segment.endPx - segment.startPx
+    val shiftedStart = ((segment.startPx - trackStart) + offsetPx) % trackLength
+    val shiftedEnd = shiftedStart + segmentWidth
+
+    if (shiftedEnd <= trackLength) {
+        drawLine(
+            color = segment.color,
+            start = Offset(trackStart + shiftedStart, y),
+            end = Offset(trackStart + shiftedEnd, y),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+        return
+    }
+
+    drawLine(
+        color = segment.color,
+        start = Offset(trackStart + shiftedStart, y),
+        end = Offset(trackStart + trackLength, y),
+        strokeWidth = strokeWidth,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = segment.color,
+        start = Offset(trackStart, y),
+        end = Offset(trackStart + (shiftedEnd - trackLength), y),
+        strokeWidth = strokeWidth,
+        cap = StrokeCap.Round
+    )
 }
 
 private fun String.toDisplayListTitle(): String {
@@ -977,12 +1240,19 @@ fun ShoppingRow(
     onStartEdit: (String) -> Unit,
     onStopEdit: () -> Unit,
     viewModel: ShoppingViewModel,
+    onServerInteraction: () -> Unit = {},
     modifier: Modifier = Modifier,
     animateVisibility: Boolean = true
 ) {
     var localChecked by remember(item.id) { mutableStateOf(item.complete) }
     val scope = rememberCoroutineScope()
     var editText by remember(item.id) { mutableStateOf(item.name) }
+    val isDarkTheme = isSystemInDarkTheme()
+    val completedTextColor = if (isDarkTheme) {
+        lerp(MaterialTheme.colorScheme.onSurface, BrandGreen, 0.48f)
+    } else {
+        lerp(MaterialTheme.colorScheme.onSurface, BrandGreen, 0.62f)
+    }
 
     val focusRequester = remember { FocusRequester() }
 
@@ -1025,11 +1295,14 @@ fun ShoppingRow(
             Checkbox(
                 checked = localChecked,
                 colors = CheckboxDefaults.colors(
-                    checkedColor = MaterialTheme.colorScheme.primary
+                    checkedColor = BrandGreen,
+                    checkmarkColor = if (isDarkTheme) Color.Black else Color.White,
+                    uncheckedColor = BrandBlue.copy(alpha = if (isDarkTheme) 0.9f else 0.72f)
                 ),
                 onCheckedChange = {
                     onStopEdit()
                     localChecked = it
+                    onServerInteraction()
                     scope.launch {
                         viewModel.toggleItem(item)
                     }
@@ -1041,6 +1314,7 @@ fun ShoppingRow(
 
                 val saveEdit = {
                     if (editText.isNotBlank() && editText != item.name) {
+                        onServerInteraction()
                         viewModel.renameItem(item, editText)
                     }
                     onStopEdit()
@@ -1087,7 +1361,8 @@ fun ShoppingRow(
                         },
                     style = if (localChecked)
                         MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            color = completedTextColor,
+                            textDecoration = TextDecoration.LineThrough
                         )
                     else
                         MaterialTheme.typography.bodyLarge

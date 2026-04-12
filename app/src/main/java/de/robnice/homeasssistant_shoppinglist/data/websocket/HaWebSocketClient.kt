@@ -176,7 +176,7 @@ class HaWebSocketClient(
 
     fun isReady(): Boolean = isConnected && isAuthenticated && webSocket != null
 
-    fun send(type: String, payload: JSONObject = JSONObject()): Int {
+    fun send(type: String, payload: JSONObject = JSONObject()): Boolean {
         val id = messageId.getAndIncrement()
 
         val msg = JSONObject()
@@ -187,9 +187,14 @@ class HaWebSocketClient(
             msg.put(key, payload.get(key))
         }
 
-        webSocket?.send(msg.toString())
+        val sent = webSocket?.send(msg.toString()) == true
+        if (!sent) {
+            Debug.log("WS send failed for type=$type")
+            isConnected = false
+            isAuthenticated = false
+        }
 
-        return id
+        return sent
     }
 
     fun ensureConnected() {

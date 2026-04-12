@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">HA ShopList</string>
     <string name="settings">Einstellungen</string>
-    <string name="settings_cta">Einstellungen  öffnen</string>
+    <string name="settings_cta">Einstellungen öffnen</string>
     <string name="settings_title">Einstellungen</string>
     <string name="ha_url">Home Assistant URL</string>
     <string name="notifications_enabled">Benachrichtigungen erlauben</string>
@@ -26,9 +26,9 @@
     <string name="auth_failed_title">Authentifizierung fehlgeschlagen</string>
     <string name="auth_failed_text">Bitte überprüfe deinen Token oder die Home-Assistant URL.</string>
     <string name="connection_errors_title">Verbindung fehlgeschlagen</string>
-    <string name="connection_errors_text">Bitte überprüfe deinen Home-Assistant URL.</string>
+    <string name="connection_errors_text">Bitte überprüfe deine Home-Assistant URL und Internetverbindung und versuche es erneut.</string>
     <string name="alwaysActiveMsg">App dauerhaft aktiv im Hintergrund</string>
-    <string name="appIsRunning">HA ShopListläuft</string>
+    <string name="appIsRunning">HA ShopList läuft</string>
     <string name="reconnected">Verbindung wieder hergestellt</string>
     <string name="settings_list">Liste</string>
     <string name="loading_failed">Laden fehlgeschlagen</string>
@@ -46,6 +46,17 @@
     <string name="product_history_clear_confirm">Löschen</string>
     <string name="privacy_policy">Datenschutzerklärung</string>
     <string name="close">Schließen</string>
+    <string name="help_link_label">Hilfe</string>
+    <string name="help_notifications_title">Benachrichtigungen</string>
+    <string name="help_notifications_text">Aktiviere Benachrichtigungen, damit die App auch im Hintergrund auf Änderungen aus Home Assistant reagieren kann. Deaktiviere sie, wenn du keine Hinweise oder Hintergrundaktualisierungen möchtest.</string>
+    <string name="help_ha_url_title">Home Assistant URL</string>
+    <string name="help_ha_url_text">Gib die vollständige Adresse deiner Home-Assistant-Instanz an, inklusive https:// oder http:// und optionalem Port. Beispiel: https://homeassistant.local:8123</string>
+    <string name="help_token_title">Long-Lived Token</string>
+    <string name="help_token_text">1. Öffne in Home Assistant dein Profil.\n2. Öffne dort den Reiter Sicherheit.\n3. Scrolle nach unten bis zum Bereich Long-Lived Access Tokens.\n4. Lege einen neuen Token an.\n5. Kopiere den Token sofort und füge ihn hier ein.\n\nDer Token wird nur einmal angezeigt und wird benötigt, damit die App deine Einkaufsliste sicher laden und aktualisieren kann.</string>
+    <string name="help_list_selection_title">Listenauswahl</string>
+    <string name="help_list_selection_text">Wähle aus, welche Todo-Liste aus Home Assistant diese App verwenden soll. Die Listen werden erst geladen, wenn eine gültige URL und ein gültiger Token eingegeben wurden.</string>
+    <string name="help_product_history_title">Produkthistorie</string>
+    <string name="help_product_history_text">Die App speichert bereits verwendete Produktnamen lokal auf diesem Gerät, um beim Hinzufügen neuer Einträge Autovervollständigung anzubieten. Beim Löschen der Historie werden nur diese lokalen Vorschläge entfernt.</string>
     <string name="offline_chip">Offline</string>
     <string name="offline_dialog_title">Offline-Modus</string>
     <string name="offline_dialog_text">Die aktuelle Liste bleibt sichtbar und kann weiter bearbeitet werden. Sobald Home Assistant wieder erreichbar ist, werden die Änderungen automatisch synchronisiert.</string>

@@ -18,6 +18,7 @@ class ShoppingViewModel(
     val connectionErrors = repository.connectionErrors
     val isOffline = repository.isOffline
     val newItems = repository.newItems
+    val remoteActivity = repository.remoteActivity
 
 
     val isLoading = combine(repository.loaded, repository.items) { loaded, items ->
