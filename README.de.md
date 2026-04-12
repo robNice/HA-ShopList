@@ -103,6 +103,5 @@ Vorgehen:
 Alle erledigten Items werden anschließend aus der Liste entfernt.
 
 ## Screenshots
-
-![list_darkmode](docs/list_dark.png)
-![list_lightmode](docs/list_light.png)
+<img src="docs/list_dark.png" alt="List dark mode" width="200">
+<img src="docs/list_light.png" alt="List light mode" width="200">
