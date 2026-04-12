@@ -101,3 +101,8 @@ Vorgehen:
 3. Löschvorgang im Dialog bestätigen
 
 Alle erledigten Items werden anschließend aus der Liste entfernt.
+
+## Screenshots
+
+![list_darkmode](docs/list_dark.png)
+![list_lightmode](docs/list_light.png)
