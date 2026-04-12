@@ -34,4 +34,12 @@
     <string name="loading_failed">Laden fehlgeschlagen</string>
     <string name="loading_lists">Listen werden geladen</string>
     <string name="error_list_not_loaded">Listen konnten nicht geladen werden</string>
+    <string name="error_no_lists_found">Auf dieser Home-Assistant-Instanz wurden keine Todo-Listen gefunden.</string>
+    <string name="retry">Erneut laden</string>
+    <string name="save_edit">Bearbeitung speichern</string>
+    <string name="offline_chip">Offline</string>
+    <string name="offline_dialog_title">Offline-Modus</string>
+    <string name="offline_dialog_text">Die aktuelle Liste bleibt sichtbar und kann weiter bearbeitet werden. Sobald Home Assistant wieder erreichbar ist, werden die Änderungen automatisch synchronisiert.</string>
+    <string name="offline_dialog_confirm">OK</string>
+    <string name="offline_empty_list">Offline. Es ist noch keine zwischengespeicherte Liste verfÃ¼gbar.</string>
 </resources>

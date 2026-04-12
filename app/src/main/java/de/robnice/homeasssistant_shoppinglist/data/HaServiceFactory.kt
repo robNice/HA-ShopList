@@ -1,7 +1,6 @@
 package de.robnice.homeasssistant_shoppinglist.data
 
 import de.robnice.homeasssistant_shoppinglist.util.Debug
-import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -26,7 +25,7 @@ object HaServiceFactory {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
-        val client = OkHttpClient.Builder()
+        val client = HaOkHttpFactory.newBuilder()
             .addInterceptor(logging)
             .build()
 

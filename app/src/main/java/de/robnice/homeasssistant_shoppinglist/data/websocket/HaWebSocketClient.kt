@@ -1,5 +1,6 @@
 package de.robnice.homeasssistant_shoppinglist.data.websocket
 
+import de.robnice.homeasssistant_shoppinglist.data.HaOkHttpFactory
 import de.robnice.homeasssistant_shoppinglist.util.Debug
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -7,12 +8,6 @@ import okhttp3.*
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.*
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import okhttp3.OkHttpClient
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
-import javax.net.ssl.*
 class HaWebSocketClient(
 
     private val baseUrl: String,
@@ -22,11 +17,7 @@ class HaWebSocketClient(
     @Volatile
     private var reconnectAllowed = true
 
-    // Secure client
-    private val client = OkHttpClient.Builder().pingInterval(30, java.util.concurrent.TimeUnit.SECONDS).build()
-
-    // Unsecure Client
-    //private val client = buildOkHttpClientTrustAll()
+    private val client = HaOkHttpFactory.newBuilder().build()
 
     private var webSocket: WebSocket? = null
     private val messageId = AtomicInteger(1)
@@ -48,6 +39,9 @@ class HaWebSocketClient(
 
     private val _connectionErrors = MutableSharedFlow<String>(replay = 1)
     val connectionErrors = _connectionErrors.asSharedFlow()
+
+    private val _disconnected = MutableSharedFlow<Unit>(replay = 1)
+    val disconnected = _disconnected.asSharedFlow()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var reconnectJob: Job? = null
@@ -97,30 +91,6 @@ class HaWebSocketClient(
         webSocket = client.newWebSocket(request, socketListener)
     }
 
-    private fun buildOkHttpClientTrustAll(): OkHttpClient {
-        val trustAllCerts = arrayOf<TrustManager>(
-            object : X509TrustManager {
-                override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = Unit
-                override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) = Unit
-                override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
-            }
-        )
-
-        val sslContext = SSLContext.getInstance("TLS").apply {
-            init(null, trustAllCerts, SecureRandom())
-        }
-
-        val trustManager = trustAllCerts[0] as X509TrustManager
-        val sslSocketFactory = sslContext.socketFactory
-
-        return OkHttpClient.Builder()
-            .sslSocketFactory(sslSocketFactory, trustManager)
-            .hostnameVerifier(HostnameVerifier { _, _ -> true }) // TRUST ALL HOSTNAMES (TEST ONLY)
-            .pingInterval(30, java.util.concurrent.TimeUnit.SECONDS)
-            .build()
-    }
-
-
     private val socketListener = object : WebSocketListener() {
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -139,6 +109,7 @@ class HaWebSocketClient(
             isConnecting = false
             this@HaWebSocketClient.webSocket = null
             Debug.log("WS CLOSED $code $reason")
+            _disconnected.tryEmit(Unit)
             scheduleReconnect()
         }
 
@@ -171,6 +142,7 @@ class HaWebSocketClient(
                     isAuthenticated = false
                     isConnected = false
                     isConnecting = false
+                    _disconnected.tryEmit(Unit)
                     _authFailed.tryEmit(Unit)
                 }
 
@@ -192,6 +164,7 @@ class HaWebSocketClient(
             Debug.log("WS FAILURE")
             t.printStackTrace()
 
+            _disconnected.tryEmit(Unit)
             _connectionErrors.tryEmit(
                 t.message ?: "Connection failed"
             )

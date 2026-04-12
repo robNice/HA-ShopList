@@ -10,6 +10,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -30,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingItem
@@ -50,10 +53,14 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import de.robnice.homeasssistant_shoppinglist.util.Debug
 import de.robnice.homeasssistant_shoppinglist.data.HaRuntime
@@ -178,8 +185,10 @@ fun ShoppingScreen(navController: NavController) {
     val dataStore = remember { SettingsDataStore(context) }
     val haUrl by dataStore.haUrl.collectAsState(initial = "")
     val haToken by dataStore.haToken.collectAsState(initial = "")
+    val todoEntity by dataStore.todoEntity.collectAsState(initial = "")
     var editingItemId by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    var showOfflineInfo by remember { mutableStateOf(false) }
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
 
     if (haUrl.isBlank() || haToken.isBlank()) {
@@ -214,7 +223,7 @@ fun ShoppingScreen(navController: NavController) {
     val viewModel = remember(repo) { ShoppingViewModel(repo) }
 
     val authFailed by viewModel.authFailed.collectAsState()
-    val connectionErrors by viewModel.connectionErrors.collectAsState()
+    val isOffline by viewModel.isOffline.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(repo, notificationsEnabled) {
@@ -264,17 +273,7 @@ fun ShoppingScreen(navController: NavController) {
     val items by viewModel.items.collectAsState()
 
 
-    if (authFailed || connectionErrors) {
-        val errorTitle: String
-        val errorText: String
-        if (authFailed) {
-            errorTitle = t(R.string.auth_failed_title)
-            errorText = t(R.string.auth_failed_text)
-        } else {
-            errorTitle = t(R.string.connection_errors_title)
-            errorText = t(R.string.connection_errors_text)
-        }
-
+    if (authFailed) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -294,14 +293,14 @@ fun ShoppingScreen(navController: NavController) {
                 ) {
 
                     Text(
-                        text = errorTitle,
+                        text = t(R.string.auth_failed_title),
                         style = MaterialTheme.typography.titleMedium
                     )
 
                     Spacer(Modifier.height(12.dp))
 
                     Text(
-                        text = errorText,
+                        text = t(R.string.auth_failed_text),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -324,11 +323,69 @@ fun ShoppingScreen(navController: NavController) {
     }
 
     var newItem by remember { mutableStateOf("") }
+    val listTitle = remember(todoEntity) { todoEntity.toDisplayListTitle() }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(t(R.string.app_name)) },
+                title = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "HA",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                Text(
+                                    text = "ShopList",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                            if (isOffline) {
+                                AssistChip(
+                                    onClick = { showOfflineInfo = true },
+                                    label = { Text(t(R.string.offline_chip)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.CloudOff,
+                                            contentDescription = null
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = listTitle,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                },
                 actions = {
                     IconButton(
                         onClick = {
@@ -431,7 +488,14 @@ fun ShoppingScreen(navController: NavController) {
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(t(R.string.no_items))
+                            Text(
+                                text = if (isOffline) {
+                                    t(R.string.offline_empty_list)
+                                } else {
+                                    t(R.string.no_items)
+                                },
+                                textAlign = TextAlign.Center
+                            )
                         }
                     } else {
                     val openItems = items.filter { !it.complete }
@@ -670,6 +734,47 @@ fun ShoppingScreen(navController: NavController) {
             }
         )
     }
+
+    if (showOfflineInfo) {
+        AlertDialog(
+            onDismissRequest = { showOfflineInfo = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null
+                )
+            },
+            title = { Text(t(R.string.offline_dialog_title)) },
+            text = { Text(t(R.string.offline_dialog_text)) },
+            confirmButton = {
+                TextButton(
+                    onClick = { showOfflineInfo = false }
+                ) {
+                    Text(t(R.string.offline_dialog_confirm))
+                }
+            }
+        )
+    }
+}
+
+private fun String.toDisplayListTitle(): String {
+    val rawName = substringAfter("todo.", this)
+        .replace('_', ' ')
+        .replace('-', ' ')
+        .trim()
+
+    if (rawName.isBlank()) {
+        return "Shopping List"
+    }
+
+    return rawName
+        .split(' ')
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { word ->
+            word.replaceFirstChar { char ->
+                if (char.isLowerCase()) char.titlecase() else char.toString()
+            }
+        }
 }
 
 
@@ -732,6 +837,7 @@ fun ShoppingRow(
                     checkedColor = MaterialTheme.colorScheme.primary
                 ),
                 onCheckedChange = {
+                    onStopEdit()
                     localChecked = it
                     scope.launch {
                         viewModel.toggleItem(item)
@@ -741,6 +847,13 @@ fun ShoppingRow(
 
 
             if (isEditing) {
+
+                val saveEdit = {
+                    if (editText.isNotBlank() && editText != item.name) {
+                        viewModel.renameItem(item, editText)
+                    }
+                    onStopEdit()
+                }
 
                 OutlinedTextField(
                     value = editText,
@@ -754,12 +867,20 @@ fun ShoppingRow(
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
-                            if (editText.isNotBlank() && editText != item.name) {
-                                viewModel.renameItem(item, editText)
-                            }
-                            onStopEdit()
+                            saveEdit()
                         }
-                    )
+                    ),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = saveEdit,
+                            enabled = editText.isNotBlank()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = t(R.string.save_edit)
+                            )
+                        }
+                    }
                 )
 
 

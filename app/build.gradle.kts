@@ -28,6 +28,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     val ksPath = System.getenv("ANDROID_KEYSTORE_PATH")
@@ -43,7 +44,12 @@ android {
         }
     }
     buildTypes {
+        debug {
+            buildConfigField("boolean", "ALLOW_INSECURE_HA", "true")
+        }
+
         release {
+            buildConfigField("boolean", "ALLOW_INSECURE_HA", "false")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

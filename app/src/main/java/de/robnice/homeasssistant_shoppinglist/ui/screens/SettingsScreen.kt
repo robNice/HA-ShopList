@@ -53,6 +53,7 @@ fun SettingsScreen(
     var todoExpanded by remember { mutableStateOf(false) }
     var todoLoading by remember { mutableStateOf(false) }
     var todoLoadError by remember { mutableStateOf<String?>(null) }
+    var todoReloadKey by remember { mutableStateOf(0) }
 
     LaunchedEffect(storedUrl, storedToken, storedTodoEntity) {
         url = storedUrl
@@ -60,9 +61,8 @@ fun SettingsScreen(
         todoEntity = storedTodoEntity
     }
 
-    LaunchedEffect(url, token) {
+    LaunchedEffect(url, token, todoReloadKey) {
         todoLoadError = null
-        todoOptions = emptyList()
 
         val cleanedUrl = normalizeHaUrl(url)
         val cleanedToken = token.trim()
@@ -80,7 +80,9 @@ fun SettingsScreen(
 
             todoOptions = loaded
 
-            if (todoEntity.isBlank()) {
+            if (loaded.isEmpty()) {
+                todoLoadError = context.getString(R.string.error_no_lists_found)
+            } else if (todoEntity.isBlank()) {
                 todoEntity = loaded.firstOrNull()?.id.orEmpty()
             } else if (loaded.none { it.id == todoEntity }) {
                 todoEntity = loaded.firstOrNull()?.id.orEmpty()
@@ -198,13 +200,6 @@ fun SettingsScreen(
                     }
                 }
 
-                todoLoadError != null -> {
-                    Text(
-                        text = t(R.string.error_list_not_loaded),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-
                 todoOptions.isNotEmpty() -> {
                     ExposedDropdownMenuBox(
                         expanded = todoExpanded,
@@ -255,6 +250,31 @@ fun SettingsScreen(
                             }
                         }
                     }
+                }
+            }
+
+            if (todoLoadError != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = t(R.string.error_list_not_loaded),
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = todoLoadError.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = { todoReloadKey++ }
+                ) {
+                    Text(t(R.string.retry))
                 }
             }
 
