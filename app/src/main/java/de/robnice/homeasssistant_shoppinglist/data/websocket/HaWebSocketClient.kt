@@ -45,10 +45,13 @@ class HaWebSocketClient(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var reconnectJob: Job? = null
+    private var heartbeatJob: Job? = null
     private var manualDisconnect = false
 
     @Volatile
     private var isConnecting = false
+    @Volatile
+    private var lastServerMessageAt = 0L
 
 
     fun connect() {
@@ -108,6 +111,7 @@ class HaWebSocketClient(
             isAuthenticated = false
             isConnecting = false
             this@HaWebSocketClient.webSocket = null
+            stopHeartbeat()
             Debug.log("WS CLOSED $code $reason")
             _disconnected.tryEmit(Unit)
             scheduleReconnect()
@@ -134,6 +138,8 @@ class HaWebSocketClient(
                     isAuthenticated = true
                     isConnected = true
                     isConnecting = false
+                    lastServerMessageAt = System.currentTimeMillis()
+                    startHeartbeat()
                     _ready.tryEmit(Unit)
                 }
 
@@ -146,7 +152,13 @@ class HaWebSocketClient(
                     _authFailed.tryEmit(Unit)
                 }
 
+                "pong" -> {
+                    lastServerMessageAt = System.currentTimeMillis()
+                    Debug.log("WS PONG")
+                }
+
                 else -> {
+                    lastServerMessageAt = System.currentTimeMillis()
                     _events.tryEmit(json)
                 }
             }
@@ -161,6 +173,7 @@ class HaWebSocketClient(
             isAuthenticated = false
             isConnecting = false
             this@HaWebSocketClient.webSocket = null
+            stopHeartbeat()
             Debug.log("WS FAILURE")
             t.printStackTrace()
 
@@ -226,6 +239,7 @@ class HaWebSocketClient(
 
         if (!allowed) {
             reconnectJob?.cancel()
+            stopHeartbeat()
         }
     }
 
@@ -233,7 +247,59 @@ class HaWebSocketClient(
         Debug.log("WS disconnect() called")
         manualDisconnect = true
         reconnectJob?.cancel()
+        stopHeartbeat()
         webSocket?.close(1000, "Closing")
+    }
+
+    private fun startHeartbeat() {
+        if (heartbeatJob?.isActive == true) return
+
+        heartbeatJob = scope.launch {
+            while (reconnectAllowed && isReady()) {
+                delay(HEARTBEAT_INTERVAL_MILLIS)
+                if (!reconnectAllowed || !isReady()) {
+                    return@launch
+                }
+
+                val pingSentAt = System.currentTimeMillis()
+                val sent = send(
+                    type = "ping",
+                    payload = JSONObject()
+                )
+                if (!sent) {
+                    markConnectionLost("Heartbeat ping send failed")
+                    return@launch
+                }
+
+                delay(HEARTBEAT_TIMEOUT_MILLIS)
+                if (reconnectAllowed && isReady() && lastServerMessageAt < pingSentAt) {
+                    markConnectionLost("Heartbeat ping timed out")
+                    return@launch
+                }
+            }
+        }
+    }
+
+    private fun stopHeartbeat() {
+        heartbeatJob?.cancel()
+        heartbeatJob = null
+    }
+
+    private fun markConnectionLost(reason: String) {
+        Debug.log("WS connection lost: $reason")
+        isConnected = false
+        isAuthenticated = false
+        isConnecting = false
+
+        try {
+            webSocket?.cancel()
+        } catch (_: Exception) {
+        }
+
+        webSocket = null
+        _disconnected.tryEmit(Unit)
+        _connectionErrors.tryEmit(reason)
+        scheduleReconnect()
     }
 
     private fun scheduleReconnect() {
@@ -250,5 +316,10 @@ class HaWebSocketClient(
                 connect()
             }
         }
+    }
+
+    companion object {
+        private const val HEARTBEAT_INTERVAL_MILLIS = 10_000L
+        private const val HEARTBEAT_TIMEOUT_MILLIS = 5_000L
     }
 }
