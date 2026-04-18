@@ -19,7 +19,7 @@ object HaOkHttpFactory {
             OkHttpClient.Builder()
         }
 
-        return builder.pingInterval(30, TimeUnit.SECONDS)
+        return builder.pingInterval(10, TimeUnit.SECONDS)
     }
 
     private fun buildInsecureBuilder(): OkHttpClient.Builder {
