@@ -58,6 +58,7 @@
     <string name="help_product_history_title">Historique des produits</string>
     <string name="help_product_history_text">L’application enregistre localement sur cet appareil les noms de produits déjà utilisés afin de proposer l’autocomplétion lors de l’ajout de nouveaux éléments. Effacer l’historique supprime uniquement ces suggestions locales.</string>
     <string name="offline_chip">Hors ligne</string>
+    <string name="connecting_chip">Reconnexion</string>
     <string name="offline_dialog_title">Mode hors ligne</string>
     <string name="offline_dialog_text">La liste actuelle reste disponible et vous pouvez continuer à la modifier. Vos changements seront synchronisés automatiquement dès que Home Assistant sera de nouveau accessible.</string>
     <string name="offline_dialog_confirm">OK</string>

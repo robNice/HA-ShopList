@@ -17,6 +17,7 @@ class ShoppingViewModel(
     val authFailed = repository.authFailed
     val connectionErrors = repository.connectionErrors
     val isOffline = repository.isOffline
+    val isConnecting = repository.isConnecting
     val newItems = repository.newItems
     val remoteActivity = repository.remoteActivity
 

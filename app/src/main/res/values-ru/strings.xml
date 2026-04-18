@@ -58,6 +58,7 @@
     <string name="help_product_history_title">История продуктов</string>
     <string name="help_product_history_text">Приложение локально сохраняет на этом устройстве названия ранее использованных продуктов, чтобы предлагать автодополнение при добавлении новых элементов. Очистка истории удаляет только эти локальные подсказки.</string>
     <string name="offline_chip">Офлайн</string>
+    <string name="connecting_chip">Повторное подключение</string>
     <string name="offline_dialog_title">Офлайн-режим</string>
     <string name="offline_dialog_text">Текущий список остаётся доступным, и вы можете продолжать его редактировать. Ваши изменения будут синхронизированы автоматически, когда Home Assistant снова станет доступен.</string>
     <string name="offline_dialog_confirm">OK</string>

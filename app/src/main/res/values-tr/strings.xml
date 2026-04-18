@@ -58,6 +58,7 @@
     <string name="help_product_history_title">Ürün geçmişi</string>
     <string name="help_product_history_text">Uygulama, yeni öğeler eklerken otomatik tamamlama sunmak için daha önce kullanılan ürün adlarını bu cihazda yerel olarak saklar. Geçmişi temizlemek yalnızca bu yerel önerileri kaldırır.</string>
     <string name="offline_chip">Çevrimdışı</string>
+    <string name="connecting_chip">Yeniden bağlanıyor</string>
     <string name="offline_dialog_title">Çevrimdışı mod</string>
     <string name="offline_dialog_text">Mevcut liste kullanılabilir durumda kalır ve düzenlemeye devam edebilirsiniz. Home Assistant yeniden erişilebilir olduğunda değişiklikleriniz otomatik olarak senkronize edilir.</string>
     <string name="offline_dialog_confirm">OK</string>
