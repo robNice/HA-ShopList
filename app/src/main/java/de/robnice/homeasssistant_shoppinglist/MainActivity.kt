@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -262,6 +263,7 @@ fun ShoppingScreen(navController: NavController) {
 
     val authFailed by viewModel.authFailed.collectAsState()
     val isOffline by viewModel.isOffline.collectAsState()
+    val isConnecting by viewModel.isConnecting.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var headerPulseKey by remember { mutableStateOf(0) }
 
@@ -405,13 +407,25 @@ fun ShoppingScreen(navController: NavController) {
                                 pulseKey = headerPulseKey
                             )
 
-                            if (isOffline) {
+                            if (isConnecting || isOffline) {
                                 AssistChip(
                                     onClick = { showOfflineInfo = true },
-                                    label = { Text(t(R.string.offline_chip)) },
+                                    label = {
+                                        Text(
+                                            if (isConnecting) {
+                                                t(R.string.connecting_chip)
+                                            } else {
+                                                t(R.string.offline_chip)
+                                            }
+                                        )
+                                    },
                                     leadingIcon = {
                                         Icon(
-                                            imageVector = Icons.Default.CloudOff,
+                                            imageVector = if (isConnecting) {
+                                                Icons.Default.Sync
+                                            } else {
+                                                Icons.Default.CloudOff
+                                            },
                                             contentDescription = null
                                         )
                                     }

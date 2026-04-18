@@ -58,6 +58,7 @@
     <string name="help_product_history_title">Produkthistorie</string>
     <string name="help_product_history_text">Die App speichert bereits verwendete Produktnamen lokal auf diesem Gerät, um beim Hinzufügen neuer Einträge Autovervollständigung anzubieten. Beim Löschen der Historie werden nur diese lokalen Vorschläge entfernt.</string>
     <string name="offline_chip">Offline</string>
+    <string name="connecting_chip">Verbindung wird wiederhergestellt</string>
     <string name="offline_dialog_title">Offline-Modus</string>
     <string name="offline_dialog_text">Die aktuelle Liste bleibt sichtbar und kann weiter bearbeitet werden. Sobald Home Assistant wieder erreichbar ist, werden die Änderungen automatisch synchronisiert.</string>
     <string name="offline_dialog_confirm">OK</string>

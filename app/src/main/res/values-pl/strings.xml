@@ -58,6 +58,7 @@
     <string name="help_product_history_title">Historia produktów</string>
     <string name="help_product_history_text">Aplikacja zapisuje lokalnie na tym urządzeniu nazwy wcześniej używanych produktów, aby oferować autouzupełnianie podczas dodawania nowych elementów. Wyczyszczenie historii usuwa tylko te lokalne sugestie.</string>
     <string name="offline_chip">Offline</string>
+    <string name="connecting_chip">Ponowne łączenie</string>
     <string name="offline_dialog_title">Tryb offline</string>
     <string name="offline_dialog_text">Aktualna lista pozostaje dostępna i możesz ją dalej edytować. Twoje zmiany zostaną zsynchronizowane automatycznie, gdy Home Assistant znów będzie osiągalny.</string>
     <string name="offline_dialog_confirm">OK</string>

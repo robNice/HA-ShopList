@@ -58,6 +58,7 @@
     <string name="help_product_history_title">Product history</string>
     <string name="help_product_history_text">The app stores previously used product names on this device to offer autocomplete when you add new items. Clearing the history removes these local suggestions.</string>
     <string name="offline_chip">Offline</string>
+    <string name="connecting_chip">Reconnecting</string>
     <string name="offline_dialog_title">Offline mode</string>
     <string name="offline_dialog_text">The current list stays available and you can keep editing it. Your changes will sync automatically when Home Assistant is reachable again.</string>
     <string name="offline_dialog_confirm">OK</string>

@@ -58,6 +58,7 @@
     <string name="help_product_history_title">Histórico de produtos</string>
     <string name="help_product_history_text">O aplicativo salva localmente neste dispositivo os nomes de produtos já usados para oferecer preenchimento automático ao adicionar novos itens. Limpar o histórico remove apenas essas sugestões locais.</string>
     <string name="offline_chip">Offline</string>
+    <string name="connecting_chip">Reconectando</string>
     <string name="offline_dialog_title">Modo offline</string>
     <string name="offline_dialog_text">A lista atual continua disponível e você pode continuar editando-a. Suas alterações serão sincronizadas automaticamente quando o Home Assistant voltar a estar acessível.</string>
     <string name="offline_dialog_confirm">OK</string>

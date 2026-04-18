@@ -58,6 +58,7 @@
     <string name="help_product_history_title">商品履歴</string>
     <string name="help_product_history_text">このアプリは、新しい項目を追加するときにオートコンプリートを提供するため、過去に使った商品名をこの端末にローカル保存します。履歴を削除すると、これらのローカル候補だけが削除されます。</string>
     <string name="offline_chip">オフライン</string>
+    <string name="connecting_chip">再接続中</string>
     <string name="offline_dialog_title">オフラインモード</string>
     <string name="offline_dialog_text">現在のリストは引き続き利用でき、編集も続けられます。Home Assistant に再び接続できるようになると、変更は自動的に同期されます。</string>
     <string name="offline_dialog_confirm">OK</string>

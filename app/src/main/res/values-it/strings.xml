@@ -58,6 +58,7 @@
     <string name="help_product_history_title">Cronologia prodotti</string>
     <string name="help_product_history_text">L’app salva localmente su questo dispositivo i nomi dei prodotti già usati per offrire l’autocompletamento quando aggiungi nuovi elementi. Cancellare la cronologia rimuove solo questi suggerimenti locali.</string>
     <string name="offline_chip">Offline</string>
+    <string name="connecting_chip">Riconnessione</string>
     <string name="offline_dialog_title">Modalità offline</string>
     <string name="offline_dialog_text">La lista attuale resta disponibile e puoi continuare a modificarla. Le tue modifiche verranno sincronizzate automaticamente quando Home Assistant sarà di nuovo raggiungibile.</string>
     <string name="offline_dialog_confirm">OK</string>

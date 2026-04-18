@@ -8,6 +8,7 @@ import de.robnice.homeasssistant_shoppinglist.util.Debug
 import de.robnice.homeasssistant_shoppinglist.util.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,12 +32,12 @@ class HaWebSocketRepository(
             val itemId: String,
             val name: String,
             val complete: Boolean,
-            val sentToServer: Boolean
+            val lastSentAtMillis: Long?
         ) : PendingAction
 
         data class Remove(
             val itemId: String,
-            val sentToServer: Boolean
+            val lastSentAtMillis: Long?
         ) : PendingAction
     }
 
@@ -45,10 +46,11 @@ class HaWebSocketRepository(
         val name: String,
         val complete: Boolean,
         val previousItemId: String?,
-        val sentToServer: Boolean
+        val lastSentAtMillis: Long?
     )
 
     private val client = HaWebSocketClient(baseUrl, token)
+    private val pendingSyncPrefs = appContext.getSharedPreferences(PENDING_SYNC_PREFS, Context.MODE_PRIVATE)
     private val productHistoryRepository = ProductHistoryRepository.getInstance(appContext)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val lock = Any()
@@ -58,6 +60,7 @@ class HaWebSocketRepository(
     private val _authFailed = MutableStateFlow(false)
     private val _connectionErrors = MutableStateFlow(false)
     private val _isOffline = MutableStateFlow(false)
+    private val _isConnecting = MutableStateFlow(false)
     private val _newItems = MutableSharedFlow<ShoppingItem>(replay = 1)
     private val _remoteActivity = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     private val _loaded = MutableStateFlow(false)
@@ -67,6 +70,7 @@ class HaWebSocketRepository(
     val authFailed = _authFailed.asStateFlow()
     val connectionErrors = _connectionErrors.asStateFlow()
     val isOffline = _isOffline.asStateFlow()
+    val isConnecting = _isConnecting.asStateFlow()
     val items = _items.asStateFlow()
     val newItems = _newItems.asSharedFlow()
     val remoteActivity = _remoteActivity.asSharedFlow()
@@ -79,10 +83,12 @@ class HaWebSocketRepository(
     private var pendingOpenOrderSentToServer = false
     private var lastRemoteItems: List<ShoppingItem> = emptyList()
     private var hadReadyOnce = false
+    private var pendingRetryJob: Job? = null
     @Volatile
     private var syncInProgress = false
 
     init {
+        restorePendingChanges()
         client.connect()
 
         scope.launch {
@@ -98,6 +104,7 @@ class HaWebSocketRepository(
                 Debug.log("REPOSITORY: connection error")
                 _connectionErrors.value = true
                 _isOffline.value = true
+                _isConnecting.value = false
                 if (_items.value.isEmpty()) {
                     _loaded.value = true
                 }
@@ -112,6 +119,7 @@ class HaWebSocketRepository(
 
                 Debug.log("REPOSITORY: disconnected")
                 _isOffline.value = true
+                _isConnecting.value = false
                 if (_items.value.isEmpty()) {
                     _loaded.value = true
                 }
@@ -123,6 +131,7 @@ class HaWebSocketRepository(
                 _authFailed.value = false
                 _connectionErrors.value = false
                 _isOffline.value = false
+                _isConnecting.value = false
 
                 val wasReconnect = hadReadyOnce
                 hadReadyOnce = true
@@ -141,6 +150,7 @@ class HaWebSocketRepository(
                 if (!subscribeSent) {
                     Debug.log("REPOSITORY: subscribe send failed after ready -> reconnect")
                     _isOffline.value = true
+                    _isConnecting.value = false
                     client.ensureConnected()
                     return@collect
                 }
@@ -159,6 +169,8 @@ class HaWebSocketRepository(
                     when (json.optString("type")) {
                         "result" -> {
                             if (!json.optBoolean("success")) {
+                                Debug.log("REPOSITORY: websocket command result failed -> retry pending changes")
+                                markPendingChangesForRetry()
                                 return@collect
                             }
 
@@ -217,6 +229,7 @@ class HaWebSocketRepository(
             pruneSatisfiedPendingOpenOrder(parsedRemote)
             val withPendingApplied = applyPendingActions(parsedRemote)
             val withPendingOrderApplied = applyPendingOpenOrder(withPendingApplied)
+            persistPendingChangesLocked()
             withPendingOrderApplied + pendingLocalAdds.values.map { it.toShoppingItem() }
         }
 
@@ -270,7 +283,7 @@ class HaWebSocketRepository(
                     itemId = matched.id,
                     name = pendingAdd.name,
                     complete = true,
-                    sentToServer = false
+                    lastSentAtMillis = null
                 )
             }
 
@@ -326,6 +339,7 @@ class HaWebSocketRepository(
         if (!sent) {
             Debug.log("REPOSITORY: loadItems send failed -> reconnect")
             _isOffline.value = true
+            _isConnecting.value = false
             client.ensureConnected()
         }
     }
@@ -336,15 +350,6 @@ class HaWebSocketRepository(
             return
         }
 
-        if (client.isReady()) {
-            locallyAddedItemNames.add(trimmed)
-            scope.launch {
-                productHistoryRepository.recordProductUse(trimmed)
-            }
-            sendAddItem(trimmed)
-            return
-        }
-
         val tempId = nextTempId()
         synchronized(lock) {
             pendingLocalAdds[tempId] = PendingLocalAdd(
@@ -352,15 +357,24 @@ class HaWebSocketRepository(
                 name = trimmed,
                 complete = false,
                 previousItemId = _items.value.lastOrNull { !it.complete }?.id,
-                sentToServer = false
+                lastSentAtMillis = null
             )
             _items.value = _items.value + ShoppingItem(
                 id = tempId,
                 name = trimmed,
                 complete = false
             )
+            persistPendingChangesLocked()
         }
-        _isOffline.value = true
+        if (client.isReady()) {
+            scope.launch {
+                flushPendingChanges()
+            }
+        } else {
+            _isOffline.value = true
+            _isConnecting.value = false
+            client.ensureConnected()
+        }
         _loaded.value = true
         scope.launch {
             productHistoryRepository.recordProductUse(trimmed)
@@ -377,6 +391,7 @@ class HaWebSocketRepository(
             synchronized(lock) {
                 pendingLocalAdds[item.id]?.let { add ->
                     pendingLocalAdds[item.id] = add.copy(complete = newStatus)
+                    persistPendingChangesLocked()
                 }
             }
             return
@@ -402,6 +417,7 @@ class HaWebSocketRepository(
             synchronized(lock) {
                 pendingLocalAdds[item.id]?.let { add ->
                     pendingLocalAdds[item.id] = add.copy(name = trimmed)
+                    persistPendingChangesLocked()
                 }
             }
             return
@@ -419,6 +435,7 @@ class HaWebSocketRepository(
                     pendingLocalAdds[itemId] = add.copy(previousItemId = previousItemId)
                     pendingOpenOrder = currentOpenOrderIds()
                     pendingOpenOrderSentToServer = false
+                    persistPendingChangesLocked()
                 }
             }
             return
@@ -449,6 +466,7 @@ class HaWebSocketRepository(
                     is PendingAction.Update -> action.itemId in idsToRemove
                 }
             }
+            persistPendingChangesLocked()
         }
 
         _items.value = itemsSnapshot.filterNot { it.complete }
@@ -467,6 +485,8 @@ class HaWebSocketRepository(
         _connectionErrors.value = false
 
         if (client.isReady()) {
+            _isOffline.value = false
+            _isConnecting.value = false
             Debug.log("REPOSITORY: already connected -> sync pending + reload")
             scope.launch {
                 flushPendingChanges()
@@ -478,7 +498,7 @@ class HaWebSocketRepository(
             _loaded.value = false
         } else {
             _loaded.value = true
-            _isOffline.value = true
+            _isConnecting.value = true
         }
         client.ensureConnected()
     }
@@ -488,7 +508,11 @@ class HaWebSocketRepository(
     }
 
     private fun enqueueOrSendUpdate(itemId: String, name: String, complete: Boolean) {
-        val sentToServer = client.isReady() && sendUpdateItem(itemId, name, complete)
+        val sentAtMillis = if (client.isReady() && sendUpdateItem(itemId, name, complete)) {
+            System.currentTimeMillis()
+        } else {
+            null
+        }
 
         synchronized(lock) {
             pendingActions.removeAll { action ->
@@ -498,12 +522,14 @@ class HaWebSocketRepository(
                 itemId = itemId,
                 name = name,
                 complete = complete,
-                sentToServer = sentToServer
+                lastSentAtMillis = sentAtMillis
             )
+            persistPendingChangesLocked()
         }
 
-        if (!sentToServer) {
+        if (sentAtMillis == null) {
             _isOffline.value = true
+            _isConnecting.value = false
             client.ensureConnected()
         }
     }
@@ -514,16 +540,22 @@ class HaWebSocketRepository(
         synchronized(lock) {
             pendingOpenOrder = currentOpenOrderIds()
             pendingOpenOrderSentToServer = sentToServer
+            persistPendingChangesLocked()
         }
 
         if (!sentToServer) {
             _isOffline.value = true
+            _isConnecting.value = false
             client.ensureConnected()
         }
     }
 
     private fun enqueueOrSendRemove(itemId: String) {
-        val sentToServer = client.isReady() && sendRemoveItem(itemId)
+        val sentAtMillis = if (client.isReady() && sendRemoveItem(itemId)) {
+            System.currentTimeMillis()
+        } else {
+            null
+        }
 
         synchronized(lock) {
             pendingActions.removeAll { action ->
@@ -534,12 +566,14 @@ class HaWebSocketRepository(
             }
             pendingActions += PendingAction.Remove(
                 itemId = itemId,
-                sentToServer = sentToServer
+                lastSentAtMillis = sentAtMillis
             )
+            persistPendingChangesLocked()
         }
 
-        if (!sentToServer) {
+        if (sentAtMillis == null) {
             _isOffline.value = true
+            _isConnecting.value = false
             client.ensureConnected()
         }
     }
@@ -566,9 +600,10 @@ class HaWebSocketRepository(
             val sentLocalAddIds = mutableSetOf<String>()
             val sentUpdateIds = mutableSetOf<String>()
             val sentRemoveIds = mutableSetOf<String>()
+            val now = System.currentTimeMillis()
 
             localAdds
-                .filterNot { it.sentToServer }
+                .filter { shouldSendPending(it.lastSentAtMillis, now) }
                 .forEach { add ->
                     locallyAddedItemNames.add(add.name.trim())
                     if (sendAddItem(add.name)) {
@@ -577,10 +612,10 @@ class HaWebSocketRepository(
                 }
 
             queuedActions
-                .filterNot { action ->
+                .filter { action ->
                     when (action) {
-                        is PendingAction.Remove -> action.sentToServer
-                        is PendingAction.Update -> action.sentToServer
+                        is PendingAction.Remove -> shouldSendPending(action.lastSentAtMillis, now)
+                        is PendingAction.Update -> shouldSendPending(action.lastSentAtMillis, now)
                     }
                 }
                 .forEach { action ->
@@ -617,37 +652,40 @@ class HaWebSocketRepository(
             synchronized(lock) {
                 sentLocalAddIds.forEach { tempId ->
                     pendingLocalAdds[tempId]?.let { add ->
-                        pendingLocalAdds[tempId] = add.copy(sentToServer = true)
+                        pendingLocalAdds[tempId] = add.copy(lastSentAtMillis = now)
                     }
                 }
                 pendingActions.replaceAll { action ->
                     when (action) {
                         is PendingAction.Remove -> {
-                            if (action.itemId in sentRemoveIds) action.copy(sentToServer = true) else action
+                            if (action.itemId in sentRemoveIds) action.copy(lastSentAtMillis = now) else action
                         }
 
                         is PendingAction.Update -> {
-                            if (action.itemId in sentUpdateIds) action.copy(sentToServer = true) else action
+                            if (action.itemId in sentUpdateIds) action.copy(lastSentAtMillis = now) else action
                         }
                     }
                 }
                 if (openOrderSent) {
                     pendingOpenOrderSentToServer = true
                 }
+                persistPendingChangesLocked()
             }
 
             if (
-                sentLocalAddIds.size != localAdds.count { !it.sentToServer } ||
-                sentUpdateIds.size != queuedActions.count { it is PendingAction.Update && !it.sentToServer } ||
-                sentRemoveIds.size != queuedActions.count { it is PendingAction.Remove && !it.sentToServer } ||
+                sentLocalAddIds.size != localAdds.count { shouldSendPending(it.lastSentAtMillis, now) } ||
+                sentUpdateIds.size != queuedActions.count { it is PendingAction.Update && shouldSendPending(it.lastSentAtMillis, now) } ||
+                sentRemoveIds.size != queuedActions.count { it is PendingAction.Remove && shouldSendPending(it.lastSentAtMillis, now) } ||
                 (openOrderToSend != null && openOrderToSend.none { it.startsWith(LOCAL_ID_PREFIX) } && !openOrderSent)
             ) {
                 _isOffline.value = true
+                _isConnecting.value = false
                 client.ensureConnected()
             }
 
             delay(150)
             loadItems()
+            schedulePendingRetryIfNeeded()
         } finally {
             syncInProgress = false
         }
@@ -684,11 +722,11 @@ class HaWebSocketRepository(
         pendingActions.removeAll { action ->
             when (action) {
                 is PendingAction.Remove -> {
-                    action.sentToServer && remoteItems.none { it.id == action.itemId }
+                    action.lastSentAtMillis != null && remoteItems.none { it.id == action.itemId }
                 }
 
                 is PendingAction.Update -> {
-                    action.sentToServer && remoteItems.any { remote ->
+                    action.lastSentAtMillis != null && remoteItems.any { remote ->
                         remote.id == action.itemId &&
                             remote.name == action.name &&
                             remote.complete == action.complete
@@ -857,6 +895,173 @@ class HaWebSocketRepository(
         return pendingLocalAdds[itemId]?.let { null }
     }
 
+    private fun shouldSendPending(lastSentAtMillis: Long?, now: Long): Boolean {
+        return lastSentAtMillis == null || now - lastSentAtMillis >= PENDING_RETRY_AFTER_MILLIS
+    }
+
+    private fun schedulePendingRetryIfNeeded() {
+        val hasPendingChanges = synchronized(lock) {
+            pendingLocalAdds.isNotEmpty() || pendingActions.isNotEmpty() || pendingOpenOrder != null
+        }
+        if (!hasPendingChanges || pendingRetryJob?.isActive == true) {
+            return
+        }
+
+        pendingRetryJob = scope.launch {
+            delay(PENDING_RETRY_AFTER_MILLIS)
+            if (client.isReady()) {
+                flushPendingChanges()
+            } else {
+                client.ensureConnected()
+            }
+        }
+    }
+
+    private fun markPendingChangesForRetry() {
+        synchronized(lock) {
+            pendingLocalAdds.replaceAll { _, add ->
+                add.copy(lastSentAtMillis = null)
+            }
+            pendingActions.replaceAll { action ->
+                when (action) {
+                    is PendingAction.Remove -> action.copy(lastSentAtMillis = null)
+                    is PendingAction.Update -> action.copy(lastSentAtMillis = null)
+                }
+            }
+            if (pendingOpenOrder != null) {
+                pendingOpenOrderSentToServer = false
+            }
+            persistPendingChangesLocked()
+        }
+        schedulePendingRetryIfNeeded()
+    }
+
+    private fun restorePendingChanges() {
+        val raw = pendingSyncPrefs.getString(PENDING_SYNC_KEY, null) ?: return
+
+        try {
+            val root = JSONObject(raw)
+            var maxRestoredTempId = 0L
+            synchronized(lock) {
+                pendingLocalAdds.clear()
+                val adds = root.optJSONArray("localAdds") ?: JSONArray()
+                for (index in 0 until adds.length()) {
+                    val add = adds.optJSONObject(index) ?: continue
+                    val tempId = add.optString("tempId").takeIf { it.isNotBlank() } ?: continue
+                    tempId
+                        .removePrefix(LOCAL_ID_PREFIX)
+                        .toLongOrNull()
+                        ?.let { maxRestoredTempId = maxOf(maxRestoredTempId, it) }
+                    pendingLocalAdds[tempId] = PendingLocalAdd(
+                        tempId = tempId,
+                        name = add.optString("name"),
+                        complete = add.optBoolean("complete"),
+                        previousItemId = add.optNullableString("previousItemId"),
+                        lastSentAtMillis = add.optNullableLong("lastSentAtMillis")
+                    )
+                }
+
+                pendingActions.clear()
+                val actions = root.optJSONArray("actions") ?: JSONArray()
+                for (index in 0 until actions.length()) {
+                    val action = actions.optJSONObject(index) ?: continue
+                    when (action.optString("type")) {
+                        "update" -> pendingActions += PendingAction.Update(
+                            itemId = action.optString("itemId"),
+                            name = action.optString("name"),
+                            complete = action.optBoolean("complete"),
+                            lastSentAtMillis = action.optNullableLong("lastSentAtMillis")
+                        )
+
+                        "remove" -> pendingActions += PendingAction.Remove(
+                            itemId = action.optString("itemId"),
+                            lastSentAtMillis = action.optNullableLong("lastSentAtMillis")
+                        )
+                    }
+                }
+
+                pendingOpenOrder = root.optJSONArray("openOrder")?.let { order ->
+                    buildList {
+                        for (index in 0 until order.length()) {
+                            order.optString(index).takeIf { it.isNotBlank() }?.let(::add)
+                        }
+                    }.takeIf { it.isNotEmpty() }
+                }
+                pendingOpenOrderSentToServer = root.optBoolean("openOrderSentToServer")
+            }
+
+            tempIdCounter.set(maxRestoredTempId + 1)
+            if (pendingLocalAdds.isNotEmpty()) {
+                _items.value = pendingLocalAdds.values.map { it.toShoppingItem() }
+                _loaded.value = true
+            }
+            Debug.log("REPOSITORY: restored pending shopping-list changes")
+        } catch (e: Exception) {
+            Debug.log("REPOSITORY: failed to restore pending changes: ${e.message}")
+            pendingSyncPrefs.edit().remove(PENDING_SYNC_KEY).apply()
+        }
+    }
+
+    private fun persistPendingChangesLocked() {
+        if (pendingLocalAdds.isEmpty() && pendingActions.isEmpty() && pendingOpenOrder == null) {
+            pendingSyncPrefs.edit().remove(PENDING_SYNC_KEY).apply()
+            return
+        }
+
+        val root = JSONObject()
+        val adds = JSONArray()
+        pendingLocalAdds.values.forEach { add ->
+            adds.put(
+                JSONObject()
+                    .put("tempId", add.tempId)
+                    .put("name", add.name)
+                    .put("complete", add.complete)
+                    .put("previousItemId", add.previousItemId ?: JSONObject.NULL)
+                    .put("lastSentAtMillis", add.lastSentAtMillis ?: JSONObject.NULL)
+            )
+        }
+
+        val actions = JSONArray()
+        pendingActions.forEach { action ->
+            when (action) {
+                is PendingAction.Remove -> actions.put(
+                    JSONObject()
+                        .put("type", "remove")
+                        .put("itemId", action.itemId)
+                        .put("lastSentAtMillis", action.lastSentAtMillis ?: JSONObject.NULL)
+                )
+
+                is PendingAction.Update -> actions.put(
+                    JSONObject()
+                        .put("type", "update")
+                        .put("itemId", action.itemId)
+                        .put("name", action.name)
+                        .put("complete", action.complete)
+                        .put("lastSentAtMillis", action.lastSentAtMillis ?: JSONObject.NULL)
+                )
+            }
+        }
+
+        val openOrder = JSONArray()
+        pendingOpenOrder.orEmpty().forEach { openOrder.put(it) }
+
+        root
+            .put("localAdds", adds)
+            .put("actions", actions)
+            .put("openOrder", if (pendingOpenOrder == null) JSONObject.NULL else openOrder)
+            .put("openOrderSentToServer", pendingOpenOrderSentToServer)
+
+        pendingSyncPrefs.edit().putString(PENDING_SYNC_KEY, root.toString()).apply()
+    }
+
+    private fun JSONObject.optNullableString(key: String): String? {
+        return if (has(key) && !isNull(key)) optString(key) else null
+    }
+
+    private fun JSONObject.optNullableLong(key: String): Long? {
+        return if (has(key) && !isNull(key)) optLong(key) else null
+    }
+
     private fun nextTempId(): String = "$LOCAL_ID_PREFIX${tempIdCounter.getAndIncrement()}"
 
     private fun PendingLocalAdd.toShoppingItem(): ShoppingItem = ShoppingItem(
@@ -867,5 +1072,8 @@ class HaWebSocketRepository(
 
     companion object {
         private const val LOCAL_ID_PREFIX = "local:"
+        private const val PENDING_SYNC_PREFS = "pending_shopping_list_sync"
+        private const val PENDING_SYNC_KEY = "pending_changes"
+        private const val PENDING_RETRY_AFTER_MILLIS = 10_000L
     }
 }
