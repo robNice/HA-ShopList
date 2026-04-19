@@ -63,4 +63,19 @@
     <string name="offline_dialog_text">現在のリストは引き続き利用でき、編集も続けられます。Home Assistant に再び接続できるようになると、変更は自動的に同期されます。</string>
     <string name="offline_dialog_confirm">OK</string>
     <string name="offline_empty_list">オフラインです。まだキャッシュされたリストはありません。</string>
+    <string name="update_section_title">アップデート</string>
+    <string name="update_check_button">アップデートを確認</string>
+    <string name="update_checking">アップデートを確認しています...</string>
+    <string name="update_up_to_date">最新バージョンを使用しています。</string>
+    <string name="update_available_status">バージョン %1$s が利用可能です。</string>
+    <string name="update_check_failed">アップデート確認に失敗しました: %1$s</string>
+    <string name="update_install_button">アップデートをインストール</string>
+    <string name="update_downloading">アップデートをダウンロードしています...</string>
+    <string name="update_download_failed">アップデートのダウンロードに失敗しました: %1$s</string>
+    <string name="update_installer_started">Android インストーラーを開きました。続行するにはアップデートを確認してください。</string>
+    <string name="update_install_permission_required">Android 設定でこのアプリからのインストールを許可し、もう一度アップデートを開始してください。</string>
+    <string name="update_install_failed_no_activity">ここから Android インストーラーを開けませんでした。</string>
+    <string name="update_show_changelog">変更履歴を表示</string>
+    <string name="update_changelog_title">バージョン %1$s の変更点</string>
+    <string name="update_changelog_empty">このリリースには変更履歴がありません。</string>
 </resources>

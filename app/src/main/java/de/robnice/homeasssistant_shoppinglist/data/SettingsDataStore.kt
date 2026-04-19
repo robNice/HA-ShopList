@@ -15,6 +15,12 @@ class SettingsDataStore(private val context: Context) {
         private val HA_TOKEN = stringPreferencesKey("ha_token")
         private val KEY_NOTIFICATIONS = booleanPreferencesKey("notifications_enabled")
         private val TODO_ENTITY = stringPreferencesKey("todo_entity")
+        private val UPDATE_LAST_CHECK_MILLIS = longPreferencesKey("update_last_check_millis")
+        private val UPDATE_VERSION_NAME = stringPreferencesKey("update_version_name")
+        private val UPDATE_TAG_NAME = stringPreferencesKey("update_tag_name")
+        private val UPDATE_APK_URL = stringPreferencesKey("update_apk_url")
+        private val UPDATE_RELEASE_URL = stringPreferencesKey("update_release_url")
+        private val UPDATE_CHANGELOG = stringPreferencesKey("update_changelog")
 
     }
 
@@ -28,6 +34,24 @@ class SettingsDataStore(private val context: Context) {
 
     val todoEntity: Flow<String> = context.dataStore.data
         .map { it[TODO_ENTITY] ?: "todo.einkaufsliste" }
+
+    val updateLastCheckMillis: Flow<Long> = context.dataStore.data
+        .map { it[UPDATE_LAST_CHECK_MILLIS] ?: 0L }
+
+    val updateVersionName: Flow<String> = context.dataStore.data
+        .map { it[UPDATE_VERSION_NAME] ?: "" }
+
+    val updateTagName: Flow<String> = context.dataStore.data
+        .map { it[UPDATE_TAG_NAME] ?: "" }
+
+    val updateApkUrl: Flow<String> = context.dataStore.data
+        .map { it[UPDATE_APK_URL] ?: "" }
+
+    val updateReleaseUrl: Flow<String> = context.dataStore.data
+        .map { it[UPDATE_RELEASE_URL] ?: "" }
+
+    val updateChangelog: Flow<String> = context.dataStore.data
+        .map { it[UPDATE_CHANGELOG] ?: "" }
 
     suspend fun saveHaUrl(url: String) {
         context.dataStore.edit {
@@ -48,6 +72,38 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveTodoEntity(entity: String) {
         context.dataStore.edit {
             it[TODO_ENTITY] = entity
+        }
+    }
+
+    suspend fun saveUpdateCheckTimestamp(timestampMillis: Long) {
+        context.dataStore.edit {
+            it[UPDATE_LAST_CHECK_MILLIS] = timestampMillis
+        }
+    }
+
+    suspend fun saveAvailableUpdate(
+        versionName: String,
+        tagName: String,
+        apkUrl: String,
+        releaseUrl: String,
+        changelog: String
+    ) {
+        context.dataStore.edit {
+            it[UPDATE_VERSION_NAME] = versionName
+            it[UPDATE_TAG_NAME] = tagName
+            it[UPDATE_APK_URL] = apkUrl
+            it[UPDATE_RELEASE_URL] = releaseUrl
+            it[UPDATE_CHANGELOG] = changelog
+        }
+    }
+
+    suspend fun clearAvailableUpdate() {
+        context.dataStore.edit {
+            it.remove(UPDATE_VERSION_NAME)
+            it.remove(UPDATE_TAG_NAME)
+            it.remove(UPDATE_APK_URL)
+            it.remove(UPDATE_RELEASE_URL)
+            it.remove(UPDATE_CHANGELOG)
         }
     }
 }

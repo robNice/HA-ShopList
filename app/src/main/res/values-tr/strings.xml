@@ -63,4 +63,19 @@
     <string name="offline_dialog_text">Mevcut liste kullanılabilir durumda kalır ve düzenlemeye devam edebilirsiniz. Home Assistant yeniden erişilebilir olduğunda değişiklikleriniz otomatik olarak senkronize edilir.</string>
     <string name="offline_dialog_confirm">OK</string>
     <string name="offline_empty_list">Çevrimdışı. Henüz önbelleğe alınmış bir liste yok.</string>
+    <string name="update_section_title">Guncellemeler</string>
+    <string name="update_check_button">Guncellemeleri kontrol et</string>
+    <string name="update_checking">Guncellemeler kontrol ediliyor...</string>
+    <string name="update_up_to_date">En son surumu kullaniyorsunuz.</string>
+    <string name="update_available_status">%1$s surumu mevcut.</string>
+    <string name="update_check_failed">Guncelleme kontrolu basarisiz: %1$s</string>
+    <string name="update_install_button">Guncellemeyi yukle</string>
+    <string name="update_downloading">Guncelleme indiriliyor...</string>
+    <string name="update_download_failed">Guncelleme indirilemedi: %1$s</string>
+    <string name="update_installer_started">Android yukleyici acildi. Devam etmek icin guncellemeyi onaylayin.</string>
+    <string name="update_install_permission_required">Android ayarlarinda bu uygulamadan yuklemeye izin verin, sonra guncellemeyi tekrar baslatin.</string>
+    <string name="update_install_failed_no_activity">Android yukleyici buradan acilamadi.</string>
+    <string name="update_show_changelog">Degisiklikleri goster</string>
+    <string name="update_changelog_title">%1$s surumundeki degisiklikler</string>
+    <string name="update_changelog_empty">Bu surum icin changelog eklenmemis.</string>
 </resources>

@@ -1,5 +1,6 @@
 package de.robnice.homeasssistant_shoppinglist.ui.screens
 
+import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -48,6 +50,10 @@ import de.robnice.homeasssistant_shoppinglist.BuildConfig
 import de.robnice.homeasssistant_shoppinglist.R
 import de.robnice.homeasssistant_shoppinglist.data.SettingsDataStore
 import de.robnice.homeasssistant_shoppinglist.data.history.ProductHistoryRepository
+import de.robnice.homeasssistant_shoppinglist.data.update.AppUpdateInfo
+import de.robnice.homeasssistant_shoppinglist.data.update.AppUpdateRepository
+import de.robnice.homeasssistant_shoppinglist.data.update.InstallStartResult
+import de.robnice.homeasssistant_shoppinglist.data.update.UpdateCheckResult
 import de.robnice.homeasssistant_shoppinglist.model.ShoppingList
 import de.robnice.homeasssistant_shoppinglist.ui.util.t
 import de.robnice.homeasssistant_shoppinglist.util.normalizeHaUrl
@@ -85,12 +91,47 @@ fun SettingsScreen(
 ) {
     val dataStore = remember { SettingsDataStore(context) }
     val productHistoryRepository = remember(context) { ProductHistoryRepository.getInstance(context) }
+    val updateRepository = remember(context) { AppUpdateRepository(context.applicationContext) }
     val coroutineScope = rememberCoroutineScope()
 
     val storedUrl by dataStore.haUrl.collectAsState(initial = "")
     val storedToken by dataStore.haToken.collectAsState(initial = "")
     val storedTodoEntity by dataStore.todoEntity.collectAsState(initial = "todo.einkaufsliste")
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
+    val updateLastCheckMillis by dataStore.updateLastCheckMillis.collectAsState(initial = 0L)
+    val updateVersionName by dataStore.updateVersionName.collectAsState(initial = "")
+    val updateTagName by dataStore.updateTagName.collectAsState(initial = "")
+    val updateApkUrl by dataStore.updateApkUrl.collectAsState(initial = "")
+    val updateReleaseUrl by dataStore.updateReleaseUrl.collectAsState(initial = "")
+    val updateChangelog by dataStore.updateChangelog.collectAsState(initial = "")
+
+    val updateChecksAllowed = remember(updateRepository) {
+        updateRepository.isGithubUpdaterAllowed()
+    }
+    val availableUpdate = remember(
+        updateVersionName,
+        updateTagName,
+        updateApkUrl,
+        updateReleaseUrl,
+        updateChangelog
+    ) {
+        if (
+            updateVersionName.isNotBlank() &&
+            updateTagName.isNotBlank() &&
+            updateApkUrl.isNotBlank() &&
+            updateReleaseUrl.isNotBlank()
+        ) {
+            AppUpdateInfo(
+                versionName = updateVersionName,
+                tagName = updateTagName,
+                apkDownloadUrl = updateApkUrl,
+                releaseUrl = updateReleaseUrl,
+                changelog = updateChangelog
+            )
+        } else {
+            null
+        }
+    }
 
     var tokenVisible by remember { mutableStateOf(false) }
     var url by remember { mutableStateOf("") }
@@ -103,8 +144,12 @@ fun SettingsScreen(
     var todoReloadKey by remember { mutableStateOf(0) }
     var showHistoryClearDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
+    var showUpdateChangelogDialog by remember { mutableStateOf(false) }
     var selectedHelpTopic by remember { mutableStateOf<SettingsHelpTopic?>(null) }
     var privacyText by remember { mutableStateOf("") }
+    var updateChecking by remember { mutableStateOf(false) }
+    var updateDownloading by remember { mutableStateOf(false) }
+    var updateStatusText by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(storedUrl, storedToken, storedTodoEntity) {
         url = storedUrl
@@ -119,6 +164,64 @@ fun SettingsScreen(
             "privacy_policy_en.md"
         }
         privacyText = context.assets.open(assetName).bufferedReader(Charsets.UTF_8).use { it.readText() }
+    }
+
+    fun checkForUpdates(manual: Boolean) {
+        if (!updateChecksAllowed || updateChecking) {
+            return
+        }
+
+        coroutineScope.launch {
+            updateChecking = true
+            if (manual) {
+                updateStatusText = context.getString(R.string.update_checking)
+            }
+
+            try {
+                when (val result = updateRepository.checkLatestRelease()) {
+                    is UpdateCheckResult.UpdateAvailable -> {
+                        dataStore.saveAvailableUpdate(
+                            versionName = result.update.versionName,
+                            tagName = result.update.tagName,
+                            apkUrl = result.update.apkDownloadUrl,
+                            releaseUrl = result.update.releaseUrl,
+                            changelog = result.update.changelog
+                        )
+                        updateStatusText = context.getString(
+                            R.string.update_available_status,
+                            result.update.versionName
+                        )
+                    }
+
+                    UpdateCheckResult.UpToDate -> {
+                        dataStore.clearAvailableUpdate()
+                        updateStatusText = context.getString(R.string.update_up_to_date)
+                    }
+                }
+
+                dataStore.saveUpdateCheckTimestamp(System.currentTimeMillis())
+            } catch (e: Exception) {
+                if (manual) {
+                    updateStatusText = context.getString(
+                        R.string.update_check_failed,
+                        e.message ?: context.getString(R.string.loading_failed)
+                    )
+                }
+            } finally {
+                updateChecking = false
+            }
+        }
+    }
+
+    LaunchedEffect(updateChecksAllowed, updateLastCheckMillis) {
+        if (!updateChecksAllowed || updateChecking) {
+            return@LaunchedEffect
+        }
+
+        val now = System.currentTimeMillis()
+        if (now - updateLastCheckMillis >= AppUpdateRepository.UPDATE_CHECK_INTERVAL_MILLIS) {
+            checkForUpdates(manual = false)
+        }
     }
 
     LaunchedEffect(url, token, todoReloadKey) {
@@ -162,7 +265,7 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 0.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -393,9 +496,112 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                if (updateChecksAllowed) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = t(R.string.update_section_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    availableUpdate?.let { update ->
+                        Text(
+                            text = context.getString(
+                                R.string.update_available_status,
+                                update.versionName
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        if (update.changelog.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            TextButton(
+                                onClick = { showUpdateChangelogDialog = true },
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(t(R.string.update_show_changelog))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = {
+                                val activity = context as? Activity
+                                if (activity == null) {
+                                    updateStatusText = context.getString(R.string.update_install_failed_no_activity)
+                                    return@Button
+                                }
+
+                                coroutineScope.launch {
+                                    updateDownloading = true
+                                    updateStatusText = context.getString(R.string.update_downloading)
+
+                                    try {
+                                        val apkFile = updateRepository.downloadApk(update)
+                                        val result = updateRepository.startInstall(activity, apkFile)
+                                        updateStatusText = when (result) {
+                                            InstallStartResult.Started ->
+                                                context.getString(R.string.update_installer_started)
+                                            InstallStartResult.NeedsInstallPermission ->
+                                                context.getString(R.string.update_install_permission_required)
+                                        }
+                                    } catch (e: Exception) {
+                                        updateStatusText = context.getString(
+                                            R.string.update_download_failed,
+                                            e.message ?: context.getString(R.string.loading_failed)
+                                        )
+                                    } finally {
+                                        updateDownloading = false
+                                    }
+                                }
+                            },
+                            enabled = !updateChecking && !updateDownloading
+                        ) {
+                            Text(
+                                if (updateDownloading) {
+                                    t(R.string.update_downloading)
+                                } else {
+                                    t(R.string.update_install_button)
+                                }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    OutlinedButton(
+                        onClick = { checkForUpdates(manual = true) },
+                        enabled = !updateChecking && !updateDownloading
+                    ) {
+                        Text(
+                            if (updateChecking) {
+                                t(R.string.update_checking)
+                            } else {
+                                t(R.string.update_check_button)
+                            }
+                        )
+                    }
+
+                    updateStatusText?.let { status ->
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = status,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider()
+                }
+            }
 
             Row(
                 modifier = Modifier
@@ -406,7 +612,8 @@ fun SettingsScreen(
             ) {
                 TextButton(
                     onClick = { showPrivacyDialog = true },
-                    contentPadding = PaddingValues(0.dp)
+                    modifier = Modifier.requiredHeightIn(min = 24.dp),
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
                 ) {
                     Text(t(R.string.privacy_policy))
                 }
@@ -450,6 +657,35 @@ fun SettingsScreen(
         PrivacyPolicyDialog(
             markdown = privacyText,
             onDismiss = { showPrivacyDialog = false }
+        )
+    }
+
+    if (showUpdateChangelogDialog) {
+        AlertDialog(
+            onDismissRequest = { showUpdateChangelogDialog = false },
+            title = {
+                Text(
+                    context.getString(
+                        R.string.update_changelog_title,
+                        availableUpdate?.versionName.orEmpty()
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = availableUpdate?.changelog
+                        ?.takeIf { it.isNotBlank() }
+                        ?: t(R.string.update_changelog_empty),
+                    modifier = Modifier
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState())
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showUpdateChangelogDialog = false }) {
+                    Text(t(R.string.close))
+                }
+            }
         )
     }
 

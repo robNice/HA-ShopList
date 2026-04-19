@@ -63,4 +63,19 @@
     <string name="offline_dialog_text">The current list stays available and you can keep editing it. Your changes will sync automatically when Home Assistant is reachable again.</string>
     <string name="offline_dialog_confirm">OK</string>
     <string name="offline_empty_list">Offline. No cached list is available yet.</string>
+    <string name="update_section_title">Updates</string>
+    <string name="update_check_button">Check for updates</string>
+    <string name="update_checking">Checking for updates...</string>
+    <string name="update_up_to_date">You are using the latest version.</string>
+    <string name="update_available_status">Version %1$s is available.</string>
+    <string name="update_check_failed">Update check failed: %1$s</string>
+    <string name="update_install_button">Install update</string>
+    <string name="update_downloading">Downloading update...</string>
+    <string name="update_download_failed">Update download failed: %1$s</string>
+    <string name="update_installer_started">Android installer opened. Confirm the update to continue.</string>
+    <string name="update_install_permission_required">Allow installs from this app in Android settings, then start the update again.</string>
+    <string name="update_install_failed_no_activity">The Android installer could not be opened from here.</string>
+    <string name="update_show_changelog">Show changelog</string>
+    <string name="update_changelog_title">Changes in version %1$s</string>
+    <string name="update_changelog_empty">No changelog was provided for this release.</string>
 </resources>

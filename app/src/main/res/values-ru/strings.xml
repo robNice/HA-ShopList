@@ -63,4 +63,19 @@
     <string name="offline_dialog_text">Текущий список остаётся доступным, и вы можете продолжать его редактировать. Ваши изменения будут синхронизированы автоматически, когда Home Assistant снова станет доступен.</string>
     <string name="offline_dialog_confirm">OK</string>
     <string name="offline_empty_list">Офлайн. Кэшированный список пока недоступен.</string>
+    <string name="update_section_title">Обновления</string>
+    <string name="update_check_button">Проверить обновления</string>
+    <string name="update_checking">Проверка обновлений...</string>
+    <string name="update_up_to_date">У вас установлена последняя версия.</string>
+    <string name="update_available_status">Доступна версия %1$s.</string>
+    <string name="update_check_failed">Не удалось проверить обновления: %1$s</string>
+    <string name="update_install_button">Установить обновление</string>
+    <string name="update_downloading">Загрузка обновления...</string>
+    <string name="update_download_failed">Не удалось загрузить обновление: %1$s</string>
+    <string name="update_installer_started">Открыт установщик Android. Подтвердите обновление, чтобы продолжить.</string>
+    <string name="update_install_permission_required">Разрешите установку из этого приложения в настройках Android, затем запустите обновление снова.</string>
+    <string name="update_install_failed_no_activity">Не удалось открыть установщик Android отсюда.</string>
+    <string name="update_show_changelog">Показать изменения</string>
+    <string name="update_changelog_title">Изменения в версии %1$s</string>
+    <string name="update_changelog_empty">Для этого выпуска список изменений не указан.</string>
 </resources>
