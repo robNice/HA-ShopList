@@ -1,5 +1,6 @@
 # --- App DTOs used by Retrofit/Moshi ---
 -keep class de.robnice.homeasssistant_shoppinglist.data.dto.** { *; }
+-keep class de.robnice.homeasssistant_shoppinglist.data.update.** { *; }
 
 # Keep Kotlin metadata for Moshi/Kotlin reflection related lookups
 -keep class kotlin.Metadata { *; }
