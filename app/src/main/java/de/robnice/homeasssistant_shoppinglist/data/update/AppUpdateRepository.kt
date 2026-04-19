@@ -56,13 +56,17 @@ class AppUpdateRepository(private val context: Context) {
     }
 
     fun getInstallerPackageName(): String? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            context.packageManager
-                .getInstallSourceInfo(context.packageName)
-                .installingPackageName
-        } else {
-            @Suppress("DEPRECATION")
-            context.packageManager.getInstallerPackageName(context.packageName)
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                context.packageManager
+                    .getInstallSourceInfo(context.packageName)
+                    .installingPackageName
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getInstallerPackageName(context.packageName)
+            }
+        } catch (_: Exception) {
+            null
         }
     }
 
