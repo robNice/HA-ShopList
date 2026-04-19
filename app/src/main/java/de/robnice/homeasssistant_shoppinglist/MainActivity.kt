@@ -30,6 +30,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import de.robnice.homeasssistant_shoppinglist.data.SettingsDataStore
+import de.robnice.homeasssistant_shoppinglist.data.update.AppUpdateRepository
+import de.robnice.homeasssistant_shoppinglist.data.update.UpdateCheckResult
 import de.robnice.homeasssistant_shoppinglist.viewmodel.ShoppingViewModel
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
@@ -111,6 +113,7 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 val navController = rememberNavController()
                 val context = LocalContext.current
                 val dataStore = remember { SettingsDataStore(context) }
+                val updateRepository = remember(context) { AppUpdateRepository(context.applicationContext) }
 
                 val configFlow = remember(dataStore) {
                     combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity) { url, token, entity ->
@@ -119,6 +122,7 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 }
 
                 val config by configFlow.collectAsState(initial = null)
+                val updateLastCheckMillis by dataStore.updateLastCheckMillis.collectAsState(initial = 0L)
                 val haUrl = config?.first
                 val haToken = config?.second
                 val todoEntity = config?.third
@@ -131,6 +135,39 @@ class MainActivity : androidx.activity.ComponentActivity() {
                     }
 
                 val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
+
+                LaunchedEffect(updateLastCheckMillis) {
+                    if (!updateRepository.isGithubUpdaterAllowed()) {
+                        return@LaunchedEffect
+                    }
+
+                    val now = System.currentTimeMillis()
+                    if (now - updateLastCheckMillis < AppUpdateRepository.UPDATE_CHECK_INTERVAL_MILLIS) {
+                        return@LaunchedEffect
+                    }
+
+                    try {
+                        when (val result = updateRepository.checkLatestRelease()) {
+                            is UpdateCheckResult.UpdateAvailable -> {
+                                dataStore.saveAvailableUpdate(
+                                    versionName = result.update.versionName,
+                                    tagName = result.update.tagName,
+                                    apkUrl = result.update.apkDownloadUrl,
+                                    releaseUrl = result.update.releaseUrl,
+                                    changelog = result.update.changelog
+                                )
+                            }
+
+                            UpdateCheckResult.UpToDate -> {
+                                dataStore.clearAvailableUpdate()
+                            }
+                        }
+
+                        dataStore.saveUpdateCheckTimestamp(now)
+                    } catch (_: Exception) {
+                        // Silent best-effort check. Manual checks in Settings show errors.
+                    }
+                }
 
                 LaunchedEffect(haUrl, haToken, todoEntity, notificationsEnabled) {
                     if (!notificationsEnabled) {

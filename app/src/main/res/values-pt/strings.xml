@@ -63,4 +63,19 @@
     <string name="offline_dialog_text">A lista atual continua disponível e você pode continuar editando-a. Suas alterações serão sincronizadas automaticamente quando o Home Assistant voltar a estar acessível.</string>
     <string name="offline_dialog_confirm">OK</string>
     <string name="offline_empty_list">Offline. Ainda não há nenhuma lista em cache disponível.</string>
+    <string name="update_section_title">Atualizacoes</string>
+    <string name="update_check_button">Procurar atualizacoes</string>
+    <string name="update_checking">Procurando atualizacoes...</string>
+    <string name="update_up_to_date">Voce esta usando a versao mais recente.</string>
+    <string name="update_available_status">A versao %1$s esta disponivel.</string>
+    <string name="update_check_failed">Falha ao procurar atualizacoes: %1$s</string>
+    <string name="update_install_button">Instalar atualizacao</string>
+    <string name="update_downloading">Baixando atualizacao...</string>
+    <string name="update_download_failed">Falha ao baixar a atualizacao: %1$s</string>
+    <string name="update_installer_started">Instalador do Android aberto. Confirme a atualizacao para continuar.</string>
+    <string name="update_install_permission_required">Permita instalacoes deste app nas configuracoes do Android e inicie a atualizacao novamente.</string>
+    <string name="update_install_failed_no_activity">Nao foi possivel abrir o instalador do Android daqui.</string>
+    <string name="update_show_changelog">Mostrar changelog</string>
+    <string name="update_changelog_title">Mudancas na versao %1$s</string>
+    <string name="update_changelog_empty">Nenhum changelog foi fornecido para esta versao.</string>
 </resources>

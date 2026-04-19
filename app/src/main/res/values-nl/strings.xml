@@ -63,4 +63,19 @@
     <string name="offline_dialog_text">De huidige lijst blijft beschikbaar en je kunt deze blijven bewerken. Je wijzigingen worden automatisch gesynchroniseerd zodra Home Assistant weer bereikbaar is.</string>
     <string name="offline_dialog_confirm">OK</string>
     <string name="offline_empty_list">Offline. Er is nog geen lijst in de cache beschikbaar.</string>
+    <string name="update_section_title">Updates</string>
+    <string name="update_check_button">Controleren op updates</string>
+    <string name="update_checking">Controleren op updates...</string>
+    <string name="update_up_to_date">Je gebruikt de nieuwste versie.</string>
+    <string name="update_available_status">Versie %1$s is beschikbaar.</string>
+    <string name="update_check_failed">Updatecontrole mislukt: %1$s</string>
+    <string name="update_install_button">Update installeren</string>
+    <string name="update_downloading">Update downloaden...</string>
+    <string name="update_download_failed">Downloaden van update mislukt: %1$s</string>
+    <string name="update_installer_started">Android-installatieprogramma geopend. Bevestig de update om door te gaan.</string>
+    <string name="update_install_permission_required">Sta installaties vanuit deze app toe in de Android-instellingen en start de update opnieuw.</string>
+    <string name="update_install_failed_no_activity">Het Android-installatieprogramma kon hier niet worden geopend.</string>
+    <string name="update_show_changelog">Wijzigingen tonen</string>
+    <string name="update_changelog_title">Wijzigingen in versie %1$s</string>
+    <string name="update_changelog_empty">Er is geen changelog voor deze release opgegeven.</string>
 </resources>
