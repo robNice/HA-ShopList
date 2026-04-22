@@ -1,3 +1,8 @@
+---
+> 
+> english version:  [Privacy Policy](PrivacyPolicy.md)
+>
+---
 # Datenschutzerklärung
 
 ## 1. Allgemeines

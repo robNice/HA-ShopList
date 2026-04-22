@@ -1,3 +1,8 @@
+---
+> 
+> deutsche Version:  [Datenschutzerklärung](Datenschutzerklaerung_DE.md)
+>
+---
 # Privacy Policy
 
 ## 1. General
