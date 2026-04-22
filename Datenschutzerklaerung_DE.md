@@ -3,7 +3,7 @@
 
 ---
 > 
-> english version:  [Privacy Policy](PrivacyPolicy.md)
+> english version:  [Privacy Policy](Privacy_Policy_EN.md)
 >
 ---
 
