@@ -1,4 +1,4 @@
-name: Build APK (live) on v* tag
+name: Build APK and app bundle on v* tag
 
 on:
   push:
