@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "de.robnice.homeasssistant_shoppinglist"
+    namespace = "de.robnice.homeshoplist"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -13,11 +13,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "de.robnice.homeasssistant_shoppinglist"
+        applicationId = "de.robnice.homeshoplist"
         minSdk = 24
         targetSdk = 36
         versionCode = 6
-        versionName = "1.7.2"
+        versionName = "1.8.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
