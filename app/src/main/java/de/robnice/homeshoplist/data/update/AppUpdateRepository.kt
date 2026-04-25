@@ -96,13 +96,8 @@ class AppUpdateRepository(private val context: Context) {
             }
 
             val apkAsset = release.assets.firstOrNull { asset ->
-                asset.name.startsWith(GITHUB_APK_PREFIX, ignoreCase = true) &&
-                    asset.name.endsWith(".apk", ignoreCase = true) &&
-                    !asset.name.contains(PLAYSTORE_MARKER, ignoreCase = true)
-            } ?: release.assets.firstOrNull { asset ->
-                asset.name.endsWith(".apk", ignoreCase = true) &&
-                    !asset.name.contains(PLAYSTORE_MARKER, ignoreCase = true)
-            } ?: throw IOException("Latest GitHub release does not contain a compatible APK asset")
+                GITHUB_APK_REGEX.matches(asset.name)
+            } ?: throw IOException("Latest GitHub release does not contain the GitHub APK asset")
 
             UpdateCheckResult.UpdateAvailable(
                 AppUpdateInfo(
@@ -178,8 +173,10 @@ class AppUpdateRepository(private val context: Context) {
         private const val LATEST_RELEASE_URL =
             "https://api.github.com/repos/robNice/HA-ShopList/releases/latest"
         private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
-        private const val GITHUB_APK_PREFIX = "homeShopList-"
-        private const val PLAYSTORE_MARKER = "playstore"
+        private val GITHUB_APK_REGEX = Regex(
+            pattern = """^homeShopList-v.+\.apk$""",
+            option = RegexOption.IGNORE_CASE
+        )
     }
 }
 

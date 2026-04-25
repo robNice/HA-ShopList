@@ -90,7 +90,6 @@ import de.robnice.homeshoplist.ui.theme.BrandGreen
 import de.robnice.homeshoplist.ui.theme.BrandOrange
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import kotlinx.coroutines.delay
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -137,6 +136,9 @@ class MainActivity : androidx.activity.ComponentActivity() {
                     }
 
                 val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
+                var runtimeRepository by remember {
+                    mutableStateOf<HaWebSocketRepository?>(HaRuntime.repository)
+                }
 
                 LaunchedEffect(updateLastCheckMillis) {
                     if (!updateRepository.isGithubUpdaterAllowed()) {
@@ -176,10 +178,12 @@ class MainActivity : androidx.activity.ComponentActivity() {
                         Debug.log("MainActivity: notifications disabled -> disconnect repo")
                         HaRuntime.repository?.setReconnectAllowed(false)
                         HaRuntime.repository?.disconnect()
+                        runtimeRepository = null
                         return@LaunchedEffect
                     }
 
                     if (haUrl.isNullOrBlank() || haToken.isNullOrBlank() || todoEntity.isNullOrBlank()) {
+                        runtimeRepository = null
                         return@LaunchedEffect
                     }
 
@@ -205,8 +209,10 @@ class MainActivity : androidx.activity.ComponentActivity() {
                             context.applicationContext,
                             todoEntity
                         )
+                        runtimeRepository = HaRuntime.repository
                     } else {
                         Debug.log("MainActivity: repository already exists with same config")
+                        runtimeRepository = repo
                     }
                 }
 
@@ -226,7 +232,10 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 ) {
 
                     composable(Screen.Shopping.route) {
-                        ShoppingScreen(navController)
+                        ShoppingScreen(
+                            navController = navController,
+                            repository = runtimeRepository
+                        )
                     }
 
                     composable(Screen.Settings.route) {
@@ -240,7 +249,10 @@ class MainActivity : androidx.activity.ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShoppingScreen(navController: NavController) {
+fun ShoppingScreen(
+    navController: NavController,
+    repository: HaWebSocketRepository?
+) {
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -259,9 +271,6 @@ fun ShoppingScreen(navController: NavController) {
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showOfflineInfo by remember { mutableStateOf(false) }
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
-    var repo by remember(haUrl, haToken, todoEntity, notificationsEnabled) {
-        mutableStateOf<HaWebSocketRepository?>(HaRuntime.repository)
-    }
 
     if (config == null) {
         Box(
@@ -271,24 +280,6 @@ fun ShoppingScreen(navController: NavController) {
             CircularProgressIndicator()
         }
         return
-    }
-
-    LaunchedEffect(haUrl, haToken, todoEntity, notificationsEnabled) {
-        if (haUrl.isNullOrBlank() || haToken.isNullOrBlank() || todoEntity.isNullOrBlank()) {
-            repo = null
-            return@LaunchedEffect
-        }
-
-        repeat(100) {
-            val runtimeRepo = HaRuntime.repository
-            if (runtimeRepo != null) {
-                repo = runtimeRepo
-                return@LaunchedEffect
-            }
-            delay(50)
-        }
-
-        repo = HaRuntime.repository
     }
 
     if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
@@ -307,7 +298,7 @@ fun ShoppingScreen(navController: NavController) {
     }
 
 
-    if (repo == null) {
+    if (repository == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -317,7 +308,7 @@ fun ShoppingScreen(navController: NavController) {
         return
     }
 
-    val activeRepo = requireNotNull(repo)
+    val activeRepo = repository
 
 
     val viewModel = remember(activeRepo) { ShoppingViewModel(activeRepo) }
