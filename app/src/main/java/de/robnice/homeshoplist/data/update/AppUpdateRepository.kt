@@ -50,6 +50,10 @@ class AppUpdateRepository(private val context: Context) {
         .adapter(GithubRelease::class.java)
 
     fun isGithubUpdaterAllowed(): Boolean {
+        if (!BuildConfig.ENABLE_GITHUB_UPDATER) {
+            return false
+        }
+
         val installerPackage = getInstallerPackageName()
         return installerPackage == null ||
                 installerPackage !in setOf(PLAY_STORE_PACKAGE, FDROID_PACKAGE)
@@ -91,9 +95,14 @@ class AppUpdateRepository(private val context: Context) {
                 return@withContext UpdateCheckResult.UpToDate
             }
 
-            val apkAsset = release.assets.firstOrNull {
-                it.name.endsWith(".apk", ignoreCase = true)
-            } ?: throw IOException("Latest GitHub release does not contain an APK asset")
+            val apkAsset = release.assets.firstOrNull { asset ->
+                asset.name.startsWith(GITHUB_APK_PREFIX, ignoreCase = true) &&
+                    asset.name.endsWith(".apk", ignoreCase = true) &&
+                    !asset.name.contains(PLAYSTORE_MARKER, ignoreCase = true)
+            } ?: release.assets.firstOrNull { asset ->
+                asset.name.endsWith(".apk", ignoreCase = true) &&
+                    !asset.name.contains(PLAYSTORE_MARKER, ignoreCase = true)
+            } ?: throw IOException("Latest GitHub release does not contain a compatible APK asset")
 
             UpdateCheckResult.UpdateAvailable(
                 AppUpdateInfo(
@@ -169,6 +178,8 @@ class AppUpdateRepository(private val context: Context) {
         private const val LATEST_RELEASE_URL =
             "https://api.github.com/repos/robNice/HA-ShopList/releases/latest"
         private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
+        private const val GITHUB_APK_PREFIX = "homeShopList-"
+        private const val PLAYSTORE_MARKER = "playstore"
     }
 }
 

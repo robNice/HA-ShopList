@@ -17,9 +17,23 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 6
-        versionName = "1.8.3"
+        versionName = "1.8.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions += "distribution"
+
+    productFlavors {
+        create("github") {
+            dimension = "distribution"
+            buildConfigField("boolean", "ENABLE_GITHUB_UPDATER", "true")
+        }
+
+        create("play") {
+            dimension = "distribution"
+            buildConfigField("boolean", "ENABLE_GITHUB_UPDATER", "false")
+        }
     }
 
 
