@@ -41,6 +41,12 @@ class HaWebSocketRepository(
         ) : PendingAction
     }
 
+    private data class PendingMove(
+        val itemId: String,
+        val previousItemId: String?,
+        val lastSentAtMillis: Long?
+    )
+
     private data class PendingLocalAdd(
         val tempId: String,
         val name: String,
@@ -79,13 +85,11 @@ class HaWebSocketRepository(
     private val locallyAddedItemNames = mutableSetOf<String>()
     private val pendingActions = mutableListOf<PendingAction>()
     private val pendingLocalAdds = linkedMapOf<String, PendingLocalAdd>()
-    private var pendingOpenOrder: List<String>? = null
-    private var pendingOpenOrderSentToServer = false
-    private var pendingOpenOrderLastSentAtMillis: Long? = null
+    private var pendingMove: PendingMove? = null
     private var lastRemoteItems: List<ShoppingItem> = emptyList()
     private var hadReadyOnce = false
     private var pendingRetryJob: Job? = null
-    private var pendingOpenOrderDispatchJob: Job? = null
+    private var pendingMoveDispatchJob: Job? = null
     @Volatile
     private var syncInProgress = false
 
@@ -228,11 +232,10 @@ class HaWebSocketRepository(
         val finalItems = synchronized(lock) {
             reconcileLocalAdds(parsedRemote, previousRemoteIds)
             pruneSatisfiedPendingActions(parsedRemote)
-            pruneSatisfiedPendingOpenOrder(parsedRemote)
+            pruneSatisfiedPendingMove(parsedRemote)
             val withPendingApplied = applyPendingActions(parsedRemote)
-            val withPendingOrderApplied = applyPendingOpenOrder(withPendingApplied)
             persistPendingChangesLocked()
-            withPendingOrderApplied + pendingLocalAdds.values.map { it.toShoppingItem() }
+            withPendingApplied + pendingLocalAdds.values.map { it.toShoppingItem() }
         }
 
         val previousItems = _items.value
@@ -289,10 +292,11 @@ class HaWebSocketRepository(
                 )
             }
 
-            if (pendingOpenOrder != null) {
-                pendingOpenOrder = pendingOpenOrder?.map { id ->
-                    if (id == pendingAdd.tempId) matched.id else id
-                }
+            pendingMove = pendingMove?.let { move ->
+                move.copy(
+                    itemId = if (move.itemId == pendingAdd.tempId) matched.id else move.itemId,
+                    previousItemId = if (move.previousItemId == pendingAdd.tempId) matched.id else move.previousItemId
+                )
             }
         }
 
@@ -437,13 +441,15 @@ class HaWebSocketRepository(
                     pendingLocalAdds[itemId] = add.copy(previousItemId = previousItemId)
                 }
             }
-            pendingOpenOrder = currentOpenOrderIds()
-            pendingOpenOrderSentToServer = false
-            pendingOpenOrderLastSentAtMillis = null
+            pendingMove = PendingMove(
+                itemId = itemId,
+                previousItemId = previousItemId,
+                lastSentAtMillis = null
+            )
             persistPendingChangesLocked()
         }
 
-        scheduleOpenOrderDispatch()
+        schedulePendingMoveDispatch()
     }
 
     fun clearCompleted() {
@@ -458,9 +464,9 @@ class HaWebSocketRepository(
             pendingLocalAdds.keys
                 .filter { it in idsToRemove }
                 .forEach { pendingLocalAdds.remove(it) }
-            pendingOpenOrder = pendingOpenOrder
-                ?.filterNot { it in idsToRemove }
-                ?.takeIf { it.isNotEmpty() }
+            pendingMove = pendingMove?.takeUnless { move ->
+                move.itemId in idsToRemove || move.previousItemId in idsToRemove
+            }
 
             pendingActions.removeAll { action ->
                 when (action) {
@@ -536,10 +542,10 @@ class HaWebSocketRepository(
         }
     }
 
-    private fun scheduleOpenOrderDispatch() {
-        pendingOpenOrderDispatchJob?.cancel()
-        pendingOpenOrderDispatchJob = scope.launch {
-            delay(OPEN_ORDER_DEBOUNCE_MILLIS)
+    private fun schedulePendingMoveDispatch() {
+        pendingMoveDispatchJob?.cancel()
+        pendingMoveDispatchJob = scope.launch {
+            delay(PENDING_MOVE_DEBOUNCE_MILLIS)
             flushPendingChanges()
         }
     }
@@ -584,11 +590,11 @@ class HaWebSocketRepository(
         try {
             val localAdds: List<PendingLocalAdd>
             val queuedActions: List<PendingAction>
-            val openOrderToSend: List<String>?
+            val moveToSend: PendingMove?
             synchronized(lock) {
                 localAdds = pendingLocalAdds.values.toList()
                 queuedActions = pendingActions.toList()
-                openOrderToSend = pendingOpenOrder
+                moveToSend = pendingMove
             }
 
             val sentLocalAddIds = mutableSetOf<String>()
@@ -636,14 +642,14 @@ class HaWebSocketRepository(
                     }
                 }
 
-            val shouldSendOpenOrder = synchronized(lock) {
-                shouldSendPendingOpenOrder(now) &&
-                    openOrderToSend != null &&
-                    openOrderToSend.none { it.startsWith(LOCAL_ID_PREFIX) }
-            }
-            val openOrderSent =
-                if (shouldSendOpenOrder) {
-                    sendOpenItemOrder()
+            val shouldSendPendingMove =
+                moveToSend != null &&
+                    shouldSendPending(moveToSend.lastSentAtMillis, now) &&
+                    resolveRemoteId(moveToSend.itemId) != null &&
+                    resolveRemoteId(moveToSend.previousItemId) != null
+            val moveSent =
+                if (shouldSendPendingMove) {
+                    sendPendingMove(moveToSend!!)
                 } else {
                     false
                 }
@@ -668,9 +674,8 @@ class HaWebSocketRepository(
                         }
                     }
                 }
-                if (openOrderSent) {
-                    pendingOpenOrderSentToServer = true
-                    pendingOpenOrderLastSentAtMillis = now
+                if (moveSent) {
+                    pendingMove = pendingMove?.copy(lastSentAtMillis = now)
                 }
                 persistPendingChangesLocked()
             }
@@ -679,7 +684,7 @@ class HaWebSocketRepository(
                 sentLocalAddIds.size != localAdds.count { shouldSendPending(it.lastSentAtMillis, now) } ||
                 sentUpdateIds.size != queuedActions.count { it is PendingAction.Update && shouldSendPending(it.lastSentAtMillis, now) } ||
                 sentRemoveIds.size != queuedActions.count { it is PendingAction.Remove && shouldSendPending(it.lastSentAtMillis, now) } ||
-                (shouldSendOpenOrder && !openOrderSent)
+                (shouldSendPendingMove && !moveSent)
             ) {
                 _isOffline.value = true
                 _isConnecting.value = false
@@ -741,6 +746,27 @@ class HaWebSocketRepository(
         }
     }
 
+    private fun pruneSatisfiedPendingMove(remoteItems: List<ShoppingItem>) {
+        val move = pendingMove ?: return
+        if (move.lastSentAtMillis == null) {
+            return
+        }
+
+        val remoteOpenOrder = remoteItems
+            .filter { !it.complete }
+            .map { it.id }
+
+        val itemIndex = remoteOpenOrder.indexOf(move.itemId)
+        if (itemIndex < 0) {
+            return
+        }
+
+        val actualPreviousItemId = remoteOpenOrder.getOrNull(itemIndex - 1)
+        if (actualPreviousItemId == move.previousItemId) {
+            pendingMove = null
+        }
+    }
+
     private fun sendAddItem(name: String): Boolean {
         return client.send(
             type = "call_service",
@@ -775,21 +801,13 @@ class HaWebSocketRepository(
         )
     }
 
-    private fun sendOpenItemOrder(): Boolean {
-        val orderToSend = synchronized(lock) {
-            pendingOpenOrder
-                ?.mapNotNull { resolveRemoteId(it) }
-                ?.takeIf { it.isNotEmpty() }
-        } ?: return false
-
-        var allSent = true
-        orderToSend.forEachIndexed { index, itemId ->
-            allSent = sendMoveItem(
-                itemId = itemId,
-                previousItemId = orderToSend.getOrNull(index - 1)
-            ) && allSent
-        }
-        return allSent
+    private fun sendPendingMove(move: PendingMove): Boolean {
+        val resolvedItemId = resolveRemoteId(move.itemId) ?: return false
+        val resolvedPreviousItemId = resolveRemoteId(move.previousItemId) ?: return false
+        return sendMoveItem(
+            itemId = resolvedItemId,
+            previousItemId = resolvedPreviousItemId
+        )
     }
 
     private fun sendMoveItem(itemId: String, previousItemId: String?): Boolean {
@@ -815,46 +833,6 @@ class HaWebSocketRepository(
                     .put("item", itemId)
                 )
         )
-    }
-
-    private fun applyPendingOpenOrder(items: List<ShoppingItem>): List<ShoppingItem> {
-        val desiredOrder = pendingOpenOrder ?: return items
-        val openItemsById = items
-            .filter { !it.complete }
-            .associateBy { it.id }
-
-        if (openItemsById.isEmpty()) {
-            return items
-        }
-
-        val orderedOpenItems = buildList {
-            desiredOrder.forEach { id ->
-                openItemsById[id]?.let(::add)
-            }
-            items
-                .filter { !it.complete && it.id !in desiredOrder }
-                .forEach(::add)
-        }
-
-        return orderedOpenItems + items.filter { it.complete }
-    }
-
-    private fun pruneSatisfiedPendingOpenOrder(remoteItems: List<ShoppingItem>) {
-        val desiredOrder = pendingOpenOrder ?: return
-        if (!pendingOpenOrderSentToServer) {
-            return
-        }
-
-        val remoteOpenOrder = remoteItems
-            .filter { !it.complete }
-            .map { it.id }
-
-        val expectedOrder = desiredOrder.filter { id -> remoteOpenOrder.contains(id) }
-        if (expectedOrder.isNotEmpty() && remoteOpenOrder == expectedOrder) {
-            pendingOpenOrder = null
-            pendingOpenOrderSentToServer = false
-            pendingOpenOrderLastSentAtMillis = null
-        }
     }
 
     private fun updateLocalItem(
@@ -888,11 +866,6 @@ class HaWebSocketRepository(
         _items.value = currentItems
     }
 
-    private fun currentOpenOrderIds(): List<String> =
-        _items.value
-            .filter { !it.complete }
-            .map { it.id }
-
     private fun resolveRemoteId(itemId: String?): String? {
         if (itemId == null || !itemId.startsWith(LOCAL_ID_PREFIX)) {
             return itemId
@@ -905,19 +878,14 @@ class HaWebSocketRepository(
         return lastSentAtMillis == null || now - lastSentAtMillis >= PENDING_RETRY_AFTER_MILLIS
     }
 
-    private fun shouldSendPendingOpenOrder(now: Long): Boolean {
-        return pendingOpenOrderLastSentAtMillis == null ||
-            now - pendingOpenOrderLastSentAtMillis!! >= OPEN_ORDER_RETRY_AFTER_MILLIS
-    }
-
     private fun schedulePendingRetryIfNeeded() {
         val retryDelayMillis = synchronized(lock) {
             val hasCriticalPendingChanges = pendingLocalAdds.isNotEmpty() || pendingActions.isNotEmpty()
-            val hasPendingOpenOrder = pendingOpenOrder != null
+            val hasPendingMove = pendingMove != null
 
             when {
                 hasCriticalPendingChanges -> PENDING_RETRY_AFTER_MILLIS
-                hasPendingOpenOrder -> OPEN_ORDER_RETRY_AFTER_MILLIS
+                hasPendingMove -> PENDING_MOVE_RETRY_AFTER_MILLIS
                 else -> null
             }
         }
@@ -946,9 +914,9 @@ class HaWebSocketRepository(
                     is PendingAction.Update -> action.copy(lastSentAtMillis = null)
                 }
             }
-            if (pendingOpenOrder != null) {
-                pendingOpenOrderSentToServer = false
-                pendingOpenOrderLastSentAtMillis = null
+            pendingMove = pendingMove?.copy(lastSentAtMillis = null)
+            if (pendingMove != null) {
+                pendingMoveDispatchJob?.cancel()
             }
             persistPendingChangesLocked()
         }
@@ -999,15 +967,16 @@ class HaWebSocketRepository(
                     }
                 }
 
-                pendingOpenOrder = root.optJSONArray("openOrder")?.let { order ->
-                    buildList {
-                        for (index in 0 until order.length()) {
-                            order.optString(index).takeIf { it.isNotBlank() }?.let(::add)
-                        }
-                    }.takeIf { it.isNotEmpty() }
+                root.optJSONObject("move")?.let { move ->
+                    val itemId = move.optString("itemId").takeIf { it.isNotBlank() }
+                    if (itemId != null) {
+                        pendingMove = PendingMove(
+                            itemId = itemId,
+                            previousItemId = move.optNullableString("previousItemId"),
+                            lastSentAtMillis = move.optNullableLong("lastSentAtMillis")
+                        )
+                    }
                 }
-                pendingOpenOrderSentToServer = root.optBoolean("openOrderSentToServer")
-                pendingOpenOrderLastSentAtMillis = root.optNullableLong("openOrderLastSentAtMillis")
             }
 
             tempIdCounter.set(maxRestoredTempId + 1)
@@ -1023,7 +992,7 @@ class HaWebSocketRepository(
     }
 
     private fun persistPendingChangesLocked() {
-        if (pendingLocalAdds.isEmpty() && pendingActions.isEmpty() && pendingOpenOrder == null) {
+        if (pendingLocalAdds.isEmpty() && pendingActions.isEmpty() && pendingMove == null) {
             pendingSyncPrefs.edit().remove(PENDING_SYNC_KEY).apply()
             return
         }
@@ -1062,15 +1031,18 @@ class HaWebSocketRepository(
             }
         }
 
-        val openOrder = JSONArray()
-        pendingOpenOrder.orEmpty().forEach { openOrder.put(it) }
-
         root
             .put("localAdds", adds)
             .put("actions", actions)
-            .put("openOrder", if (pendingOpenOrder == null) JSONObject.NULL else openOrder)
-            .put("openOrderSentToServer", pendingOpenOrderSentToServer)
-            .put("openOrderLastSentAtMillis", pendingOpenOrderLastSentAtMillis ?: JSONObject.NULL)
+            .put(
+                "move",
+                pendingMove?.let { move ->
+                    JSONObject()
+                        .put("itemId", move.itemId)
+                        .put("previousItemId", move.previousItemId ?: JSONObject.NULL)
+                        .put("lastSentAtMillis", move.lastSentAtMillis ?: JSONObject.NULL)
+                } ?: JSONObject.NULL
+            )
 
         pendingSyncPrefs.edit().putString(PENDING_SYNC_KEY, root.toString()).apply()
     }
@@ -1096,7 +1068,7 @@ class HaWebSocketRepository(
         private const val PENDING_SYNC_PREFS = "pending_shopping_list_sync"
         private const val PENDING_SYNC_KEY = "pending_changes"
         private const val PENDING_RETRY_AFTER_MILLIS = 10_000L
-        private const val OPEN_ORDER_DEBOUNCE_MILLIS = 750L
-        private const val OPEN_ORDER_RETRY_AFTER_MILLIS = 30_000L
+        private const val PENDING_MOVE_DEBOUNCE_MILLIS = 750L
+        private const val PENDING_MOVE_RETRY_AFTER_MILLIS = 30_000L
     }
 }
