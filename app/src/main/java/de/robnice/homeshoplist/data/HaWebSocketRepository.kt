@@ -81,9 +81,11 @@ class HaWebSocketRepository(
     private val pendingLocalAdds = linkedMapOf<String, PendingLocalAdd>()
     private var pendingOpenOrder: List<String>? = null
     private var pendingOpenOrderSentToServer = false
+    private var pendingOpenOrderLastSentAtMillis: Long? = null
     private var lastRemoteItems: List<ShoppingItem> = emptyList()
     private var hadReadyOnce = false
     private var pendingRetryJob: Job? = null
+    private var pendingOpenOrderDispatchJob: Job? = null
     @Volatile
     private var syncInProgress = false
 
@@ -429,19 +431,19 @@ class HaWebSocketRepository(
     fun moveItem(itemId: String, previousItemId: String?) {
         applyLocalMove(itemId, previousItemId)
 
-        if (itemId.startsWith(LOCAL_ID_PREFIX)) {
-            synchronized(lock) {
+        synchronized(lock) {
+            if (itemId.startsWith(LOCAL_ID_PREFIX)) {
                 pendingLocalAdds[itemId]?.let { add ->
                     pendingLocalAdds[itemId] = add.copy(previousItemId = previousItemId)
-                    pendingOpenOrder = currentOpenOrderIds()
-                    pendingOpenOrderSentToServer = false
-                    persistPendingChangesLocked()
                 }
             }
-            return
+            pendingOpenOrder = currentOpenOrderIds()
+            pendingOpenOrderSentToServer = false
+            pendingOpenOrderLastSentAtMillis = null
+            persistPendingChangesLocked()
         }
 
-        enqueueOrSendOpenOrder()
+        scheduleOpenOrderDispatch()
     }
 
     fun clearCompleted() {
@@ -534,19 +536,11 @@ class HaWebSocketRepository(
         }
     }
 
-    private fun enqueueOrSendOpenOrder() {
-        val sentToServer = client.isReady() && sendOpenItemOrder()
-
-        synchronized(lock) {
-            pendingOpenOrder = currentOpenOrderIds()
-            pendingOpenOrderSentToServer = sentToServer
-            persistPendingChangesLocked()
-        }
-
-        if (!sentToServer) {
-            _isOffline.value = true
-            _isConnecting.value = false
-            client.ensureConnected()
+    private fun scheduleOpenOrderDispatch() {
+        pendingOpenOrderDispatchJob?.cancel()
+        pendingOpenOrderDispatchJob = scope.launch {
+            delay(OPEN_ORDER_DEBOUNCE_MILLIS)
+            flushPendingChanges()
         }
     }
 
@@ -642,12 +636,20 @@ class HaWebSocketRepository(
                     }
                 }
 
+            val shouldSendOpenOrder = synchronized(lock) {
+                shouldSendPendingOpenOrder(now) &&
+                    openOrderToSend != null &&
+                    openOrderToSend.none { it.startsWith(LOCAL_ID_PREFIX) }
+            }
             val openOrderSent =
-                if (openOrderToSend != null && openOrderToSend.none { it.startsWith(LOCAL_ID_PREFIX) }) {
+                if (shouldSendOpenOrder) {
                     sendOpenItemOrder()
                 } else {
                     false
                 }
+
+            val sentAnyNonReorderChange =
+                sentLocalAddIds.isNotEmpty() || sentUpdateIds.isNotEmpty() || sentRemoveIds.isNotEmpty()
 
             synchronized(lock) {
                 sentLocalAddIds.forEach { tempId ->
@@ -668,6 +670,7 @@ class HaWebSocketRepository(
                 }
                 if (openOrderSent) {
                     pendingOpenOrderSentToServer = true
+                    pendingOpenOrderLastSentAtMillis = now
                 }
                 persistPendingChangesLocked()
             }
@@ -676,15 +679,17 @@ class HaWebSocketRepository(
                 sentLocalAddIds.size != localAdds.count { shouldSendPending(it.lastSentAtMillis, now) } ||
                 sentUpdateIds.size != queuedActions.count { it is PendingAction.Update && shouldSendPending(it.lastSentAtMillis, now) } ||
                 sentRemoveIds.size != queuedActions.count { it is PendingAction.Remove && shouldSendPending(it.lastSentAtMillis, now) } ||
-                (openOrderToSend != null && openOrderToSend.none { it.startsWith(LOCAL_ID_PREFIX) } && !openOrderSent)
+                (shouldSendOpenOrder && !openOrderSent)
             ) {
                 _isOffline.value = true
                 _isConnecting.value = false
                 client.ensureConnected()
             }
 
-            delay(150)
-            loadItems()
+            if (sentAnyNonReorderChange) {
+                delay(150)
+                loadItems()
+            }
             schedulePendingRetryIfNeeded()
         } finally {
             syncInProgress = false
@@ -848,6 +853,7 @@ class HaWebSocketRepository(
         if (expectedOrder.isNotEmpty() && remoteOpenOrder == expectedOrder) {
             pendingOpenOrder = null
             pendingOpenOrderSentToServer = false
+            pendingOpenOrderLastSentAtMillis = null
         }
     }
 
@@ -899,16 +905,28 @@ class HaWebSocketRepository(
         return lastSentAtMillis == null || now - lastSentAtMillis >= PENDING_RETRY_AFTER_MILLIS
     }
 
+    private fun shouldSendPendingOpenOrder(now: Long): Boolean {
+        return pendingOpenOrderLastSentAtMillis == null ||
+            now - pendingOpenOrderLastSentAtMillis!! >= OPEN_ORDER_RETRY_AFTER_MILLIS
+    }
+
     private fun schedulePendingRetryIfNeeded() {
-        val hasPendingChanges = synchronized(lock) {
-            pendingLocalAdds.isNotEmpty() || pendingActions.isNotEmpty() || pendingOpenOrder != null
+        val retryDelayMillis = synchronized(lock) {
+            val hasCriticalPendingChanges = pendingLocalAdds.isNotEmpty() || pendingActions.isNotEmpty()
+            val hasPendingOpenOrder = pendingOpenOrder != null
+
+            when {
+                hasCriticalPendingChanges -> PENDING_RETRY_AFTER_MILLIS
+                hasPendingOpenOrder -> OPEN_ORDER_RETRY_AFTER_MILLIS
+                else -> null
+            }
         }
-        if (!hasPendingChanges || pendingRetryJob?.isActive == true) {
+        if (retryDelayMillis == null || pendingRetryJob?.isActive == true) {
             return
         }
 
         pendingRetryJob = scope.launch {
-            delay(PENDING_RETRY_AFTER_MILLIS)
+            delay(retryDelayMillis)
             if (client.isReady()) {
                 flushPendingChanges()
             } else {
@@ -930,6 +948,7 @@ class HaWebSocketRepository(
             }
             if (pendingOpenOrder != null) {
                 pendingOpenOrderSentToServer = false
+                pendingOpenOrderLastSentAtMillis = null
             }
             persistPendingChangesLocked()
         }
@@ -988,6 +1007,7 @@ class HaWebSocketRepository(
                     }.takeIf { it.isNotEmpty() }
                 }
                 pendingOpenOrderSentToServer = root.optBoolean("openOrderSentToServer")
+                pendingOpenOrderLastSentAtMillis = root.optNullableLong("openOrderLastSentAtMillis")
             }
 
             tempIdCounter.set(maxRestoredTempId + 1)
@@ -1050,6 +1070,7 @@ class HaWebSocketRepository(
             .put("actions", actions)
             .put("openOrder", if (pendingOpenOrder == null) JSONObject.NULL else openOrder)
             .put("openOrderSentToServer", pendingOpenOrderSentToServer)
+            .put("openOrderLastSentAtMillis", pendingOpenOrderLastSentAtMillis ?: JSONObject.NULL)
 
         pendingSyncPrefs.edit().putString(PENDING_SYNC_KEY, root.toString()).apply()
     }
@@ -1075,5 +1096,7 @@ class HaWebSocketRepository(
         private const val PENDING_SYNC_PREFS = "pending_shopping_list_sync"
         private const val PENDING_SYNC_KEY = "pending_changes"
         private const val PENDING_RETRY_AFTER_MILLIS = 10_000L
+        private const val OPEN_ORDER_DEBOUNCE_MILLIS = 750L
+        private const val OPEN_ORDER_RETRY_AFTER_MILLIS = 30_000L
     }
 }
