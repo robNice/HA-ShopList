@@ -535,10 +535,17 @@ class HaWebSocketRepository(
     }
 
     private fun enqueueOrSendOpenOrder() {
+        val openOrder = currentOpenOrderIds()
+
+        synchronized(lock) {
+            pendingOpenOrder = openOrder
+            pendingOpenOrderSentToServer = false
+            persistPendingChangesLocked()
+        }
+
         val sentToServer = client.isReady() && sendOpenItemOrder()
 
         synchronized(lock) {
-            pendingOpenOrder = currentOpenOrderIds()
             pendingOpenOrderSentToServer = sentToServer
             persistPendingChangesLocked()
         }
