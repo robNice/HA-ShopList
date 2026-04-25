@@ -33,36 +33,40 @@ jobs:
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
 
-      - name: Build Release APK
+      - name: Build Release artifacts
         env:
           ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease :app:bundleRelease
+        run: ./gradlew :app:assembleGithubRelease :app:bundleGithubRelease :app:assemblePlayRelease :app:bundlePlayRelease
 
-      - name: Rename APK to include tag
+      - name: Rename artifacts to include tag
         run: |
-          APK="$(ls app/build/outputs/apk/release/*.apk | head -n 1)"
-          mv "$APK" "app-${{ github.ref_name }}.apk"
-          AAB="$(ls app/build/outputs/bundle/release/*.aab | head -n 1)"
-          mv "$AAB" "app-${{ github.ref_name }}.aab"
+          mv "app/build/outputs/apk/github/release/app-github-release.apk" "homeShopList-${{ github.ref_name }}.apk"
+          mv "app/build/outputs/bundle/githubRelease/app-github-release.aab" "homeShopList-${{ github.ref_name }}.aab"
+          mv "app/build/outputs/apk/play/release/app-play-release.apk" "homeShopList-playstore-${{ github.ref_name }}.apk"
+          mv "app/build/outputs/bundle/playRelease/app-play-release.aab" "homeShopList-playstore-${{ github.ref_name }}.aab"
 
-      - name: Upload APK artifact
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: apk-${{ github.ref_name }}
+          name: release-${{ github.ref_name }}
           path: |  
-            app-${{ github.ref_name }}.apk
-            app-${{ github.ref_name }}.aab
+            homeShopList-${{ github.ref_name }}.apk
+            homeShopList-${{ github.ref_name }}.aab
+            homeShopList-playstore-${{ github.ref_name }}.apk
+            homeShopList-playstore-${{ github.ref_name }}.aab
           if-no-files-found: error
 
-      - name: Publish APK to GitHub Release
+      - name: Publish release artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           generate_release_notes: true
           files: | 
-            app-${{ github.ref_name }}.apk
-            app-${{ github.ref_name }}.aab
+            homeShopList-${{ github.ref_name }}.apk
+            homeShopList-${{ github.ref_name }}.aab
+            homeShopList-playstore-${{ github.ref_name }}.apk
+            homeShopList-playstore-${{ github.ref_name }}.aab
