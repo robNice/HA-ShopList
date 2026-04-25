@@ -1,5 +1,14 @@
 # HA Shopping List (Android)
 
+## Wichtiger Hinweis zum Update
+
+- Ab Version `1.8` verwendet die App eine neue App-ID.
+- Wenn du aktuell eine Version unter `1.8` nutzt, kannst du nicht direkt per In-App-Update auf `1.8` aktualisieren.
+- Bitte deinstalliere in diesem Fall zuerst die alte App und installiere danach Version `1.8` oder neuer manuell neu.
+- Danach funktionieren künftige Updates auch wieder ganz normal in der App.
+
+---
+
 Standalone-Android-App für die **Home Assistant Todo-Listen** mit Live-Updates über die Home Assistant WebSocket API.
 
 ---
