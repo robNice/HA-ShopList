@@ -79,6 +79,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
 import de.robnice.homeshoplist.util.Debug
 import de.robnice.homeshoplist.data.HaRuntime
+import de.robnice.homeshoplist.data.HaWebSocketRepository
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import androidx.compose.ui.layout.ContentScale
@@ -89,6 +90,7 @@ import de.robnice.homeshoplist.ui.theme.BrandGreen
 import de.robnice.homeshoplist.ui.theme.BrandOrange
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import kotlinx.coroutines.delay
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -257,6 +259,9 @@ fun ShoppingScreen(navController: NavController) {
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showOfflineInfo by remember { mutableStateOf(false) }
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
+    var repo by remember(haUrl, haToken, todoEntity, notificationsEnabled) {
+        mutableStateOf<HaWebSocketRepository?>(HaRuntime.repository)
+    }
 
     if (config == null) {
         Box(
@@ -266,6 +271,24 @@ fun ShoppingScreen(navController: NavController) {
             CircularProgressIndicator()
         }
         return
+    }
+
+    LaunchedEffect(haUrl, haToken, todoEntity, notificationsEnabled) {
+        if (haUrl.isNullOrBlank() || haToken.isNullOrBlank() || todoEntity.isNullOrBlank()) {
+            repo = null
+            return@LaunchedEffect
+        }
+
+        repeat(100) {
+            val runtimeRepo = HaRuntime.repository
+            if (runtimeRepo != null) {
+                repo = runtimeRepo
+                return@LaunchedEffect
+            }
+            delay(50)
+        }
+
+        repo = HaRuntime.repository
     }
 
     if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
@@ -284,7 +307,6 @@ fun ShoppingScreen(navController: NavController) {
     }
 
 
-    val repo = HaRuntime.repository
     if (repo == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -295,8 +317,10 @@ fun ShoppingScreen(navController: NavController) {
         return
     }
 
+    val activeRepo = requireNotNull(repo)
 
-    val viewModel = remember(repo) { ShoppingViewModel(repo) }
+
+    val viewModel = remember(activeRepo) { ShoppingViewModel(activeRepo) }
 
     val authFailed by viewModel.authFailed.collectAsState()
     val isOffline by viewModel.isOffline.collectAsState()
@@ -308,15 +332,15 @@ fun ShoppingScreen(navController: NavController) {
         headerPulseKey += 1
     }
 
-    LaunchedEffect(repo, notificationsEnabled) {
+    LaunchedEffect(activeRepo, notificationsEnabled) {
         if (notificationsEnabled) {
-            repo.setReconnectAllowed(true)
+            activeRepo.setReconnectAllowed(true)
             viewModel.ensureConnection()
         }
     }
 
-    LaunchedEffect(repo) {
-        repo.reconnected.collect { ts ->
+    LaunchedEffect(activeRepo) {
+        activeRepo.reconnected.collect { ts ->
             if (ts == 0L) return@collect
 
             Toast.makeText(
@@ -333,18 +357,18 @@ fun ShoppingScreen(navController: NavController) {
         }
     }
 
-    DisposableEffect(lifecycleOwner, notificationsEnabled, repo) {
+    DisposableEffect(lifecycleOwner, notificationsEnabled, activeRepo) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             when (event) {
                 androidx.lifecycle.Lifecycle.Event.ON_START -> {
                     if (notificationsEnabled) {
-                        repo.setReconnectAllowed(true)
+                        activeRepo.setReconnectAllowed(true)
                         viewModel.ensureConnection()
                     }
                 }
 
                 androidx.lifecycle.Lifecycle.Event.ON_STOP -> {
-                    repo.setReconnectAllowed(false)
+                    activeRepo.setReconnectAllowed(false)
                 }
 
                 else -> Unit
