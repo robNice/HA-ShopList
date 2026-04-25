@@ -1,4 +1,4 @@
-# HA Shopping List (Android)
+# Home ShopList (Android)
 
 ## Wichtiger Hinweis zum Update
 
