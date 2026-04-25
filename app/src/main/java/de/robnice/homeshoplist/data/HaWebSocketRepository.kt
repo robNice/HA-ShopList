@@ -162,6 +162,7 @@ class HaWebSocketRepository(
                 }
 
                 scope.launch {
+                    loadItems()
                     flushPendingChanges()
                 }
             }
