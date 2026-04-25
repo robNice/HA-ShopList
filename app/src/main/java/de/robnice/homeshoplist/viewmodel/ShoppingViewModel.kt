@@ -1,0 +1,57 @@
+package de.robnice.homeshoplist.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import de.robnice.homeshoplist.data.HaWebSocketRepository
+import de.robnice.homeshoplist.model.ShoppingItem
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+class ShoppingViewModel(
+    private val repository: HaWebSocketRepository
+) : ViewModel() {
+
+    val items: StateFlow<List<ShoppingItem>> = repository.items
+    val authFailed = repository.authFailed
+    val connectionErrors = repository.connectionErrors
+    val isOffline = repository.isOffline
+    val isConnecting = repository.isConnecting
+    val newItems = repository.newItems
+    val remoteActivity = repository.remoteActivity
+
+
+    val isLoading = combine(repository.loaded, repository.items) { loaded, items ->
+        !loaded && items.isEmpty()
+    }
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
+
+    fun addItem(name: String) {
+        repository.addItem(name)
+    }
+
+    fun toggleItem(item: ShoppingItem) {
+        repository.toggleItem(item)
+    }
+
+    fun clearCompleted() {
+        repository.clearCompleted()
+    }
+
+    fun renameItem(item: ShoppingItem, newName: String) {
+        repository.renameItem(item, newName)
+    }
+
+    fun ensureConnection() {
+        repository.ensureConnected()
+    }
+
+    fun moveItem(itemId: String, previousItemId: String?) {
+        repository.moveItem(itemId, previousItemId)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+    }
+}
