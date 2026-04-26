@@ -647,7 +647,7 @@ class HaWebSocketRepository(
                 moveToSend != null &&
                     shouldSendPending(moveToSend.lastSentAtMillis, now) &&
                     resolveRemoteId(moveToSend.itemId) != null &&
-                    resolveRemoteId(moveToSend.previousItemId) != null
+                    (moveToSend.previousItemId == null || resolveRemoteId(moveToSend.previousItemId) != null)
             val moveSent =
                 if (shouldSendPendingMove) {
                     sendPendingMove(moveToSend!!)
@@ -804,7 +804,7 @@ class HaWebSocketRepository(
 
     private fun sendPendingMove(move: PendingMove): Boolean {
         val resolvedItemId = resolveRemoteId(move.itemId) ?: return false
-        val resolvedPreviousItemId = resolveRemoteId(move.previousItemId) ?: return false
+        val resolvedPreviousItemId = move.previousItemId?.let { resolveRemoteId(it) } ?: move.previousItemId
         return sendMoveItem(
             itemId = resolvedItemId,
             previousItemId = resolvedPreviousItemId
@@ -812,12 +812,17 @@ class HaWebSocketRepository(
     }
 
     private fun sendMoveItem(itemId: String, previousItemId: String?): Boolean {
+        val payload = JSONObject()
+            .put("entity_id", todoEntity)
+            .put("uid", itemId)
+
+        if (previousItemId != null) {
+            payload.put("previous_uid", previousItemId)
+        }
+
         return client.send(
             type = "todo/item/move",
-            payload = JSONObject()
-                .put("entity_id", todoEntity)
-                .put("uid", itemId)
-                .put("previous_uid", previousItemId ?: JSONObject.NULL)
+            payload = payload
         )
     }
 
