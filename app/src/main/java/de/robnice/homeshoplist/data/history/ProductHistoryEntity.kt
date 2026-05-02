@@ -8,6 +8,7 @@ data class ProductHistoryEntity(
     @PrimaryKey
     val normalizedName: String,
     val displayName: String,
+    val areaKey: String?,
     val useCount: Int,
     val lastUsedAt: Long
 )
