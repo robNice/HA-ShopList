@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - live
+    tags:
+      - devbuild
 
 permissions:
   contents: write
@@ -13,22 +15,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout live branch
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: live
           fetch-depth: 0
 
-      - name: Check for devbuild tag on HEAD
+      - name: Check whether live and devbuild match
         id: dev_tag
         shell: bash
         run: |
-          if git tag --points-at HEAD | grep -x "devbuild" > /dev/null; then
+          git fetch origin live --tags
+          live_head="$(git rev-parse origin/live)"
+          tag_commit="$(git rev-list -n 1 refs/tags/devbuild 2>/dev/null || true)"
+
+          if [ -n "$tag_commit" ] && [ "$live_head" = "$tag_commit" ]; then
             echo "found=true" >> "$GITHUB_OUTPUT"
             echo "tag=devbuild" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "No 'devbuild' tag on HEAD. Skipping build."
+            echo "live HEAD ($live_head) and tag devbuild ($tag_commit) do not match. Skipping build."
           fi
 
       - name: Set up JDK 17
