@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HA ShopList</string>
+    <string name="app_name">HomeShopList</string>
     <string name="settings">Настройки</string>
     <string name="settings_cta">Открыть настройки</string>
     <string name="settings_title">Настройки</string>
@@ -28,7 +28,7 @@
     <string name="connection_errors_title">Не удалось подключиться</string>
     <string name="connection_errors_text">Проверьте URL Home Assistant и подключение к интернету, затем повторите попытку.</string>
     <string name="alwaysActiveMsg">Приложение всегда активно</string>
-    <string name="appIsRunning">HA ShopList запущен</string>
+    <string name="appIsRunning">HomeShopList запущен</string>
     <string name="reconnected">Подключение восстановлено</string>
     <string name="settings_list">Список</string>
     <string name="loading_failed">Не удалось загрузить</string>

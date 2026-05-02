@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HA ShopList</string>
+    <string name="app_name">HomeShopList</string>
     <string name="settings">設定</string>
     <string name="settings_cta">設定を開く</string>
     <string name="settings_title">設定</string>
@@ -28,7 +28,7 @@
     <string name="connection_errors_title">接続に失敗しました</string>
     <string name="connection_errors_text">Home Assistant のURL とインターネット接続を確認して、もう一度お試しください。</string>
     <string name="alwaysActiveMsg">アプリを常にアクティブにする</string>
-    <string name="appIsRunning">HA ShopList 実行中</string>
+    <string name="appIsRunning">HomeShopList 実行中</string>
     <string name="reconnected">接続が復旧しました</string>
     <string name="settings_list">リスト</string>
     <string name="loading_failed">読み込みに失敗しました</string>

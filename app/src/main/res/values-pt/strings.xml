@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HA ShopList</string>
+    <string name="app_name">HomeShopList</string>
     <string name="settings">Configurações</string>
     <string name="settings_cta">Abrir configurações</string>
     <string name="settings_title">Configurações</string>
@@ -28,7 +28,7 @@
     <string name="connection_errors_title">Falha na conexão</string>
     <string name="connection_errors_text">Verifique a URL do Home Assistant e sua conexão com a internet e tente novamente.</string>
     <string name="alwaysActiveMsg">Aplicativo sempre ativo</string>
-    <string name="appIsRunning">HA ShopList em execução</string>
+    <string name="appIsRunning">HomeShopList em execução</string>
     <string name="reconnected">Conexão restabelecida</string>
     <string name="settings_list">Lista</string>
     <string name="loading_failed">Falha ao carregar</string>

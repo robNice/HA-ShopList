@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HA ShopList</string>
+    <string name="app_name">HomeShopList</string>
     <string name="settings">Instellingen</string>
     <string name="settings_cta">Instellingen openen</string>
     <string name="settings_title">Instellingen</string>
@@ -28,7 +28,7 @@
     <string name="connection_errors_title">Verbinding mislukt</string>
     <string name="connection_errors_text">Controleer je Home Assistant-URL en je internetverbinding en probeer het opnieuw.</string>
     <string name="alwaysActiveMsg">App altijd actief</string>
-    <string name="appIsRunning">HA ShopList actief</string>
+    <string name="appIsRunning">HomeShopList actief</string>
     <string name="reconnected">Verbinding hersteld</string>
     <string name="settings_list">Lijst</string>
     <string name="loading_failed">Laden mislukt</string>
