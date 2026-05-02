@@ -1,9 +1,9 @@
-name: Build dev APK and app bundle on live push with devbuild tag
+name: Build dev APK and app bundle on dev push with devbuild tag
 
 on:
   push:
     branches:
-      - live
+      - dev
     tags:
       - devbuild
 
@@ -20,20 +20,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check whether live and devbuild match
+      - name: Check whether dev and devbuild match
         id: dev_tag
         shell: bash
         run: |
-          git fetch origin live --tags
-          live_head="$(git rev-parse origin/live)"
+          git fetch origin dev --tags
+          dev_head="$(git rev-parse origin/dev)"
           tag_commit="$(git rev-list -n 1 refs/tags/devbuild 2>/dev/null || true)"
 
-          if [ -n "$tag_commit" ] && [ "$live_head" = "$tag_commit" ]; then
+          if [ -n "$tag_commit" ] && [ "$dev_head" = "$tag_commit" ]; then
             echo "found=true" >> "$GITHUB_OUTPUT"
             echo "tag=devbuild" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "live HEAD ($live_head) and tag devbuild ($tag_commit) do not match. Skipping build."
+            echo "dev HEAD ($dev_head) and tag devbuild ($tag_commit) do not match. Skipping build."
           fi
 
       - name: Set up JDK 17
