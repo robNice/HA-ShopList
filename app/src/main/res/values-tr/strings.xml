@@ -55,6 +55,8 @@
     <string name="help_token_text">1. Home Assistant içinde profilinizi açın.\n2. Security sekmesini açın.\n3. Long-Lived Access Tokens bölümüne kadar aşağı kaydırın.\n4. Yeni bir token oluşturun.\n5. Token’i hemen kopyalayıp buraya yapıştırın.\n\nToken yalnızca bir kez gösterilir ve uygulamanın alışveriş listenizi güvenli şekilde yükleyip güncellemesi için gereklidir.</string>
     <string name="help_list_selection_title">Liste seçimi</string>
     <string name="help_list_selection_text">Bu uygulamanın kullanacağı Home Assistant yapılacaklar listesini seçin. Listeler yalnızca geçerli bir URL ve token girildikten sonra yüklenir.</string>
+    <string name="help_area_visibility_title">Bölümler</string>
+    <string name="help_area_visibility_text">Bölüm açılır listelerinde yalnızca görünmesini istediğiniz mağaza bölümlerini etkinleştirin. Devre dışı bırakılan bölümler yeni veya düzenlenen ögelerin açılır listelerinden gizlenir, ancak mevcut ögeler onları zaten kullanıyorsa alışveriş listesinde görünmeye devam eder.</string>
     <string name="help_product_history_title">Ürün geçmişi</string>
     <string name="help_product_history_text">Uygulama, yeni ögeler eklerken otomatik tamamlama sunmak için daha önce kullanılan ürün adlarını bu cihazda yerel olarak saklar. Geçmişi temizlemek yalnızca bu yerel önerileri kaldırır.</string>
     <string name="offline_chip">Çevrimdışı</string>

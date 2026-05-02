@@ -276,8 +276,12 @@ fun ShoppingScreen(
     val haToken = config?.second
     val todoEntity = config?.third
     val areaOrderRaw by dataStore.areaOrder.collectAsState(initial = "")
+    val enabledAreasRaw by dataStore.enabledAreas.collectAsState(initial = "")
     val orderedAreas = remember(areaOrderRaw) {
         ShoppingArea.orderedFromStorage(areaOrderRaw)
+    }
+    val enabledAreas = remember(orderedAreas, enabledAreasRaw) {
+        ShoppingArea.enabledFromStorage(enabledAreasRaw, orderedAreas)
     }
     var editingItemId by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -439,6 +443,11 @@ fun ShoppingScreen(
 
     var newItem by remember { mutableStateOf("") }
     var selectedArea by remember { mutableStateOf(ShoppingArea.OTHER) }
+    LaunchedEffect(enabledAreas) {
+        if (selectedArea !in enabledAreas) {
+            selectedArea = enabledAreas.firstOrNull() ?: ShoppingArea.OTHER
+        }
+    }
     val autocompleteFlow = remember(newItem, productHistoryRepository) {
         if (newItem.isBlank()) {
             flowOf(emptyList())
@@ -587,7 +596,7 @@ fun ShoppingScreen(
 
                                 AreaMenuButton(
                                     selectedArea = selectedArea,
-                                    areas = orderedAreas,
+                                    areas = enabledAreas,
                                     onAreaSelected = { area ->
                                         selectedArea = area
                                     }
@@ -963,6 +972,7 @@ fun ShoppingScreen(
                                             ShoppingRow(
                                                 item = item,
                                                 orderedAreas = orderedAreas,
+                                                selectableAreas = enabledAreas,
                                                 isEditing = editingItemId == item.id,
                                                 onStartEdit = { clickedId ->
 
@@ -1058,6 +1068,7 @@ fun ShoppingScreen(
                                         ShoppingRow(
                                             item = item,
                                             orderedAreas = orderedAreas,
+                                            selectableAreas = enabledAreas,
                                             isEditing = editingItemId == item.id,
                                             onStartEdit = { clickedId ->
 
@@ -1810,6 +1821,7 @@ private fun ActiveDropIndicator(
 fun ShoppingRow(
     item: ShoppingItem,
     orderedAreas: List<ShoppingArea>,
+    selectableAreas: List<ShoppingArea>,
     isEditing: Boolean,
     onStartEdit: (String) -> Unit,
     onStopEdit: () -> Unit,
@@ -1958,7 +1970,7 @@ fun ShoppingRow(
 
                     AreaMenuButton(
                         selectedArea = item.area ?: ShoppingArea.OTHER,
-                        areas = orderedAreas,
+                        areas = selectableAreas,
                         onAreaSelected = { area ->
                             if (area != (item.area ?: ShoppingArea.OTHER)) {
                                 onStopEdit()

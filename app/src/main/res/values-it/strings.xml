@@ -55,6 +55,8 @@
     <string name="help_token_text">1. Apri il tuo profilo in Home Assistant.\n2. Apri la scheda Security.\n3. Scorri verso il basso fino a Long-Lived Access Tokens.\n4. Crea un nuovo token.\n5. Copia subito il token e incollalo qui.\n\nIl token viene mostrato una sola volta ed è necessario affinché l’app possa caricare e aggiornare in modo sicuro la tua lista della spesa.</string>
     <string name="help_list_selection_title">Selezione della lista</string>
     <string name="help_list_selection_text">Scegli quale lista di attività di Home Assistant deve usare questa app. Le liste vengono caricate solo dopo aver inserito un URL e un token validi.</string>
+    <string name="help_area_visibility_title">Reparti</string>
+    <string name="help_area_visibility_text">Attiva solo i reparti del negozio che devono comparire nei menu a discesa dei reparti. I reparti disattivati vengono nascosti nei menu a discesa per gli elementi nuovi o modificati, ma restano visibili nella lista della spesa se elementi già esistenti li usano ancora.</string>
     <string name="help_product_history_title">Cronologia prodotti</string>
     <string name="help_product_history_text">L’app salva localmente su questo dispositivo i nomi dei prodotti già usati per offrire l’autocompletamento quando aggiungi nuovi elementi. Cancellare la cronologia rimuove solo questi suggerimenti locali.</string>
     <string name="offline_chip">Offline</string>

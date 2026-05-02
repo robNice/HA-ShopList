@@ -52,7 +52,28 @@ enum class ShoppingArea(
             return storedAreas + entries.filterNot { it in storedAreas }
         }
 
+        fun enabledFromStorage(
+            storedEnabled: String?,
+            orderedAreas: List<ShoppingArea> = entries.toList()
+        ): List<ShoppingArea> {
+            val enabledSet = storedEnabled
+                .orEmpty()
+                .split(',')
+                .mapNotNull { fromKey(it.trim()) }
+                .toSet()
+
+            if (enabledSet.isEmpty()) {
+                return orderedAreas
+            }
+
+            return orderedAreas.filter { it in enabledSet }
+        }
+
         fun serializeOrder(areas: List<ShoppingArea>): String {
+            return areas.joinToString(",") { it.key }
+        }
+
+        fun serializeEnabledAreas(areas: List<ShoppingArea>): String {
             return areas.joinToString(",") { it.key }
         }
     }

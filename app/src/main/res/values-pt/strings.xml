@@ -55,6 +55,8 @@
     <string name="help_token_text">1. Abra seu perfil no Home Assistant.\n2. Abra a aba Security.\n3. Role para baixo até Long-Lived Access Tokens.\n4. Crie um novo token.\n5. Copie o token imediatamente e cole-o aqui.\n\nO token é exibido apenas uma vez e é necessário para que o aplicativo carregue e atualize sua lista de compras com segurança.</string>
     <string name="help_list_selection_title">Seleção de lista</string>
     <string name="help_list_selection_text">Escolha qual lista de tarefas do Home Assistant este aplicativo deve usar. As listas só são carregadas depois que uma URL e um token válidos forem informados.</string>
+    <string name="help_area_visibility_title">Seções</string>
+    <string name="help_area_visibility_text">Ative apenas as seções da loja que devem aparecer nos menus suspensos de seção. As seções desativadas ficam ocultas nos menus de novos itens ou itens editados, mas continuam visíveis na lista de compras se itens existentes já as utilizarem.</string>
     <string name="help_product_history_title">Histórico de produtos</string>
     <string name="help_product_history_text">O aplicativo salva localmente neste dispositivo os nomes de produtos já usados para oferecer preenchimento automático ao adicionar novos itens. Limpar o histórico remove apenas essas sugestões locais.</string>
     <string name="offline_chip">Offline</string>
