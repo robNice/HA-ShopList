@@ -3,6 +3,7 @@ package de.robnice.homeshoplist.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.robnice.homeshoplist.data.HaWebSocketRepository
+import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,8 +28,8 @@ class ShoppingViewModel(
     }
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
 
-    fun addItem(name: String) {
-        repository.addItem(name)
+    fun addItem(name: String, area: ShoppingArea?) {
+        repository.addItem(name, area)
     }
 
     fun toggleItem(item: ShoppingItem) {
@@ -39,16 +40,16 @@ class ShoppingViewModel(
         repository.clearCompleted()
     }
 
-    fun renameItem(item: ShoppingItem, newName: String) {
-        repository.renameItem(item, newName)
+    fun updateItem(item: ShoppingItem, newName: String, area: ShoppingArea?) {
+        repository.updateItem(item, newName, area)
     }
 
     fun ensureConnection() {
         repository.ensureConnected()
     }
 
-    fun moveItem(itemId: String, previousItemId: String?) {
-        repository.moveItem(itemId, previousItemId)
+    fun moveItem(itemId: String, previousItemId: String?, area: ShoppingArea? = null) {
+        repository.moveItem(itemId, previousItemId, area)
     }
 
     override fun onCleared() {

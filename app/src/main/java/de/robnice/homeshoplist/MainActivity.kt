@@ -45,6 +45,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import de.robnice.homeshoplist.data.history.ProductHistoryEntity
 import de.robnice.homeshoplist.data.history.ProductHistoryRepository
+import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingItem
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
@@ -55,6 +56,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
@@ -62,8 +64,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.StrokeCap
-import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
@@ -74,9 +74,12 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import de.robnice.homeshoplist.util.Debug
 import de.robnice.homeshoplist.data.HaRuntime
 import de.robnice.homeshoplist.data.HaWebSocketRepository
@@ -90,6 +93,9 @@ import de.robnice.homeshoplist.ui.theme.BrandGreen
 import de.robnice.homeshoplist.ui.theme.BrandOrange
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -426,6 +432,7 @@ fun ShoppingScreen(
     }
 
     var newItem by remember { mutableStateOf("") }
+    var selectedArea by remember { mutableStateOf(ShoppingArea.OTHER) }
     val autocompleteFlow = remember(newItem, productHistoryRepository) {
         if (newItem.isBlank()) {
             flowOf(emptyList())
@@ -437,6 +444,7 @@ fun ShoppingScreen(
     val listTitle = remember(todoEntity) { todoEntity.orEmpty().toDisplayListTitle() }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
                 expandedHeight = 76.dp,
@@ -564,11 +572,18 @@ fun ShoppingScreen(
                                         onDone = {
                                             if (newItem.isNotBlank()) {
                                                 triggerHeaderPulse()
-                                                viewModel.addItem(newItem.trim())
+                                                viewModel.addItem(newItem.trim(), selectedArea)
                                                 newItem = ""
                                             }
                                         }
                                     )
+                                )
+
+                                AreaMenuButton(
+                                    selectedArea = selectedArea,
+                                    onAreaSelected = { area ->
+                                        selectedArea = area
+                                    }
                                 )
 
                                 Spacer(Modifier.width(12.dp))
@@ -577,7 +592,7 @@ fun ShoppingScreen(
                                     onClick = {
                                         if (newItem.isNotBlank()) {
                                             triggerHeaderPulse()
-                                            viewModel.addItem(newItem)
+                                            viewModel.addItem(newItem.trim(), selectedArea)
                                             newItem = ""
                                         }
                                     },
@@ -616,7 +631,7 @@ fun ShoppingScreen(
                                             canDelete = suggestion.normalizedName !in currentItemNames,
                                             onSelect = {
                                                 triggerHeaderPulse()
-                                                viewModel.addItem(suggestion.displayName)
+                                                viewModel.addItem(suggestion.displayName, selectedArea)
                                                 newItem = ""
                                             },
                                             onDelete = {
@@ -670,42 +685,72 @@ fun ShoppingScreen(
                     var localOpenItems by remember {
                         mutableStateOf<List<ShoppingItem>>(emptyList())
                     }
-
-                    LaunchedEffect(openItems) {
-                        localOpenItems = openItems
+                    var deferredOpenItems by remember {
+                        mutableStateOf<List<ShoppingItem>?>(null)
                     }
-
+                    var pendingCommittedOrderIds by remember {
+                        mutableStateOf<List<String>?>(null)
+                    }
+                    val normalizedOpenItems = remember(openItems) {
+                        normalizeOpenItemsForAreaGrouping(openItems)
+                    }
 
                     val lazyListState = rememberLazyListState()
 
-                    var draggingOpenKey by remember { mutableStateOf<String?>(null) }
-                    var dragStartIndex by remember { mutableStateOf<Int?>(null) }
                     var droppedItemId by remember { mutableStateOf<String?>(null) }
-
-                    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
-                        localOpenItems = localOpenItems.toMutableList().apply {
-                            add(to.index, removeAt(from.index))
-                        }
+                    var draggingItemId by remember { mutableStateOf<String?>(null) }
+                    var activeDropSlotKey by remember { mutableStateOf<String?>(null) }
+                    var dragPointerYInRoot by remember { mutableStateOf(0f) }
+                    var dragTouchOffsetY by remember { mutableStateOf(0f) }
+                    var listTopInRoot by remember { mutableStateOf(0f) }
+                    val itemBounds = remember { mutableStateMapOf<String, ItemDragBounds>() }
+                    val slotBounds = remember { mutableStateMapOf<String, DropSlotBounds>() }
+                    val openDisplayEntries = remember(localOpenItems, activeDropSlotKey, draggingItemId) {
+                        buildOpenDisplayEntries(
+                            items = localOpenItems,
+                            activeDropSlotKey = activeDropSlotKey,
+                            draggingItemId = draggingItemId
+                        )
                     }
-
-                    val currentDragIndex = remember(draggingOpenKey, localOpenItems) {
-                        val draggedId = draggingOpenKey?.removePrefix("open_") ?: return@remember -1
-                        localOpenItems.indexOfFirst { it.id == draggedId }
+                    val activeDropCandidateKeys = remember(openDisplayEntries) {
+                        openDisplayEntries
+                            .mapNotNull { entry ->
+                                (entry as? OpenListEntry.DropSlotEntry)
+                                    ?.slot
+                                    ?.takeUnless { it.isNoOp }
+                                    ?.key
+                            }
+                            .toSet()
                     }
-                    val hasActiveDropPreview =
-                        draggingOpenKey != null &&
-                            dragStartIndex != null &&
-                            currentDragIndex >= 0 &&
-                            currentDragIndex != dragStartIndex
-                    val insertLineBeforeIndex =
-                        if (hasActiveDropPreview && currentDragIndex < localOpenItems.lastIndex) {
-                            currentDragIndex + 1
+                    val itemSlotAnchors = remember(openDisplayEntries) {
+                        buildItemSlotAnchors(openDisplayEntries)
+                    }
+                    LaunchedEffect(normalizedOpenItems, draggingItemId) {
+                        if (draggingItemId != null) {
+                            deferredOpenItems = normalizedOpenItems
                         } else {
-                            null
-                        }
-                    val showInsertLineAtEnd =
-                        hasActiveDropPreview && currentDragIndex == localOpenItems.lastIndex
+                            val incomingItems = deferredOpenItems ?: normalizedOpenItems
+                            val incomingOrderIds = incomingItems.map { it.id }
+                            val pendingIds = pendingCommittedOrderIds
+                            val incomingIdSet = incomingOrderIds.toSet()
+                            val pendingIdSet = pendingIds?.toSet()
+                            val itemSetChanged = pendingIdSet != null && pendingIdSet != incomingIdSet
 
+                            if (pendingIds == null || pendingIds == incomingOrderIds || itemSetChanged) {
+                                localOpenItems = incomingItems
+                                deferredOpenItems = null
+                                pendingCommittedOrderIds = null
+                            }
+                        }
+                    }
+                    LaunchedEffect(openDisplayEntries) {
+                        val slotKeys = openDisplayEntries
+                            .mapNotNull { entry ->
+                                if (entry is OpenListEntry.DropSlotEntry) entry.slot.key else null
+                            }
+                            .toSet()
+                        slotBounds.keys.retainAll(slotKeys)
+                    }
                     LaunchedEffect(droppedItemId) {
                         if (droppedItemId != null) {
                             kotlinx.coroutines.delay(650)
@@ -713,175 +758,226 @@ fun ShoppingScreen(
                         }
                     }
 
-                    LaunchedEffect(completedExpanded, localOpenItems.size, completedItems.size) {
+                    LaunchedEffect(completedExpanded) {
                         if (completedExpanded && completedItems.isNotEmpty()) {
-                            val headerIndex = localOpenItems.size
+                            val headerIndex = openDisplayEntries.size
                             kotlinx.coroutines.delay(16)
                             lazyListState.animateScrollToItem(headerIndex)
                         }
                     }
 
-                    LazyColumn(
-                        state = lazyListState,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
                     ) {
-
-                        itemsIndexed(
-                            items = localOpenItems,
-                            key = { _, openItem -> "open_${openItem.id}" }
-                        ) { index, item ->
-
-                            val openKey = "open_${item.id}"
-
-                            ReorderableItem(reorderState, key = openKey) { isDragging ->
-                                val isJustDropped = droppedItemId == item.id
-                                val baseContainer = MaterialTheme.colorScheme.surfaceVariant
-                                val targetContainer = when {
-                                    isDragging -> lerp(
-                                        baseContainer,
-                                        if (isSystemInDarkTheme()) BrandBlueGlow else BrandBlue,
-                                        if (isSystemInDarkTheme()) 0.22f else 0.12f
-                                    )
-                                    isJustDropped -> lerp(
-                                        baseContainer,
-                                        BrandGreen,
-                                        if (isSystemInDarkTheme()) 0.18f else 0.12f
-                                    )
-                                    else -> baseContainer
+                        LazyColumn(
+                            state = lazyListState,
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .onGloballyPositioned { coords ->
+                                    listTopInRoot = coords.positionInRoot().y
                                 }
-                                val containerColor by animateColorAsState(
-                                    targetValue = targetContainer,
-                                    label = "dragCardColor"
-                                )
-                                val borderColor by animateColorAsState(
-                                    targetValue = when {
-                                        isDragging -> BrandBlue
-                                        isJustDropped -> BrandGreen
-                                        else -> Color.Transparent
-                                    },
-                                    label = "dragCardBorderColor"
-                                )
-                                val borderWidth by animateDpAsState(
-                                    targetValue = when {
-                                        isDragging -> 1.5.dp
-                                        isJustDropped -> 1.dp
-                                        else -> 0.dp
-                                    },
-                                    label = "dragCardBorderWidth"
-                                )
+                        ) {
 
-                                val elevation by animateDpAsState(
-                                    targetValue = if (isDragging) 16.dp else 2.dp,
-                                    label = "dragElevation"
-                                )
+                            items(
+                                items = openDisplayEntries,
+                                key = { entry -> entry.stableKey }
+                            ) { entry ->
+                                when (entry) {
+                                    is OpenListEntry.HeaderEntry -> {
+                                        AreaHeader(area = entry.area)
+                                    }
 
-                                val scale by animateFloatAsState(
-                                    targetValue = if (isDragging) 1.03f else 1f,
-                                    label = "dragScale"
-                                )
-
-                                Card(
-                                    elevation = CardDefaults.cardElevation(elevation),
-                                    shape = MaterialTheme.shapes.large,
-                                    border = if (borderWidth > 0.dp) {
-                                        BorderStroke(borderWidth, borderColor)
-                                    } else {
-                                        null
-                                    },
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = containerColor
-                                    ),
-                                    modifier = Modifier
-                                        .graphicsLayer {
-                                            scaleX = scale
-                                            scaleY = scale
-                                        }
-                                        .fillMaxWidth()
-                                        .longPressDraggableHandle(
-                                            onDragStarted = {
-                                                draggingOpenKey = openKey
-                                                dragStartIndex = index
-                                                droppedItemId = null
-                                            },
-                                            onDragStopped = {
-                                                val id = draggingOpenKey?.removePrefix("open_")
-                                                    ?: return@longPressDraggableHandle
-                                                val startIndex = dragStartIndex
-                                                draggingOpenKey = null
-                                                dragStartIndex = null
-
-                                                val endIndex =
-                                                    localOpenItems.indexOfFirst { it.id == id }
-                                                if (endIndex < 0) return@longPressDraggableHandle
-
-                                                val movedItem = localOpenItems[endIndex]
-                                                if (startIndex != null && startIndex != endIndex) {
-                                                    droppedItemId = movedItem.id
-                                                    triggerHeaderPulse()
-                                                }
-                                                val previousItemId =
-                                                    if (endIndex > 0) localOpenItems[endIndex - 1].id else null
-
-                                                viewModel.moveItem(movedItem.id, previousItemId)
+                                    is OpenListEntry.DropSlotEntry -> {
+                                        DropSlotSpacer(
+                                            active = !entry.slot.isNoOp && activeDropSlotKey == entry.slot.key,
+                                            modifier = Modifier.onGloballyPositioned { coords ->
+                                                val top = coords.positionInRoot().y
+                                                slotBounds[entry.slot.key] = DropSlotBounds(
+                                                    topInRoot = top,
+                                                    bottomInRoot = top + coords.size.height
+                                                )
                                             }
                                         )
-                                ) {
-                                    Column(modifier = Modifier.fillMaxWidth()) {
-                                        if (insertLineBeforeIndex == index) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(4.dp)
-                                                    .padding(horizontal = 18.dp, vertical = 2.dp)
-                                                    .background(
-                                                        color = BrandOrange,
-                                                        shape = RoundedCornerShape(999.dp)
+                                    }
+
+                                    is OpenListEntry.ItemEntry -> {
+                                        val item = entry.item
+                                        val isJustDropped = droppedItemId == item.id
+                                        val isDraggingThisItem = draggingItemId == item.id
+                                        val baseContainer = MaterialTheme.colorScheme.surfaceVariant
+                                        val targetContainer = when {
+                                            isDraggingThisItem -> lerp(
+                                                baseContainer,
+                                                if (isSystemInDarkTheme()) BrandBlueGlow else BrandBlue,
+                                                if (isSystemInDarkTheme()) 0.22f else 0.12f
+                                            )
+                                            isJustDropped -> lerp(
+                                                baseContainer,
+                                                BrandGreen,
+                                                if (isSystemInDarkTheme()) 0.18f else 0.12f
+                                            )
+                                            else -> baseContainer
+                                        }
+                                        val containerColor by animateColorAsState(
+                                            targetValue = targetContainer,
+                                            label = "dragCardColor"
+                                        )
+                                        val borderColor by animateColorAsState(
+                                            targetValue = when {
+                                                isDraggingThisItem -> BrandBlue
+                                                isJustDropped -> BrandGreen
+                                                else -> Color.Transparent
+                                            },
+                                            label = "dragCardBorderColor"
+                                        )
+                                        val borderWidth by animateDpAsState(
+                                            targetValue = when {
+                                                isDraggingThisItem -> 1.5.dp
+                                                isJustDropped -> 1.dp
+                                                else -> 0.dp
+                                            },
+                                            label = "dragCardBorderWidth"
+                                        )
+                                        val elevation by animateDpAsState(
+                                            targetValue = if (isDraggingThisItem) 16.dp else 2.dp,
+                                            label = "dragElevation"
+                                        )
+                                        val scale by animateFloatAsState(
+                                            targetValue = if (isDraggingThisItem) 1.03f else 1f,
+                                            label = "dragScale"
+                                        )
+
+                                        Card(
+                                            elevation = CardDefaults.cardElevation(elevation),
+                                            shape = MaterialTheme.shapes.large,
+                                            border = if (borderWidth > 0.dp) {
+                                                BorderStroke(borderWidth, borderColor)
+                                            } else {
+                                                null
+                                            },
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = containerColor
+                                            ),
+                                            modifier = Modifier
+                                                .graphicsLayer {
+                                                    scaleX = scale
+                                                    scaleY = scale
+                                                    alpha = if (isDraggingThisItem) 0.38f else 1f
+                                                }
+                                                .fillMaxWidth()
+                                                .onGloballyPositioned { coords ->
+                                                    itemBounds[item.id] = ItemDragBounds(
+                                                        topInRoot = coords.positionInRoot().y,
+                                                        height = coords.size.height.toFloat()
                                                     )
+                                                }
+                                                .pointerInput(item.id) {
+                                                    detectDragGesturesAfterLongPress(
+                                                        onDragStart = { offset ->
+                                                            val bounds = itemBounds[item.id] ?: return@detectDragGesturesAfterLongPress
+                                                            draggingItemId = item.id
+                                                            droppedItemId = null
+                                                            pendingCommittedOrderIds = null
+                                                            dragPointerYInRoot = bounds.topInRoot + offset.y
+                                                            dragTouchOffsetY = offset.y
+                                                            activeDropSlotKey = resolveActiveDropSlotKey(
+                                                                pointerYInRoot = dragPointerYInRoot,
+                                                                draggedItemId = item.id,
+                                                                itemBounds = itemBounds,
+                                                                itemSlotAnchors = itemSlotAnchors,
+                                                                slotBounds = slotBounds,
+                                                                allowedSlotKeys = activeDropCandidateKeys
+                                                            )
+                                                        },
+                                                        onDrag = { change, dragAmount ->
+                                                            change.consume()
+                                                            dragPointerYInRoot += dragAmount.y
+                                                            activeDropSlotKey = resolveActiveDropSlotKey(
+                                                                pointerYInRoot = dragPointerYInRoot,
+                                                                draggedItemId = item.id,
+                                                                itemBounds = itemBounds,
+                                                                itemSlotAnchors = itemSlotAnchors,
+                                                                slotBounds = slotBounds,
+                                                                allowedSlotKeys = activeDropCandidateKeys
+                                                            )
+                                                        },
+                                                        onDragEnd = {
+                                                            val draggedId = draggingItemId
+                                                            val activeSlot = openDisplayEntries
+                                                                .mapNotNull { displayEntry ->
+                                                                    (displayEntry as? OpenListEntry.DropSlotEntry)?.slot
+                                                                }
+                                                                .firstOrNull { it.key == activeDropSlotKey }
+                                                            val draggedItem = localOpenItems.firstOrNull { it.id == draggedId }
+                                                            if (draggedId != null && activeSlot != null && draggedItem != null) {
+                                                                val finalPreviewItems = applyDropSlotToItems(
+                                                                    items = localOpenItems,
+                                                                    itemId = draggedId,
+                                                                    slot = activeSlot
+                                                                )
+                                                                val finalIndex =
+                                                                    finalPreviewItems.indexOfFirst { it.id == draggedId }
+                                                                val previousItemId =
+                                                                    finalPreviewItems.getOrNull(finalIndex - 1)?.id
+                                                                val changed =
+                                                                    finalPreviewItems.map { it.id } != localOpenItems.map { it.id } ||
+                                                                        finalPreviewItems.firstOrNull { it.id == draggedId }?.area != draggedItem.area
+                                                                if (changed) {
+                                                                    localOpenItems = finalPreviewItems
+                                                                    pendingCommittedOrderIds =
+                                                                        finalPreviewItems.map { it.id }
+                                                                    droppedItemId = draggedId
+                                                                    triggerHeaderPulse()
+                                                                    viewModel.moveItem(
+                                                                        itemId = draggedId,
+                                                                        previousItemId = previousItemId,
+                                                                        area = activeSlot.area
+                                                                    )
+                                                                }
+                                                            }
+                                                            draggingItemId = null
+                                                            activeDropSlotKey = null
+                                                        },
+                                                        onDragCancel = {
+                                                            draggingItemId = null
+                                                            activeDropSlotKey = null
+                                                        }
+                                                    )
+                                                }
+                                        ) {
+                                            ShoppingRow(
+                                                item = item,
+                                                isEditing = editingItemId == item.id,
+                                                onStartEdit = { clickedId ->
+
+                                                    if (editingItemId != null && editingItemId != clickedId) {
+                                                        editingItemId = null
+                                                        return@ShoppingRow
+                                                    }
+
+                                                    editingItemId = clickedId
+                                                },
+                                                onStopEdit = { editingItemId = null },
+                                                viewModel = viewModel,
+                                                onServerInteraction = triggerHeaderPulse,
+                                                onToggleChecked = { checked ->
+                                                    if (checked) {
+                                                        localOpenItems = localOpenItems.filterNot { it.id == item.id }
+                                                        pendingCommittedOrderIds =
+                                                            pendingCommittedOrderIds?.filterNot { it == item.id }
+                                                    }
+                                                },
+                                                onAreaPersisted = {}
                                             )
                                         }
-
-                                        ShoppingRow(
-                                            item = item,
-                                            isEditing = editingItemId == item.id,
-                                            onStartEdit = { clickedId ->
-
-                                                if (editingItemId != null && editingItemId != clickedId) {
-                                                    editingItemId = null
-                                                    return@ShoppingRow
-                                                }
-
-                                                editingItemId = clickedId
-                                            },
-                                            onStopEdit = { editingItemId = null },
-                                            viewModel = viewModel,
-                                            onServerInteraction = triggerHeaderPulse
-                                        )
                                     }
                                 }
                             }
-                        }
 
-                        if (showInsertLineAtEnd) {
-                            item(key = "open_drop_indicator_end") {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(4.dp)
-                                        .padding(horizontal = 18.dp, vertical = 2.dp)
-                                        .background(
-                                            color = BrandOrange,
-                                            shape = RoundedCornerShape(999.dp)
-                                        )
-                                )
-                            }
-                        }
-
-
-
-                        if (completedItems.isNotEmpty()) {
+                            if (completedItems.isNotEmpty()) {
 
                             item {
                                 Spacer(Modifier.height(16.dp))
@@ -942,12 +1038,33 @@ fun ShoppingScreen(
                                             onStopEdit = { editingItemId = null },
                                             viewModel = viewModel,
                                             onServerInteraction = triggerHeaderPulse,
+                                            onToggleChecked = {},
+                                            onAreaPersisted = {},
                                             animateVisibility = false,
                                             modifier = Modifier.padding(horizontal = 4.dp)
                                         )
                                     }
                                 }
                             }
+                        }
+                        }
+
+                        val draggedItem = remember(draggingItemId, localOpenItems) {
+                            localOpenItems.firstOrNull { it.id == draggingItemId }
+                        }
+                        if (draggedItem != null) {
+                            DragPreviewCard(
+                                item = draggedItem,
+                                modifier = Modifier
+                                    .offset {
+                                        IntOffset(
+                                            x = 0,
+                                            y = (dragPointerYInRoot - listTopInRoot - dragTouchOffsetY)
+                                                .roundToInt()
+                                        )
+                                    }
+                                    .fillMaxWidth()
+                            )
                         }
                     }
                     }
@@ -1297,6 +1414,372 @@ private fun HistorySuggestionRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AreaSelector(
+    selectedArea: ShoppingArea,
+    label: String,
+    onAreaSelected: (ShoppingArea) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = "${selectedArea.emoji} ${selectedArea.label()}",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = true)
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            ShoppingArea.entries.forEach { area ->
+                DropdownMenuItem(
+                    text = { Text("${area.emoji} ${area.label()}") },
+                    onClick = {
+                        expanded = false
+                        onAreaSelected(area)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AreaHeader(area: ShoppingArea, visible: Boolean = true) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 6.dp)
+            .graphicsLayer {
+                alpha = if (visible) 1f else 0f
+            },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            thickness = 1.dp,
+            color = BrandOrange.copy(alpha = 0.45f)
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = area.label(),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = BrandOrange
+        )
+        Spacer(Modifier.width(10.dp))
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            thickness = 1.dp,
+            color = BrandOrange.copy(alpha = 0.45f)
+        )
+    }
+}
+
+@Composable
+private fun ShoppingArea.label(): String {
+    val resId = when (this) {
+        ShoppingArea.PRODUCE -> R.string.area_produce
+        ShoppingArea.BAKERY -> R.string.area_bakery
+        ShoppingArea.MEAT -> R.string.area_meat
+        ShoppingArea.FISH_SEAFOOD -> R.string.area_fish_seafood
+        ShoppingArea.DAIRY_EGGS -> R.string.area_dairy_eggs
+        ShoppingArea.CHEESE_DELI -> R.string.area_cheese_deli
+        ShoppingArea.FROZEN -> R.string.area_frozen
+        ShoppingArea.DRY_GOODS -> R.string.area_dry_goods
+        ShoppingArea.CANNED_JARS -> R.string.area_canned_jars
+        ShoppingArea.SAUCES_SPICES -> R.string.area_sauces_spices
+        ShoppingArea.BREAKFAST -> R.string.area_breakfast
+        ShoppingArea.SNACKS_SWEETS -> R.string.area_snacks_sweets
+        ShoppingArea.DRINKS -> R.string.area_drinks
+        ShoppingArea.ALCOHOL -> R.string.area_alcohol
+        ShoppingArea.COFFEE_TEA -> R.string.area_coffee_tea
+        ShoppingArea.HOUSEHOLD -> R.string.area_household
+        ShoppingArea.CLEANING -> R.string.area_cleaning
+        ShoppingArea.PAPER_GOODS -> R.string.area_paper_goods
+        ShoppingArea.PERSONAL_CARE -> R.string.area_personal_care
+        ShoppingArea.BABY -> R.string.area_baby
+        ShoppingArea.PET -> R.string.area_pet
+        ShoppingArea.HEALTH -> R.string.area_health
+        ShoppingArea.NON_FOOD -> R.string.area_non_food
+        ShoppingArea.OTHER -> R.string.area_other
+    }
+    return stringResource(resId)
+}
+
+private fun normalizeOpenItemsForAreaGrouping(items: List<ShoppingItem>): List<ShoppingItem> {
+    val grouped = LinkedHashMap<ShoppingArea, MutableList<ShoppingItem>>()
+    ShoppingArea.entries.forEach { grouped[it] = mutableListOf() }
+    items.forEach { item ->
+        grouped.getValue(item.area ?: ShoppingArea.OTHER).add(item)
+    }
+    return grouped.values.flatten()
+}
+
+private data class ItemDragBounds(
+    val topInRoot: Float,
+    val height: Float
+)
+
+private data class DropSlotBounds(
+    val topInRoot: Float,
+    val bottomInRoot: Float
+)
+
+private data class ItemSlotAnchors(
+    val beforeSlotKey: String,
+    val afterSlotKey: String
+)
+
+private data class DropSlotData(
+    val key: String,
+    val insertBeforeItemId: String?,
+    val area: ShoppingArea,
+    val isNoOp: Boolean
+)
+
+private sealed interface OpenListEntry {
+    val stableKey: String
+
+    data class HeaderEntry(
+        val area: ShoppingArea
+    ) : OpenListEntry {
+        override val stableKey: String = "header_${area.key}"
+    }
+
+    data class DropSlotEntry(
+        val slot: DropSlotData
+    ) : OpenListEntry {
+        override val stableKey: String = slot.key
+    }
+
+    data class ItemEntry(
+        val item: ShoppingItem
+    ) : OpenListEntry {
+        override val stableKey: String = "open_${item.id}"
+    }
+}
+
+private fun buildOpenDisplayEntries(
+    items: List<ShoppingItem>,
+    activeDropSlotKey: String?,
+    draggingItemId: String?
+): List<OpenListEntry> {
+    if (items.isEmpty()) return emptyList()
+
+    val entries = mutableListOf<OpenListEntry>()
+    var previousItemId: String? = null
+    ShoppingArea.entries.forEach { area ->
+        val areaItems = items.filter { (it.area ?: ShoppingArea.OTHER) == area }
+        if (areaItems.isEmpty()) return@forEach
+
+        entries += OpenListEntry.HeaderEntry(area)
+        val startSlot = DropSlotData(
+            key = "slot_${area.key}_start",
+            insertBeforeItemId = areaItems.first().id,
+            area = area,
+            isNoOp = isNoOpDropSlot(
+                insertBeforeItemId = areaItems.first().id,
+                draggingItemId = draggingItemId,
+                previousItemId = previousItemId
+            )
+        )
+        entries += OpenListEntry.DropSlotEntry(startSlot)
+
+        areaItems.forEachIndexed { index, item ->
+            entries += OpenListEntry.ItemEntry(item)
+            previousItemId = item.id
+            val nextItemId = areaItems.getOrNull(index + 1)?.id
+            val afterSlot = DropSlotData(
+                key = "slot_after_${item.id}",
+                insertBeforeItemId = nextItemId,
+                area = area,
+                isNoOp = isNoOpDropSlot(
+                    insertBeforeItemId = nextItemId,
+                    draggingItemId = draggingItemId,
+                    previousItemId = item.id
+                )
+            )
+            entries += OpenListEntry.DropSlotEntry(afterSlot)
+        }
+    }
+    return entries
+}
+
+private fun isNoOpDropSlot(
+    insertBeforeItemId: String?,
+    draggingItemId: String?,
+    previousItemId: String?
+): Boolean {
+    if (draggingItemId == null) return false
+    return insertBeforeItemId == draggingItemId || previousItemId == draggingItemId
+}
+
+private fun buildItemSlotAnchors(
+    entries: List<OpenListEntry>
+): Map<String, ItemSlotAnchors> {
+    val anchors = mutableMapOf<String, ItemSlotAnchors>()
+    entries.forEachIndexed { index, entry ->
+        if (entry is OpenListEntry.ItemEntry) {
+            val beforeSlotKey = (entries.getOrNull(index - 1) as? OpenListEntry.DropSlotEntry)?.slot?.key
+            val afterSlotKey = (entries.getOrNull(index + 1) as? OpenListEntry.DropSlotEntry)?.slot?.key
+            if (beforeSlotKey != null && afterSlotKey != null) {
+                anchors[entry.item.id] = ItemSlotAnchors(
+                    beforeSlotKey = beforeSlotKey,
+                    afterSlotKey = afterSlotKey
+                )
+            }
+        }
+    }
+    return anchors
+}
+
+private fun resolveActiveDropSlotKey(
+    pointerYInRoot: Float,
+    draggedItemId: String,
+    itemBounds: Map<String, ItemDragBounds>,
+    itemSlotAnchors: Map<String, ItemSlotAnchors>,
+    slotBounds: Map<String, DropSlotBounds>,
+    allowedSlotKeys: Set<String>
+): String? {
+    slotBounds.entries.firstOrNull { entry ->
+        entry.key in allowedSlotKeys &&
+            run {
+                val bounds = entry.value
+            pointerYInRoot in bounds.topInRoot..bounds.bottomInRoot
+            }
+    }?.let { return it.key }
+
+    itemBounds.entries.firstOrNull { (itemId, bounds) ->
+        itemId != draggedItemId &&
+            pointerYInRoot in bounds.topInRoot..(bounds.topInRoot + bounds.height)
+    }?.let { (itemId, bounds) ->
+        val anchors = itemSlotAnchors[itemId] ?: return@let
+        val midpoint = bounds.topInRoot + bounds.height / 2f
+        val preferredKey = if (pointerYInRoot < midpoint) anchors.beforeSlotKey else anchors.afterSlotKey
+        val fallbackKey = if (pointerYInRoot < midpoint) anchors.afterSlotKey else anchors.beforeSlotKey
+        return when {
+            preferredKey in allowedSlotKeys -> preferredKey
+            fallbackKey in allowedSlotKeys -> fallbackKey
+            else -> null
+        }
+    }
+
+    return slotBounds
+        .filterKeys { it in allowedSlotKeys }
+        .minByOrNull { (_, bounds) ->
+            val centerY = (bounds.topInRoot + bounds.bottomInRoot) / 2f
+            kotlin.math.abs(centerY - pointerYInRoot)
+        }
+        ?.key
+}
+
+private fun applyDropSlotToItems(
+    items: List<ShoppingItem>,
+    itemId: String,
+    slot: DropSlotData
+): List<ShoppingItem> {
+    val movedItem = items.firstOrNull { it.id == itemId } ?: return items
+    val remainingItems = items.filterNot { it.id == itemId }.toMutableList()
+    val targetIndex =
+        slot.insertBeforeItemId
+            ?.let { insertBeforeId ->
+                remainingItems.indexOfFirst { it.id == insertBeforeId }
+                    .takeIf { it >= 0 }
+            }
+            ?: remainingItems.size
+
+    remainingItems.add(
+        targetIndex.coerceIn(0, remainingItems.size),
+        movedItem.copy(area = slot.area)
+    )
+    return normalizeOpenItemsForAreaGrouping(remainingItems)
+}
+
+@Composable
+private fun DropSlotSpacer(
+    active: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val slotHeight by animateDpAsState(
+        targetValue = if (active) 88.dp else 14.dp,
+        label = "dropSlotHeight"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(slotHeight),
+        contentAlignment = Alignment.Center
+    ) {
+        if (active) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .padding(horizontal = 18.dp)
+                    .background(
+                        color = BrandOrange,
+                        shape = RoundedCornerShape(999.dp)
+                    )
+            )
+        }
+    }
+}
+
+@Composable
+private fun DragPreviewCard(
+    item: ShoppingItem,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        elevation = CardDefaults.cardElevation(18.dp),
+        shape = MaterialTheme.shapes.large,
+        border = BorderStroke(1.5.dp, BrandBlue),
+        colors = CardDefaults.cardColors(
+            containerColor = lerp(
+                MaterialTheme.colorScheme.surfaceVariant,
+                if (isSystemInDarkTheme()) BrandBlueGlow else BrandBlue,
+                if (isSystemInDarkTheme()) 0.22f else 0.12f
+            )
+        ),
+        modifier = modifier
+            .padding(horizontal = 0.dp)
+            .graphicsLayer {
+                scaleX = 1.03f
+                scaleY = 1.03f
+            }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = false,
+                onCheckedChange = null
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
+
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -1307,6 +1790,8 @@ fun ShoppingRow(
     onStopEdit: () -> Unit,
     viewModel: ShoppingViewModel,
     onServerInteraction: () -> Unit = {},
+    onToggleChecked: (Boolean) -> Unit = {},
+    onAreaPersisted: (ShoppingArea) -> Unit = {},
     modifier: Modifier = Modifier,
     animateVisibility: Boolean = true
 ) {
@@ -1332,6 +1817,9 @@ fun ShoppingRow(
             editText = item.name
         }
     }
+    LaunchedEffect(item.complete) {
+        localChecked = item.complete
+    }
 
 
     val exitAnimation =
@@ -1354,7 +1842,7 @@ fun ShoppingRow(
         Row(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -1368,6 +1856,7 @@ fun ShoppingRow(
                 onCheckedChange = {
                     onStopEdit()
                     localChecked = it
+                    onToggleChecked(it)
                     onServerInteraction()
                     scope.launch {
                         viewModel.toggleItem(item)
@@ -1379,9 +1868,10 @@ fun ShoppingRow(
             if (isEditing) {
 
                 val saveEdit = {
-                    if (editText.isNotBlank() && editText != item.name) {
+                    val nameChanged = editText.isNotBlank() && editText != item.name
+                    if (editText.isNotBlank() && nameChanged) {
                         onServerInteraction()
-                        viewModel.renameItem(item, editText)
+                        viewModel.updateItem(item, editText, item.area ?: ShoppingArea.OTHER)
                     }
                     onStopEdit()
                 }
@@ -1413,25 +1903,96 @@ fun ShoppingRow(
                         }
                     }
                 )
-
-
             } else {
 
-                Text(
-                    text = item.name,
+                Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable {
-                            onStartEdit(item.id)
-                            editText = item.name
-                        },
-                    style = if (localChecked)
-                        MaterialTheme.typography.bodyLarge.copy(
-                            color = completedTextColor,
-                            textDecoration = TextDecoration.LineThrough
-                        )
-                    else
-                        MaterialTheme.typography.bodyLarge
+                        .padding(end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = item.name,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                onStartEdit(item.id)
+                                editText = item.name
+                            },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = if (localChecked)
+                            MaterialTheme.typography.bodyLarge.copy(
+                                color = completedTextColor,
+                                textDecoration = TextDecoration.LineThrough
+                            )
+                        else
+                            MaterialTheme.typography.bodyLarge
+                    )
+
+                    AreaMenuButton(
+                        selectedArea = item.area ?: ShoppingArea.OTHER,
+                        onAreaSelected = { area ->
+                            if (area != (item.area ?: ShoppingArea.OTHER)) {
+                                onStopEdit()
+                                onServerInteraction()
+                                viewModel.updateItem(item, item.name, area)
+                                onAreaPersisted(area)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AreaMenuButton(
+    selectedArea: ShoppingArea,
+    onAreaSelected: (ShoppingArea) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        TextButton(
+            onClick = { expanded = true },
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            colors = ButtonDefaults.textButtonColors(
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        ) {
+            Text(
+                text = selectedArea.emoji,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            ShoppingArea.entries.forEach { area ->
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = area.emoji,
+                                modifier = Modifier.width(24.dp),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(text = area.label())
+                        }
+                    },
+                    onClick = {
+                        expanded = false
+                        onAreaSelected(area)
+                    }
                 )
             }
         }

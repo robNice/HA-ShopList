@@ -3,5 +3,7 @@ package de.robnice.homeshoplist.model
 data class ShoppingItem(
     val id: String,
     val name: String,
-    val complete: Boolean
+    val complete: Boolean,
+    val description: String? = null,
+    val area: ShoppingArea? = null
 )
