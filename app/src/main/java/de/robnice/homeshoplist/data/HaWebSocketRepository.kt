@@ -258,7 +258,7 @@ class HaWebSocketRepository(
 
         scope.launch {
             finalItems.forEach { item ->
-                productHistoryRepository.rememberProduct(item.name)
+                productHistoryRepository.rememberProduct(item.name, item.area)
             }
         }
 
@@ -404,7 +404,7 @@ class HaWebSocketRepository(
         }
         _loaded.value = true
         scope.launch {
-            productHistoryRepository.recordProductUse(trimmed)
+            productHistoryRepository.recordProductUse(trimmed, area)
         }
     }
 
@@ -446,8 +446,10 @@ class HaWebSocketRepository(
                 area = area
             )
         }
-        scope.launch {
-            productHistoryRepository.recordProductUse(trimmed)
+        if (trimmed != item.name) {
+            scope.launch {
+                productHistoryRepository.recordProductUse(trimmed, area)
+            }
         }
 
         if (item.id.startsWith(LOCAL_ID_PREFIX)) {

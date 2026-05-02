@@ -81,6 +81,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
 import de.robnice.homeshoplist.util.Debug
 import de.robnice.homeshoplist.data.HaRuntime
 import de.robnice.homeshoplist.data.HaWebSocketRepository
@@ -96,6 +97,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
+import androidx.compose.ui.zIndex
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
@@ -636,7 +638,10 @@ fun ShoppingScreen(
                                             canDelete = suggestion.normalizedName !in currentItemNames,
                                             onSelect = {
                                                 triggerHeaderPulse()
-                                                viewModel.addItem(suggestion.displayName, selectedArea)
+                                                val suggestionArea =
+                                                    ShoppingArea.fromKey(suggestion.areaKey) ?: selectedArea
+                                                viewModel.addItem(suggestion.displayName, suggestionArea)
+                                                selectedArea = suggestionArea
                                                 newItem = ""
                                             },
                                             onDelete = {
@@ -871,7 +876,7 @@ fun ShoppingScreen(
                                                 .graphicsLayer {
                                                     scaleX = scale
                                                     scaleY = scale
-                                                    alpha = if (isDraggingThisItem) 0.38f else 1f
+                                                    alpha = if (isDraggingThisItem) 0f else 1f
                                                 }
                                                 .fillMaxWidth()
                                                 .onGloballyPositioned { coords ->
@@ -990,7 +995,14 @@ fun ShoppingScreen(
                                                         orderedAreas = orderedAreas
                                                     )
                                                 },
-                                                onAreaPersisted = {}
+                                                onAreaPersisted = { area ->
+                                                    coroutineScope.launch {
+                                                        productHistoryRepository.updateStoredProductArea(
+                                                            name = item.name,
+                                                            area = area
+                                                        )
+                                                    }
+                                                }
                                             )
                                         }
                                     }
@@ -1067,9 +1079,21 @@ fun ShoppingScreen(
                                         )
                                     }
                                 }
+                                }
                             }
                         }
+
+                        val activeDropBounds = activeDropSlotKey?.let(slotBounds::get)
+                        if (activeDropBounds != null) {
+                            ActiveDropIndicator(
+                                centerY = activeDropBounds.centerY - listTopInRoot,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .zIndex(1f)
+                            )
                         }
+
+                        val dragPreviewOffsetX = with(LocalDensity.current) { 12.dp.roundToPx() }
 
                         val draggedItem = remember(draggingItemId, localOpenItems) {
                             localOpenItems.firstOrNull { it.id == draggingItemId }
@@ -1080,11 +1104,12 @@ fun ShoppingScreen(
                                 modifier = Modifier
                                     .offset {
                                         IntOffset(
-                                            x = 0,
+                                            x = dragPreviewOffsetX,
                                             y = (dragPointerYInRoot - listTopInRoot - dragTouchOffsetY)
                                                 .roundToInt()
                                         )
                                     }
+                                    .zIndex(2f)
                                     .fillMaxWidth()
                             )
                         }
@@ -1410,6 +1435,8 @@ private fun HistorySuggestionRow(
     onSelect: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val suggestionArea = ShoppingArea.fromKey(suggestion.areaKey) ?: ShoppingArea.OTHER
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1417,6 +1444,13 @@ private fun HistorySuggestionRow(
             .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Text(
+            text = suggestionArea.emoji,
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(Modifier.width(10.dp))
+
         Text(
             text = suggestion.displayName,
             modifier = Modifier.weight(1f),
@@ -1488,7 +1522,10 @@ private data class ItemDragBounds(
 private data class DropSlotBounds(
     val topInRoot: Float,
     val bottomInRoot: Float
-)
+) {
+    val centerY: Float
+        get() = (topInRoot + bottomInRoot) / 2f
+}
 
 private data class ItemSlotAnchors(
     val beforeSlotKey: String,
@@ -1546,7 +1583,7 @@ private fun buildOpenDisplayEntries(
             isNoOp = isNoOpDropSlot(
                 insertBeforeItemId = areaItems.first().id,
                 draggingItemId = draggingItemId,
-                previousItemId = previousItemId
+                previousItemId = null
             )
         )
         entries += OpenListEntry.DropSlotEntry(startSlot)
@@ -1607,34 +1644,37 @@ private fun resolveActiveDropSlotKey(
     slotBounds: Map<String, DropSlotBounds>,
     allowedSlotKeys: Set<String>
 ): String? {
-    slotBounds.entries.firstOrNull { entry ->
-        entry.key in allowedSlotKeys &&
-            run {
-                val bounds = entry.value
-            pointerYInRoot in bounds.topInRoot..bounds.bottomInRoot
-            }
-    }?.let { return it.key }
-
-    itemBounds.entries.firstOrNull { (itemId, bounds) ->
-        itemId != draggedItemId &&
-            pointerYInRoot in bounds.topInRoot..(bounds.topInRoot + bounds.height)
-    }?.let { (itemId, bounds) ->
-        val anchors = itemSlotAnchors[itemId] ?: return@let
-        val midpoint = bounds.topInRoot + bounds.height / 2f
-        val preferredKey = if (pointerYInRoot < midpoint) anchors.beforeSlotKey else anchors.afterSlotKey
-        val fallbackKey = if (pointerYInRoot < midpoint) anchors.afterSlotKey else anchors.beforeSlotKey
-        return when {
-            preferredKey in allowedSlotKeys -> preferredKey
-            fallbackKey in allowedSlotKeys -> fallbackKey
-            else -> null
+    slotBounds.entries
+        .asSequence()
+        .filter { (key, bounds) ->
+            key in allowedSlotKeys && pointerYInRoot in bounds.topInRoot..bounds.bottomInRoot
         }
-    }
+        .minByOrNull { (_, bounds) -> bounds.topInRoot }
+        ?.let { return it.key }
+
+    itemBounds.entries
+        .asSequence()
+        .filter { (itemId, bounds) ->
+            itemId != draggedItemId &&
+                pointerYInRoot in bounds.topInRoot..(bounds.topInRoot + bounds.height)
+        }
+        .minByOrNull { (_, bounds) -> bounds.topInRoot }
+        ?.let { (itemId, bounds) ->
+            val anchors = itemSlotAnchors[itemId] ?: return@let
+            val midpoint = bounds.topInRoot + bounds.height / 2f
+            val preferredKey = if (pointerYInRoot < midpoint) anchors.beforeSlotKey else anchors.afterSlotKey
+            val fallbackKey = if (pointerYInRoot < midpoint) anchors.afterSlotKey else anchors.beforeSlotKey
+            return when {
+                preferredKey in allowedSlotKeys -> preferredKey
+                fallbackKey in allowedSlotKeys -> fallbackKey
+                else -> null
+            }
+        }
 
     return slotBounds
         .filterKeys { it in allowedSlotKeys }
-        .minByOrNull { (_, bounds) ->
-            val centerY = (bounds.topInRoot + bounds.bottomInRoot) / 2f
-            kotlin.math.abs(centerY - pointerYInRoot)
+        .minByOrNull { entry ->
+            kotlin.math.abs(entry.value.centerY - pointerYInRoot)
         }
         ?.key
 }
@@ -1667,25 +1707,20 @@ private fun DropSlotSpacer(
     active: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val slotHeight by animateDpAsState(
-        targetValue = if (active) 88.dp else 14.dp,
-        label = "dropSlotHeight"
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(slotHeight),
+            .height(14.dp),
         contentAlignment = Alignment.Center
     ) {
         if (active) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(4.dp)
+                    .height(2.dp)
                     .padding(horizontal = 18.dp)
                     .background(
-                        color = BrandOrange,
+                        color = BrandOrange.copy(alpha = 0.18f),
                         shape = RoundedCornerShape(999.dp)
                     )
             )
@@ -1714,6 +1749,7 @@ private fun DragPreviewCard(
             .graphicsLayer {
                 scaleX = 1.03f
                 scaleY = 1.03f
+                alpha = 0.92f
             }
     ) {
         Row(
@@ -1732,6 +1768,39 @@ private fun DragPreviewCard(
                 style = MaterialTheme.typography.bodyLarge
             )
         }
+    }
+}
+
+@Composable
+private fun ActiveDropIndicator(
+    centerY: Float,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .offset { IntOffset(0, (centerY - 12.dp.toPx()).roundToInt()) }
+            .padding(horizontal = 18.dp)
+            .height(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .background(
+                    color = BrandOrange.copy(alpha = if (isSystemInDarkTheme()) 0.16f else 0.12f),
+                    shape = RoundedCornerShape(999.dp)
+                )
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .background(
+                    color = BrandOrange,
+                    shape = RoundedCornerShape(999.dp)
+                )
+        )
     }
 }
 

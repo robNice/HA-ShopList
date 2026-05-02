@@ -25,6 +25,15 @@ interface ProductHistoryDao {
 
     @Query(
         """
+        UPDATE product_history
+        SET areaKey = :areaKey
+        WHERE normalizedName = :normalizedName
+        """
+    )
+    suspend fun updateArea(normalizedName: String, areaKey: String?)
+
+    @Query(
+        """
         SELECT * FROM product_history
         WHERE normalizedName LIKE :prefix || '%' OR displayName LIKE '%' || :query || '%'
         ORDER BY
