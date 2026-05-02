@@ -1,0 +1,86 @@
+name: Build dev APK and app bundle on live push with dev tag
+
+on:
+  push:
+    branches:
+      - live
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout live branch
+        uses: actions/checkout@v4
+        with:
+          ref: live
+          fetch-depth: 0
+
+      - name: Check for dev tag on HEAD
+        id: dev_tag
+        shell: bash
+        run: |
+          if git tag --points-at HEAD | grep -x "dev" > /dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "tag=dev" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No 'dev' tag on HEAD. Skipping build."
+          fi
+
+      - name: Set up JDK 17
+        if: steps.dev_tag.outputs.found == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle executable
+        if: steps.dev_tag.outputs.found == 'true'
+        run: chmod +x ./gradlew
+
+      - name: Decode keystore
+        if: steps.dev_tag.outputs.found == 'true'
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+
+      - name: Build GitHub release artifacts
+        if: steps.dev_tag.outputs.found == 'true'
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"
+        run: ./gradlew --no-daemon :app:assembleGithubRelease :app:bundleGithubRelease
+
+      - name: Rename artifacts to include tag
+        if: steps.dev_tag.outputs.found == 'true'
+        run: |
+          mv "app/build/outputs/apk/github/release/app-github-release.apk" "homeShopList-${{ steps.dev_tag.outputs.tag }}.apk"
+          mv "app/build/outputs/bundle/githubRelease/app-github-release.aab" "homeShopList-${{ steps.dev_tag.outputs.tag }}.aab"
+
+      - name: Upload release artifacts
+        if: steps.dev_tag.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.dev_tag.outputs.tag }}
+          path: |
+            homeShopList-${{ steps.dev_tag.outputs.tag }}.apk
+            homeShopList-${{ steps.dev_tag.outputs.tag }}.aab
+          if-no-files-found: error
+
+      - name: Publish release artifacts to GitHub Release
+        if: steps.dev_tag.outputs.found == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.dev_tag.outputs.tag }}
+          name: ${{ steps.dev_tag.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            homeShopList-${{ steps.dev_tag.outputs.tag }}.apk
+            homeShopList-${{ steps.dev_tag.outputs.tag }}.aab
