@@ -55,6 +55,8 @@
     <string name="help_token_text">1. Ouvrez votre profil dans Home Assistant.\n2. Ouvrez l’onglet Security.\n3. Faites défiler vers le bas jusqu’à Long-Lived Access Tokens.\n4. Créez un nouveau jeton.\n5. Copiez immédiatement le jeton et collez-le ici.\n\nLe jeton n’est affiché qu’une seule fois et il est nécessaire pour que l’application charge et mette à jour votre liste de courses en toute sécurité.</string>
     <string name="help_list_selection_title">Sélection de la liste</string>
     <string name="help_list_selection_text">Choisissez la liste de tâches Home Assistant que cette application doit utiliser. Les listes ne sont chargées qu’après la saisie d’une URL et d’un jeton valides.</string>
+    <string name="help_area_visibility_title">Rayons</string>
+    <string name="help_area_visibility_text">Activez uniquement les rayons du magasin qui doivent apparaître dans les menus déroulants de rayon. Les rayons désactivés sont masqués dans les menus déroulants pour les nouveaux éléments ou les éléments modifiés, mais restent visibles dans la liste de courses si des éléments existants les utilisent déjà.</string>
     <string name="help_product_history_title">Historique des produits</string>
     <string name="help_product_history_text">L’application enregistre localement sur cet appareil les noms de produits déjà utilisés afin de proposer l’autocomplétion lors de l’ajout de nouveaux éléments. Effacer l’historique supprime uniquement ces suggestions locales.</string>
     <string name="offline_chip">Hors ligne</string>

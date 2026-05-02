@@ -17,6 +17,7 @@ class SettingsDataStore(private val context: Context) {
         private val TODO_ENTITY = stringPreferencesKey("todo_entity")
         private val LAST_USED_AREA = stringPreferencesKey("last_used_area")
         private val AREA_ORDER = stringPreferencesKey("area_order")
+        private val ENABLED_AREAS = stringPreferencesKey("enabled_areas")
         private val UPDATE_LAST_CHECK_MILLIS = longPreferencesKey("update_last_check_millis")
         private val UPDATE_VERSION_NAME = stringPreferencesKey("update_version_name")
         private val UPDATE_TAG_NAME = stringPreferencesKey("update_tag_name")
@@ -42,6 +43,9 @@ class SettingsDataStore(private val context: Context) {
 
     val areaOrder: Flow<String> = context.dataStore.data
         .map { it[AREA_ORDER] ?: "" }
+
+    val enabledAreas: Flow<String> = context.dataStore.data
+        .map { it[ENABLED_AREAS] ?: "" }
 
     val updateLastCheckMillis: Flow<Long> = context.dataStore.data
         .map { it[UPDATE_LAST_CHECK_MILLIS] ?: 0L }
@@ -92,6 +96,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveAreaOrder(areaOrder: String) {
         context.dataStore.edit {
             it[AREA_ORDER] = areaOrder
+        }
+    }
+
+    suspend fun saveEnabledAreas(enabledAreas: String) {
+        context.dataStore.edit {
+            it[ENABLED_AREAS] = enabledAreas
         }
     }
 

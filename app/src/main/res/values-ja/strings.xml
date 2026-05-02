@@ -55,6 +55,8 @@
     <string name="help_token_text">1. Home Assistant でプロフィールを開きます。\n2. Security タブを開きます。\n3. Long-Lived Access Tokens まで下にスクロールします。\n4. 新しいトークンを作成します。\n5. そのトークンをすぐにコピーして、ここに貼り付けます。\n\nトークンは一度しか表示されず、アプリが買い物リストを安全に読み込み更新するために必要です。</string>
     <string name="help_list_selection_title">リスト選択</string>
     <string name="help_list_selection_text">このアプリで使用する Home Assistant の ToDo リストを選択します。リストは有効な URL とトークンを入力した後にのみ読み込まれます。</string>
+    <string name="help_area_visibility_title">売り場</string>
+    <string name="help_area_visibility_text">売り場のドロップダウンに表示したい売り場だけを有効にしてください。無効にした売り場は新規項目や編集項目のドロップダウンからは非表示になりますが、既存の項目ですでに使われている場合は買い物リスト上に引き続き表示されます。</string>
     <string name="help_product_history_title">商品履歴</string>
     <string name="help_product_history_text">このアプリは、新しい項目を追加するときにオートコンプリートを提供するため、過去に使った商品名をこの端末にローカル保存します。履歴を削除すると、これらのローカル候補だけが削除されます。</string>
     <string name="offline_chip">オフライン</string>

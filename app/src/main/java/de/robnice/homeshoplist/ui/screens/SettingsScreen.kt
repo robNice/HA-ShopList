@@ -38,7 +38,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -81,14 +80,18 @@ private enum class SettingsHelpTopic(
     HaUrl(R.string.help_ha_url_title, R.string.help_ha_url_text),
     Token(R.string.help_token_title, R.string.help_token_text),
     ListSelection(R.string.help_list_selection_title, R.string.help_list_selection_text),
+    AreaVisibility(R.string.help_area_visibility_title, R.string.help_area_visibility_text),
     ProductHistory(R.string.help_product_history_title, R.string.help_product_history_text)
 }
 
 @Composable
 private fun AreaOrderRow(
     area: ShoppingArea,
+    enabled: Boolean,
+    canDisable: Boolean,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
+    onEnabledChanged: (Boolean) -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit
 ) {
@@ -110,7 +113,18 @@ private fun AreaOrderRow(
         Text(
             text = area.label(),
             modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        )
+
+        Switch(
+            checked = enabled,
+            onCheckedChange = onEnabledChanged,
+            enabled = !enabled || canDisable
         )
 
         IconButton(
@@ -155,6 +169,7 @@ fun SettingsScreen(
     val storedToken by dataStore.haToken.collectAsState(initial = "")
     val storedTodoEntity by dataStore.todoEntity.collectAsState(initial = "todo.einkaufsliste")
     val storedAreaOrder by dataStore.areaOrder.collectAsState(initial = "")
+    val storedEnabledAreas by dataStore.enabledAreas.collectAsState(initial = "")
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
     val updateLastCheckMillis by dataStore.updateLastCheckMillis.collectAsState(initial = 0L)
     val updateVersionName by dataStore.updateVersionName.collectAsState(initial = "")
@@ -165,9 +180,6 @@ fun SettingsScreen(
 
     val updateChecksAllowed = remember(updateRepository) {
         updateRepository.isGithubUpdaterAllowed()
-    }
-    val orderedAreas = remember(storedAreaOrder) {
-        ShoppingArea.orderedFromStorage(storedAreaOrder)
     }
     val availableUpdate = remember(
         updateVersionName,
@@ -198,6 +210,8 @@ fun SettingsScreen(
     var url by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
     var todoEntity by remember { mutableStateOf("") }
+    var areaOrderDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
+    var enabledAreasDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
     var todoOptions by remember { mutableStateOf<List<ShoppingList>>(emptyList()) }
     var todoExpanded by remember { mutableStateOf(false) }
     var todoLoading by remember { mutableStateOf(false) }
@@ -212,10 +226,13 @@ fun SettingsScreen(
     var updateDownloading by remember { mutableStateOf(false) }
     var updateStatusText by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(storedUrl, storedToken, storedTodoEntity) {
+    LaunchedEffect(storedUrl, storedToken, storedTodoEntity, storedAreaOrder, storedEnabledAreas) {
         url = storedUrl
         token = storedToken
         todoEntity = storedTodoEntity
+        val restoredAreaOrder = ShoppingArea.orderedFromStorage(storedAreaOrder)
+        areaOrderDraft = restoredAreaOrder
+        enabledAreasDraft = ShoppingArea.enabledFromStorage(storedEnabledAreas, restoredAreaOrder)
     }
 
     LaunchedEffect(Unit) {
@@ -318,10 +335,10 @@ fun SettingsScreen(
         }
     }
 
-    CompositionLocalProvider(
-        LocalTextStyle provides LocalTextStyle.current.copy(
-            color = Color.Black
-        )
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) {
         Column(
             modifier = Modifier
@@ -494,6 +511,12 @@ fun SettingsScreen(
                                 dataStore.saveHaUrl(cleanedUrl)
                                 dataStore.saveHaToken(cleanedToken)
                                 dataStore.saveTodoEntity(todoEntity)
+                                dataStore.saveAreaOrder(
+                                    ShoppingArea.serializeOrder(areaOrderDraft)
+                                )
+                                dataStore.saveEnabledAreas(
+                                    ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
+                                )
                                 navController.navigate(Screen.Shopping.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         inclusive = true
@@ -542,9 +565,9 @@ fun SettingsScreen(
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
+                SectionHeaderWithHelp(
                     text = t(R.string.area_order_title),
-                    style = MaterialTheme.typography.titleMedium
+                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.AreaVisibility }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -568,30 +591,33 @@ fun SettingsScreen(
                             .fillMaxWidth()
                             .padding(vertical = 6.dp)
                     ) {
-                        orderedAreas.forEachIndexed { index, area ->
+                        areaOrderDraft.forEachIndexed { index, area ->
                             AreaOrderRow(
                                 area = area,
+                                enabled = area in enabledAreasDraft,
+                                canDisable = enabledAreasDraft.size > 1,
                                 canMoveUp = index > 0,
-                                canMoveDown = index < orderedAreas.lastIndex,
-                                onMoveUp = {
-                                    val updatedAreas = orderedAreas.toMutableList().apply {
-                                        add(index - 1, removeAt(index))
+                                canMoveDown = index < areaOrderDraft.lastIndex,
+                                onEnabledChanged = { isEnabled ->
+                                    enabledAreasDraft = if (isEnabled) {
+                                        areaOrderDraft.filter { it in enabledAreasDraft || it == area }
+                                    } else {
+                                        enabledAreasDraft.filterNot { it == area }
                                     }
-                                    coroutineScope.launch {
-                                        dataStore.saveAreaOrder(ShoppingArea.serializeOrder(updatedAreas))
+                                },
+                                onMoveUp = {
+                                    areaOrderDraft = areaOrderDraft.toMutableList().apply {
+                                        add(index - 1, removeAt(index))
                                     }
                                 },
                                 onMoveDown = {
-                                    val updatedAreas = orderedAreas.toMutableList().apply {
+                                    areaOrderDraft = areaOrderDraft.toMutableList().apply {
                                         add(index + 1, removeAt(index))
-                                    }
-                                    coroutineScope.launch {
-                                        dataStore.saveAreaOrder(ShoppingArea.serializeOrder(updatedAreas))
                                     }
                                 }
                             )
 
-                            if (index < orderedAreas.lastIndex) {
+                            if (index < areaOrderDraft.lastIndex) {
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     thickness = 1.dp,
@@ -606,9 +632,8 @@ fun SettingsScreen(
 
                 OutlinedButton(
                     onClick = {
-                        coroutineScope.launch {
-                            dataStore.saveAreaOrder(ShoppingArea.serializeOrder(ShoppingArea.entries.toList()))
-                        }
+                        areaOrderDraft = ShoppingArea.entries.toList()
+                        enabledAreasDraft = ShoppingArea.entries.toList()
                     }
                 ) {
                     Text(t(R.string.area_order_reset))

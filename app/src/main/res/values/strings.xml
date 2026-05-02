@@ -55,6 +55,8 @@
     <string name="help_token_text">1. Open your profile in Home Assistant.\n2. Open the Security tab.\n3. Scroll down to Long-Lived Access Tokens.\n4. Create a new token.\n5. Copy the token immediately and paste it here.\n\nThe token is shown only once and is required so the app can securely load and update your shopping list.</string>
     <string name="help_list_selection_title">List selection</string>
     <string name="help_list_selection_text">Choose which Home Assistant todo list this app should use. Lists are only loaded after a valid URL and token have been entered.</string>
+    <string name="help_area_visibility_title">Store sections</string>
+    <string name="help_area_visibility_text">Enable only the store sections you want to use in the section dropdowns. Disabled sections are hidden from dropdowns for new or edited items, but still remain visible in the shopping list when existing items already use them.</string>
     <string name="help_product_history_title">Product history</string>
     <string name="help_product_history_text">The app stores previously used product names on this device to offer autocomplete when you add new items. Clearing the history removes these local suggestions.</string>
     <string name="offline_chip">Offline</string>

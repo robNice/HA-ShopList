@@ -55,6 +55,8 @@
     <string name="help_token_text">1. Open je profiel in Home Assistant.\n2. Open het tabblad Security.\n3. Scroll naar beneden tot Long-Lived Access Tokens.\n4. Maak een nieuwe token aan.\n5. Kopieer de token meteen en plak hem hier.\n\nDe token wordt maar één keer getoond en is nodig zodat de app je boodschappenlijst veilig kan laden en bijwerken.</string>
     <string name="help_list_selection_title">Lijstselectie</string>
     <string name="help_list_selection_text">Kies welke Home Assistant-takenlijst deze app moet gebruiken. Lijsten worden pas geladen nadat een geldige URL en token zijn ingevoerd.</string>
+    <string name="help_area_visibility_title">Afdelingen</string>
+    <string name="help_area_visibility_text">Schakel alleen de winkelafdelingen in die in de afdelingsdropdowns zichtbaar moeten zijn. Uitgeschakelde afdelingen verdwijnen uit de dropdowns voor nieuwe of bewerkte items, maar blijven wel zichtbaar in de boodschappenlijst als bestaande items ze al gebruiken.</string>
     <string name="help_product_history_title">Productgeschiedenis</string>
     <string name="help_product_history_text">De app slaat eerder gebruikte productnamen lokaal op dit apparaat op om automatisch aanvullen aan te bieden wanneer je nieuwe items toevoegt. Bij het wissen van de geschiedenis worden alleen deze lokale suggesties verwijderd.</string>
     <string name="offline_chip">Offline</string>

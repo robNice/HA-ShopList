@@ -55,6 +55,8 @@
     <string name="help_token_text">1. Öffne in Home Assistant dein Profil.\n2. Öffne dort den Reiter Sicherheit.\n3. Scrolle nach unten bis zum Bereich Long-Lived Access Tokens.\n4. Lege einen neuen Token an.\n5. Kopiere den Token sofort und füge ihn hier ein.\n\nDer Token wird nur einmal angezeigt und wird benötigt, damit die App deine Einkaufsliste sicher laden und aktualisieren kann.</string>
     <string name="help_list_selection_title">Listenauswahl</string>
     <string name="help_list_selection_text">Wähle aus, welche Todo-Liste aus Home Assistant diese App verwenden soll. Die Listen werden erst geladen, wenn eine gültige URL und ein gültiger Token eingegeben wurden.</string>
+    <string name="help_area_visibility_title">Bereiche</string>
+    <string name="help_area_visibility_text">Aktiviere nur die Bereiche, die in den Bereichs-Dropdowns auswählbar sein sollen. Deaktivierte Bereiche verschwinden aus den Dropdowns für neue oder bearbeitete Einträge, bleiben in der Einkaufsliste aber weiterhin sichtbar, wenn vorhandene Einträge sie bereits verwenden.</string>
     <string name="help_product_history_title">Produkthistorie</string>
     <string name="help_product_history_text">Die App speichert bereits verwendete Produktnamen lokal auf diesem Gerät, um beim Hinzufügen neuer Einträge Autovervollständigung anzubieten. Beim Löschen der Historie werden nur diese lokalen Vorschläge entfernt.</string>
     <string name="offline_chip">Offline</string>
