@@ -1,4 +1,4 @@
-name: Build dev APK and app bundle on live push with dev tag
+name: Build dev APK and app bundle on live push with devbuild tag
 
 on:
   push:
@@ -19,16 +19,16 @@ jobs:
           ref: live
           fetch-depth: 0
 
-      - name: Check for dev tag on HEAD
+      - name: Check for devbuild tag on HEAD
         id: dev_tag
         shell: bash
         run: |
-          if git tag --points-at HEAD | grep -x "dev" > /dev/null; then
+          if git tag --points-at HEAD | grep -x "devbuild" > /dev/null; then
             echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "tag=dev" >> "$GITHUB_OUTPUT"
+            echo "tag=devbuild" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "No 'dev' tag on HEAD. Skipping build."
+            echo "No 'devbuild' tag on HEAD. Skipping build."
           fi
 
       - name: Set up JDK 17
@@ -80,6 +80,8 @@ jobs:
         with:
           tag_name: ${{ steps.dev_tag.outputs.tag }}
           name: ${{ steps.dev_tag.outputs.tag }}
+          prerelease: true
+          make_latest: false
           generate_release_notes: true
           files: |
             homeShopList-${{ steps.dev_tag.outputs.tag }}.apk
