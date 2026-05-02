@@ -47,6 +47,7 @@ import de.robnice.homeshoplist.data.history.ProductHistoryEntity
 import de.robnice.homeshoplist.data.history.ProductHistoryRepository
 import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingItem
+import de.robnice.homeshoplist.model.label
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
@@ -93,7 +94,6 @@ import de.robnice.homeshoplist.ui.theme.BrandGreen
 import de.robnice.homeshoplist.ui.theme.BrandOrange
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 
@@ -273,6 +273,10 @@ fun ShoppingScreen(
     val haUrl = config?.first
     val haToken = config?.second
     val todoEntity = config?.third
+    val areaOrderRaw by dataStore.areaOrder.collectAsState(initial = "")
+    val orderedAreas = remember(areaOrderRaw) {
+        ShoppingArea.orderedFromStorage(areaOrderRaw)
+    }
     var editingItemId by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showOfflineInfo by remember { mutableStateOf(false) }
@@ -581,6 +585,7 @@ fun ShoppingScreen(
 
                                 AreaMenuButton(
                                     selectedArea = selectedArea,
+                                    areas = orderedAreas,
                                     onAreaSelected = { area ->
                                         selectedArea = area
                                     }
@@ -692,7 +697,7 @@ fun ShoppingScreen(
                         mutableStateOf<List<String>?>(null)
                     }
                     val normalizedOpenItems = remember(openItems) {
-                        normalizeOpenItemsForAreaGrouping(openItems)
+                        normalizeOpenItemsForAreaGrouping(openItems, orderedAreas)
                     }
 
                     val lazyListState = rememberLazyListState()
@@ -709,7 +714,8 @@ fun ShoppingScreen(
                         buildOpenDisplayEntries(
                             items = localOpenItems,
                             activeDropSlotKey = activeDropSlotKey,
-                            draggingItemId = draggingItemId
+                            draggingItemId = draggingItemId,
+                            orderedAreas = orderedAreas
                         )
                     }
                     val activeDropCandidateKeys = remember(openDisplayEntries) {
@@ -916,7 +922,8 @@ fun ShoppingScreen(
                                                                 val finalPreviewItems = applyDropSlotToItems(
                                                                     items = localOpenItems,
                                                                     itemId = draggedId,
-                                                                    slot = activeSlot
+                                                                    slot = activeSlot,
+                                                                    orderedAreas = orderedAreas
                                                                 )
                                                                 val finalIndex =
                                                                     finalPreviewItems.indexOfFirst { it.id == draggedId }
@@ -950,6 +957,7 @@ fun ShoppingScreen(
                                         ) {
                                             ShoppingRow(
                                                 item = item,
+                                                orderedAreas = orderedAreas,
                                                 isEditing = editingItemId == item.id,
                                                 onStartEdit = { clickedId ->
 
@@ -969,6 +977,18 @@ fun ShoppingScreen(
                                                         pendingCommittedOrderIds =
                                                             pendingCommittedOrderIds?.filterNot { it == item.id }
                                                     }
+                                                },
+                                                onAreaChanged = { area ->
+                                                    localOpenItems = normalizeOpenItemsForAreaGrouping(
+                                                        items = localOpenItems.map { openItem ->
+                                                            if (openItem.id == item.id) {
+                                                                openItem.copy(area = area)
+                                                            } else {
+                                                                openItem
+                                                            }
+                                                        },
+                                                        orderedAreas = orderedAreas
+                                                    )
                                                 },
                                                 onAreaPersisted = {}
                                             )
@@ -1025,6 +1045,7 @@ fun ShoppingScreen(
                                     ) {
                                         ShoppingRow(
                                             item = item,
+                                            orderedAreas = orderedAreas,
                                             isEditing = editingItemId == item.id,
                                             onStartEdit = { clickedId ->
 
@@ -1039,6 +1060,7 @@ fun ShoppingScreen(
                                             viewModel = viewModel,
                                             onServerInteraction = triggerHeaderPulse,
                                             onToggleChecked = {},
+                                            onAreaChanged = {},
                                             onAreaPersisted = {},
                                             animateVisibility = false,
                                             modifier = Modifier.padding(horizontal = 4.dp)
@@ -1414,47 +1436,6 @@ private fun HistorySuggestionRow(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AreaSelector(
-    selectedArea: ShoppingArea,
-    label: String,
-    onAreaSelected: (ShoppingArea) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
-    ) {
-        OutlinedTextField(
-            value = "${selectedArea.emoji} ${selectedArea.label()}",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = true)
-        )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            ShoppingArea.entries.forEach { area ->
-                DropdownMenuItem(
-                    text = { Text("${area.emoji} ${area.label()}") },
-                    onClick = {
-                        expanded = false
-                        onAreaSelected(area)
-                    }
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun AreaHeader(area: ShoppingArea, visible: Boolean = true) {
     Row(
@@ -1487,40 +1468,12 @@ private fun AreaHeader(area: ShoppingArea, visible: Boolean = true) {
     }
 }
 
-@Composable
-private fun ShoppingArea.label(): String {
-    val resId = when (this) {
-        ShoppingArea.PRODUCE -> R.string.area_produce
-        ShoppingArea.BAKERY -> R.string.area_bakery
-        ShoppingArea.MEAT -> R.string.area_meat
-        ShoppingArea.FISH_SEAFOOD -> R.string.area_fish_seafood
-        ShoppingArea.DAIRY_EGGS -> R.string.area_dairy_eggs
-        ShoppingArea.CHEESE_DELI -> R.string.area_cheese_deli
-        ShoppingArea.FROZEN -> R.string.area_frozen
-        ShoppingArea.DRY_GOODS -> R.string.area_dry_goods
-        ShoppingArea.CANNED_JARS -> R.string.area_canned_jars
-        ShoppingArea.SAUCES_SPICES -> R.string.area_sauces_spices
-        ShoppingArea.BREAKFAST -> R.string.area_breakfast
-        ShoppingArea.SNACKS_SWEETS -> R.string.area_snacks_sweets
-        ShoppingArea.DRINKS -> R.string.area_drinks
-        ShoppingArea.ALCOHOL -> R.string.area_alcohol
-        ShoppingArea.COFFEE_TEA -> R.string.area_coffee_tea
-        ShoppingArea.HOUSEHOLD -> R.string.area_household
-        ShoppingArea.CLEANING -> R.string.area_cleaning
-        ShoppingArea.PAPER_GOODS -> R.string.area_paper_goods
-        ShoppingArea.PERSONAL_CARE -> R.string.area_personal_care
-        ShoppingArea.BABY -> R.string.area_baby
-        ShoppingArea.PET -> R.string.area_pet
-        ShoppingArea.HEALTH -> R.string.area_health
-        ShoppingArea.NON_FOOD -> R.string.area_non_food
-        ShoppingArea.OTHER -> R.string.area_other
-    }
-    return stringResource(resId)
-}
-
-private fun normalizeOpenItemsForAreaGrouping(items: List<ShoppingItem>): List<ShoppingItem> {
+private fun normalizeOpenItemsForAreaGrouping(
+    items: List<ShoppingItem>,
+    orderedAreas: List<ShoppingArea>
+): List<ShoppingItem> {
     val grouped = LinkedHashMap<ShoppingArea, MutableList<ShoppingItem>>()
-    ShoppingArea.entries.forEach { grouped[it] = mutableListOf() }
+    orderedAreas.forEach { grouped[it] = mutableListOf() }
     items.forEach { item ->
         grouped.getValue(item.area ?: ShoppingArea.OTHER).add(item)
     }
@@ -1574,13 +1527,14 @@ private sealed interface OpenListEntry {
 private fun buildOpenDisplayEntries(
     items: List<ShoppingItem>,
     activeDropSlotKey: String?,
-    draggingItemId: String?
+    draggingItemId: String?,
+    orderedAreas: List<ShoppingArea>
 ): List<OpenListEntry> {
     if (items.isEmpty()) return emptyList()
 
     val entries = mutableListOf<OpenListEntry>()
     var previousItemId: String? = null
-    ShoppingArea.entries.forEach { area ->
+    orderedAreas.forEach { area ->
         val areaItems = items.filter { (it.area ?: ShoppingArea.OTHER) == area }
         if (areaItems.isEmpty()) return@forEach
 
@@ -1688,7 +1642,8 @@ private fun resolveActiveDropSlotKey(
 private fun applyDropSlotToItems(
     items: List<ShoppingItem>,
     itemId: String,
-    slot: DropSlotData
+    slot: DropSlotData,
+    orderedAreas: List<ShoppingArea>
 ): List<ShoppingItem> {
     val movedItem = items.firstOrNull { it.id == itemId } ?: return items
     val remainingItems = items.filterNot { it.id == itemId }.toMutableList()
@@ -1704,7 +1659,7 @@ private fun applyDropSlotToItems(
         targetIndex.coerceIn(0, remainingItems.size),
         movedItem.copy(area = slot.area)
     )
-    return normalizeOpenItemsForAreaGrouping(remainingItems)
+    return normalizeOpenItemsForAreaGrouping(remainingItems, orderedAreas)
 }
 
 @Composable
@@ -1785,12 +1740,14 @@ private fun DragPreviewCard(
 @Composable
 fun ShoppingRow(
     item: ShoppingItem,
+    orderedAreas: List<ShoppingArea>,
     isEditing: Boolean,
     onStartEdit: (String) -> Unit,
     onStopEdit: () -> Unit,
     viewModel: ShoppingViewModel,
     onServerInteraction: () -> Unit = {},
     onToggleChecked: (Boolean) -> Unit = {},
+    onAreaChanged: (ShoppingArea) -> Unit = {},
     onAreaPersisted: (ShoppingArea) -> Unit = {},
     modifier: Modifier = Modifier,
     animateVisibility: Boolean = true
@@ -1932,9 +1889,11 @@ fun ShoppingRow(
 
                     AreaMenuButton(
                         selectedArea = item.area ?: ShoppingArea.OTHER,
+                        areas = orderedAreas,
                         onAreaSelected = { area ->
                             if (area != (item.area ?: ShoppingArea.OTHER)) {
                                 onStopEdit()
+                                onAreaChanged(area)
                                 onServerInteraction()
                                 viewModel.updateItem(item, item.name, area)
                                 onAreaPersisted(area)
@@ -1951,6 +1910,7 @@ fun ShoppingRow(
 @Composable
 private fun AreaMenuButton(
     selectedArea: ShoppingArea,
+    areas: List<ShoppingArea>,
     onAreaSelected: (ShoppingArea) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -1974,7 +1934,7 @@ private fun AreaMenuButton(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            ShoppingArea.entries.forEach { area ->
+            areas.forEach { area ->
                 DropdownMenuItem(
                     text = {
                         Row(
