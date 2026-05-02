@@ -1,11 +1,9 @@
-name: Build dev APK and app bundle on dev push with devbuild tag
+name: Build APK on devbuild tag
 
 on:
   push:
-    branches:
-      - dev
     tags:
-      - devbuild
+      - "devbuild"
 
 permissions:
   contents: write
@@ -15,29 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout master branch
         uses: actions/checkout@v4
         with:
+          ref: master
           fetch-depth: 0
 
-      - name: Check whether dev and devbuild match
-        id: dev_tag
-        shell: bash
-        run: |
-          git fetch origin dev --tags
-          dev_head="$(git rev-parse origin/dev)"
-          tag_commit="$(git rev-list -n 1 refs/tags/devbuild 2>/dev/null || true)"
-
-          if [ -n "$tag_commit" ] && [ "$dev_head" = "$tag_commit" ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "tag=devbuild" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "dev HEAD ($dev_head) and tag devbuild ($tag_commit) do not match. Skipping build."
-          fi
-
       - name: Set up JDK 17
-        if: steps.dev_tag.outputs.found == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -45,49 +27,40 @@ jobs:
           cache: gradle
 
       - name: Make Gradle executable
-        if: steps.dev_tag.outputs.found == 'true'
         run: chmod +x ./gradlew
 
       - name: Decode keystore
-        if: steps.dev_tag.outputs.found == 'true'
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
 
-      - name: Build GitHub release artifacts
-        if: steps.dev_tag.outputs.found == 'true'
+      - name: Build GitHub release APK
         env:
           ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"
-        run: ./gradlew --no-daemon :app:assembleGithubRelease :app:bundleGithubRelease
+        run: ./gradlew --no-daemon :app:assembleGithubRelease
 
-      - name: Rename artifacts to include tag
-        if: steps.dev_tag.outputs.found == 'true'
+      - name: Rename artifact to include tag
         run: |
-          mv "app/build/outputs/apk/github/release/app-github-release.apk" "homeShopList-${{ steps.dev_tag.outputs.tag }}.apk"
-          mv "app/build/outputs/bundle/githubRelease/app-github-release.aab" "homeShopList-${{ steps.dev_tag.outputs.tag }}.aab"
+          mv "app/build/outputs/apk/github/release/app-github-release.apk" "homeShopList-${{ github.ref_name }}.apk"
 
-      - name: Upload release artifacts
-        if: steps.dev_tag.outputs.found == 'true'
+      - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ steps.dev_tag.outputs.tag }}
+          name: release-${{ github.ref_name }}
           path: |
-            homeShopList-${{ steps.dev_tag.outputs.tag }}.apk
-            homeShopList-${{ steps.dev_tag.outputs.tag }}.aab
+            homeShopList-${{ github.ref_name }}.apk
           if-no-files-found: error
 
-      - name: Publish release artifacts to GitHub Release
-        if: steps.dev_tag.outputs.found == 'true'
+      - name: Publish release artifact to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.dev_tag.outputs.tag }}
-          name: ${{ steps.dev_tag.outputs.tag }}
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           prerelease: true
           make_latest: false
           generate_release_notes: true
           files: |
-            homeShopList-${{ steps.dev_tag.outputs.tag }}.apk
-            homeShopList-${{ steps.dev_tag.outputs.tag }}.aab
+            homeShopList-${{ github.ref_name }}.apk
