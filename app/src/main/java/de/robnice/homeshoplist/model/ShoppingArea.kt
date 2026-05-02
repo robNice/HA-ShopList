@@ -1,5 +1,9 @@
 package de.robnice.homeshoplist.model
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import de.robnice.homeshoplist.R
+
 enum class ShoppingArea(
     val key: String,
     val emoji: String
@@ -33,5 +37,54 @@ enum class ShoppingArea(
         fun fromKey(key: String?): ShoppingArea? {
             return entries.firstOrNull { it.key == key }
         }
+
+        fun orderedFromStorage(storedOrder: String?): List<ShoppingArea> {
+            val storedAreas = storedOrder
+                .orEmpty()
+                .split(',')
+                .mapNotNull { fromKey(it.trim()) }
+                .distinct()
+
+            if (storedAreas.isEmpty()) {
+                return entries.toList()
+            }
+
+            return storedAreas + entries.filterNot { it in storedAreas }
+        }
+
+        fun serializeOrder(areas: List<ShoppingArea>): String {
+            return areas.joinToString(",") { it.key }
+        }
     }
+}
+
+@Composable
+fun ShoppingArea.label(): String {
+    val resId = when (this) {
+        ShoppingArea.PRODUCE -> R.string.area_produce
+        ShoppingArea.BAKERY -> R.string.area_bakery
+        ShoppingArea.MEAT -> R.string.area_meat
+        ShoppingArea.FISH_SEAFOOD -> R.string.area_fish_seafood
+        ShoppingArea.DAIRY_EGGS -> R.string.area_dairy_eggs
+        ShoppingArea.CHEESE_DELI -> R.string.area_cheese_deli
+        ShoppingArea.FROZEN -> R.string.area_frozen
+        ShoppingArea.DRY_GOODS -> R.string.area_dry_goods
+        ShoppingArea.CANNED_JARS -> R.string.area_canned_jars
+        ShoppingArea.SAUCES_SPICES -> R.string.area_sauces_spices
+        ShoppingArea.BREAKFAST -> R.string.area_breakfast
+        ShoppingArea.SNACKS_SWEETS -> R.string.area_snacks_sweets
+        ShoppingArea.DRINKS -> R.string.area_drinks
+        ShoppingArea.ALCOHOL -> R.string.area_alcohol
+        ShoppingArea.COFFEE_TEA -> R.string.area_coffee_tea
+        ShoppingArea.HOUSEHOLD -> R.string.area_household
+        ShoppingArea.CLEANING -> R.string.area_cleaning
+        ShoppingArea.PAPER_GOODS -> R.string.area_paper_goods
+        ShoppingArea.PERSONAL_CARE -> R.string.area_personal_care
+        ShoppingArea.BABY -> R.string.area_baby
+        ShoppingArea.PET -> R.string.area_pet
+        ShoppingArea.HEALTH -> R.string.area_health
+        ShoppingArea.NON_FOOD -> R.string.area_non_food
+        ShoppingArea.OTHER -> R.string.area_other
+    }
+    return stringResource(resId)
 }

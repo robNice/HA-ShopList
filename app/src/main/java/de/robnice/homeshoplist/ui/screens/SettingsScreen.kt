@@ -21,6 +21,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -55,7 +57,9 @@ import de.robnice.homeshoplist.data.update.AppUpdateInfo
 import de.robnice.homeshoplist.data.update.AppUpdateRepository
 import de.robnice.homeshoplist.data.update.InstallStartResult
 import de.robnice.homeshoplist.data.update.UpdateCheckResult
+import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingList
+import de.robnice.homeshoplist.model.label
 import de.robnice.homeshoplist.ui.navigation.Screen
 import de.robnice.homeshoplist.ui.util.t
 import de.robnice.homeshoplist.util.normalizeHaUrl
@@ -80,6 +84,57 @@ private enum class SettingsHelpTopic(
     ProductHistory(R.string.help_product_history_title, R.string.help_product_history_text)
 }
 
+@Composable
+private fun AreaOrderRow(
+    area: ShoppingArea,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = area.emoji,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.width(28.dp),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Text(
+            text = area.label(),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        IconButton(
+            onClick = onMoveUp,
+            enabled = canMoveUp
+        ) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowUp,
+                contentDescription = t(R.string.area_order_move_up)
+            )
+        }
+
+        IconButton(
+            onClick = onMoveDown,
+            enabled = canMoveDown
+        ) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = t(R.string.area_order_move_down)
+            )
+        }
+    }
+}
+
 /**
  * @todo: prevent copying token
  * @todo: prevent screenshots
@@ -99,6 +154,7 @@ fun SettingsScreen(
     val storedUrl by dataStore.haUrl.collectAsState(initial = "")
     val storedToken by dataStore.haToken.collectAsState(initial = "")
     val storedTodoEntity by dataStore.todoEntity.collectAsState(initial = "todo.einkaufsliste")
+    val storedAreaOrder by dataStore.areaOrder.collectAsState(initial = "")
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
     val updateLastCheckMillis by dataStore.updateLastCheckMillis.collectAsState(initial = 0L)
     val updateVersionName by dataStore.updateVersionName.collectAsState(initial = "")
@@ -109,6 +165,9 @@ fun SettingsScreen(
 
     val updateChecksAllowed = remember(updateRepository) {
         updateRepository.isGithubUpdaterAllowed()
+    }
+    val orderedAreas = remember(storedAreaOrder) {
+        ShoppingArea.orderedFromStorage(storedAreaOrder)
     }
     val availableUpdate = remember(
         updateVersionName,
@@ -477,6 +536,82 @@ fun SettingsScreen(
                     OutlinedButton(onClick = { todoReloadKey++ }) {
                         Text(t(R.string.retry))
                     }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = t(R.string.area_order_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = t(R.string.area_order_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Card(
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                    ) {
+                        orderedAreas.forEachIndexed { index, area ->
+                            AreaOrderRow(
+                                area = area,
+                                canMoveUp = index > 0,
+                                canMoveDown = index < orderedAreas.lastIndex,
+                                onMoveUp = {
+                                    val updatedAreas = orderedAreas.toMutableList().apply {
+                                        add(index - 1, removeAt(index))
+                                    }
+                                    coroutineScope.launch {
+                                        dataStore.saveAreaOrder(ShoppingArea.serializeOrder(updatedAreas))
+                                    }
+                                },
+                                onMoveDown = {
+                                    val updatedAreas = orderedAreas.toMutableList().apply {
+                                        add(index + 1, removeAt(index))
+                                    }
+                                    coroutineScope.launch {
+                                        dataStore.saveAreaOrder(ShoppingArea.serializeOrder(updatedAreas))
+                                    }
+                                }
+                            )
+
+                            if (index < orderedAreas.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            dataStore.saveAreaOrder(ShoppingArea.serializeOrder(ShoppingArea.entries.toList()))
+                        }
+                    }
+                ) {
+                    Text(t(R.string.area_order_reset))
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
