@@ -101,6 +101,7 @@ class HaWebSocketRepository(
     private var remoteMetaItemId: String? = null
     private var remoteMetaItemName: String? = null
     private var localMetaItemExists = false
+    private var hasLoadedRemoteItems = false
     private var lastRemoteItems: List<ShoppingItem> = emptyList()
     private var hadReadyOnce = false
     private var pendingRetryJob: Job? = null
@@ -178,7 +179,6 @@ class HaWebSocketRepository(
 
                 scope.launch {
                     loadItems()
-                    flushPendingChanges()
                 }
             }
         }
@@ -264,6 +264,7 @@ class HaWebSocketRepository(
         lastRemoteItems = parsedRemote
 
         val finalItems = synchronized(lock) {
+            hasLoadedRemoteItems = true
             remoteMetaItemId = parsedMetaId
             remoteMetaItemName = parsedMetaName
             localMetaItemExists = parsedMetaId != null
@@ -678,6 +679,10 @@ class HaWebSocketRepository(
 
     private suspend fun flushPendingChanges() {
         if (!client.isReady()) {
+            return
+        }
+
+        if (!hasLoadedRemoteItems) {
             return
         }
 
