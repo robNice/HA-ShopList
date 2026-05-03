@@ -939,15 +939,18 @@ fun ShoppingScreen(
                                                                     slot = activeSlot,
                                                                     orderedAreas = orderedAreas
                                                                 )
+                                                                val finalDraggedItem =
+                                                                    finalPreviewItems.firstOrNull { it.id == draggedId }
                                                                 val finalIndex =
                                                                     finalPreviewItems.indexOfFirst { it.id == draggedId }
                                                                 val previousItemId =
                                                                     finalPreviewItems.getOrNull(finalIndex - 1)?.id
                                                                 val changed =
                                                                     finalPreviewItems.map { it.id } != localOpenItems.map { it.id } ||
-                                                                        finalPreviewItems.firstOrNull { it.id == draggedId }?.area != draggedItem.area
+                                                                        finalDraggedItem?.area != draggedItem.area
                                                                 if (changed) {
                                                                     localOpenItems = finalPreviewItems
+                                                                    deferredOpenItems = finalPreviewItems
                                                                     pendingCommittedOrderIds =
                                                                         finalPreviewItems.map { it.id }
                                                                     droppedItemId = draggedId
@@ -955,7 +958,7 @@ fun ShoppingScreen(
                                                                     viewModel.moveItem(
                                                                         itemId = draggedId,
                                                                         previousItemId = previousItemId,
-                                                                        area = activeSlot.area
+                                                                        area = finalDraggedItem?.area ?: activeSlot.area
                                                                     )
                                                                 }
                                                             }
@@ -1708,9 +1711,20 @@ private fun applyDropSlotToItems(
             }
             ?: remainingItems.size
 
+    val currentArea = movedItem.area ?: ShoppingArea.OTHER
+    val previousArea = remainingItems.getOrNull(targetIndex - 1)?.area ?: ShoppingArea.OTHER
+    val nextArea = remainingItems.getOrNull(targetIndex)?.area ?: ShoppingArea.OTHER
+    val effectiveArea =
+        when {
+            slot.area != ShoppingArea.OTHER -> slot.area
+            previousArea == currentArea || nextArea == currentArea -> currentArea
+            previousArea == nextArea -> previousArea
+            else -> slot.area
+        }
+
     remainingItems.add(
         targetIndex.coerceIn(0, remainingItems.size),
-        movedItem.copy(area = slot.area)
+        movedItem.copy(area = effectiveArea)
     )
     return normalizeOpenItemsForAreaGrouping(remainingItems, orderedAreas)
 }
