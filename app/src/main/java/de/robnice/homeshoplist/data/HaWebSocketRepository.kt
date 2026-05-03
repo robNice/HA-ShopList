@@ -460,6 +460,8 @@ class HaWebSocketRepository(
         if (trimmed.isBlank()) {
             return
         }
+        val nameChanged = trimmed != item.name
+        val areaChanged = area != item.area
 
         updateLocalItem(item.id) { current ->
             current.copy(
@@ -468,7 +470,7 @@ class HaWebSocketRepository(
                 area = area
             )
         }
-        if (trimmed != item.name) {
+        if (nameChanged) {
             scope.launch {
                 productHistoryRepository.recordProductUse(trimmed, area)
             }
@@ -485,12 +487,29 @@ class HaWebSocketRepository(
             return
         }
 
-        enqueueOrSendUpdate(
-            itemId = item.id,
-            name = trimmed,
-            complete = item.complete,
-            area = area
-        )
+        if (nameChanged) {
+            enqueueOrSendUpdate(
+                itemId = item.id,
+                name = trimmed,
+                complete = item.complete,
+                area = area
+            )
+        } else if (areaChanged) {
+            synchronized(lock) {
+                syncPendingMetaLocked(_items.value)
+                persistPendingChangesLocked()
+            }
+
+            if (client.isReady()) {
+                scope.launch {
+                    flushPendingChanges()
+                }
+            } else {
+                _isOffline.value = true
+                _isConnecting.value = false
+                client.ensureConnected()
+            }
+        }
     }
 
     fun moveItem(itemId: String, previousItemId: String?, area: ShoppingArea? = null) {
