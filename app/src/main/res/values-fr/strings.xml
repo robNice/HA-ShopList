@@ -111,4 +111,19 @@
     <string name="area_health">Santé</string>
     <string name="area_non_food">Non alimentaire</string>
     <string name="area_other">Autres</string>
+    <string name="area_groceries">Épicerie</string>
+    <string name="area_milk">Lait</string>
+    <string name="area_eggs">Œufs</string>
+    <string name="area_cold_cuts">Charcuterie</string>
+    <string name="area_refrigerated_cases">Rayons réfrigérés</string>
+    <string name="area_butcher_counter">Boucherie</string>
+    <string name="area_1">Zone 1</string>
+    <string name="area_2">Zone 2</string>
+    <string name="area_3">Zone 3</string>
+    <string name="area_4">Zone 4</string>
+    <string name="area_5">Zone 5</string>
+    <string name="area_6">Zone 6</string>
+    <string name="area_7">Zone 7</string>
+    <string name="area_8">Zone 8</string>
+    <string name="area_impulse_buy">Achats d’impulsion</string>
 </resources>

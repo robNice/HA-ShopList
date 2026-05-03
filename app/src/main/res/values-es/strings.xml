@@ -111,4 +111,19 @@
     <string name="area_health">Salud</string>
     <string name="area_non_food">No alimentario</string>
     <string name="area_other">Otros</string>
+    <string name="area_groceries">Comestibles</string>
+    <string name="area_milk">Leche</string>
+    <string name="area_eggs">Huevos</string>
+    <string name="area_cold_cuts">Fiambres</string>
+    <string name="area_refrigerated_cases">Vitrinas refrigeradas</string>
+    <string name="area_butcher_counter">Mostrador de carnicería</string>
+    <string name="area_1">Área 1</string>
+    <string name="area_2">Área 2</string>
+    <string name="area_3">Área 3</string>
+    <string name="area_4">Área 4</string>
+    <string name="area_5">Área 5</string>
+    <string name="area_6">Área 6</string>
+    <string name="area_7">Área 7</string>
+    <string name="area_8">Área 8</string>
+    <string name="area_impulse_buy">Compra por impulso</string>
 </resources>

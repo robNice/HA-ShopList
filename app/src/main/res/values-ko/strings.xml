@@ -111,4 +111,19 @@
     <string name="area_health">건강</string>
     <string name="area_non_food">비식품</string>
     <string name="area_other">기타</string>
+    <string name="area_groceries">식료품</string>
+    <string name="area_milk">우유</string>
+    <string name="area_eggs">달걀</string>
+    <string name="area_cold_cuts">콜드컷</string>
+    <string name="area_refrigerated_cases">냉장 진열대</string>
+    <string name="area_butcher_counter">정육 코너</string>
+    <string name="area_1">구역 1</string>
+    <string name="area_2">구역 2</string>
+    <string name="area_3">구역 3</string>
+    <string name="area_4">구역 4</string>
+    <string name="area_5">구역 5</string>
+    <string name="area_6">구역 6</string>
+    <string name="area_7">구역 7</string>
+    <string name="area_8">구역 8</string>
+    <string name="area_impulse_buy">충동구매</string>
 </resources>
