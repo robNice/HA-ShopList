@@ -1,9 +1,9 @@
 package de.robnice.homeshoplist
 
 import de.robnice.homeshoplist.model.ShoppingArea
-import de.robnice.homeshoplist.model.buildDescriptionWithArea
-import de.robnice.homeshoplist.model.isNativeWayMeta
-import de.robnice.homeshoplist.model.parseAreaFromDescription
+import de.robnice.homeshoplist.model.encodeMetaItemName
+import de.robnice.homeshoplist.model.isMetaItemName
+import de.robnice.homeshoplist.model.parseMetaItemName
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -13,44 +13,44 @@ import org.junit.Test
 class ShoppingAreaDescriptionTest {
 
     @Test
-    fun parsesValidAreaJson() {
-        val description = """{"type":"ha-shoplist-meta","version":1,"area":"dairy_eggs"}"""
+    fun `parse meta item name with known areas`() {
+        val name = """.__ha_shoplist_meta__:{"type":"ha-shoplist-meta","version":1,"areas":{"uid-1":"dairy_eggs","uid-2":"drinks"}}"""
 
-        assertEquals(ShoppingArea.DAIRY_EGGS, parseAreaFromDescription(description))
-        assertTrue(isNativeWayMeta(description))
+        val meta = parseMetaItemName(name)
+
+        assertEquals(ShoppingArea.DAIRY_EGGS, meta?.itemAreas?.get("uid-1"))
+        assertEquals(ShoppingArea.DRINKS, meta?.itemAreas?.get("uid-2"))
+        assertTrue(isMetaItemName(name))
     }
 
     @Test
-    fun ignoresBrokenJson() {
-        assertNull(parseAreaFromDescription("{broken"))
-        assertFalse(isNativeWayMeta("{broken"))
+    fun `ignore broken meta item names`() {
+        assertNull(parseMetaItemName(".__ha_shoplist_meta__:{broken"))
+        assertFalse(isMetaItemName(".__ha_shoplist_meta__:{broken"))
     }
 
     @Test
-    fun ignoresUnknownAreaKeys() {
-        val description = """{"type":"ha-shoplist-meta","version":1,"area":"unknown"}"""
+    fun `ignore unknown areas in meta item names`() {
+        val name = """.__ha_shoplist_meta__:{"type":"ha-shoplist-meta","version":1,"areas":{"uid-1":"unknown"}}"""
 
-        assertNull(parseAreaFromDescription(description))
-        assertTrue(isNativeWayMeta(description))
+        val meta = parseMetaItemName(name)
+
+        assertTrue(isMetaItemName(name))
+        assertTrue(meta?.itemAreas?.isEmpty() == true)
     }
 
     @Test
-    fun preservesExistingPlainDescription() {
-        val description = buildDescriptionWithArea("already there", ShoppingArea.DRINKS)
+    fun `encode meta item names deterministically`() {
+        val name = encodeMetaItemName(
+            mapOf(
+                "uid-2" to ShoppingArea.DRINKS,
+                "uid-1" to ShoppingArea.DAIRY_EGGS
+            )
+        )
 
-        assertTrue(description!!.contains("already there"))
-        assertEquals(ShoppingArea.DRINKS, parseAreaFromDescription(description))
-    }
-
-    @Test
-    fun preservesEmbeddedTextWhenAreaIsCleared() {
-        val existing = """{"type":"ha-shoplist-meta","version":1,"area":"other","text":"keep"}"""
-
-        assertEquals("keep", buildDescriptionWithArea(existing, null))
-    }
-
-    @Test
-    fun keepsForeignDescriptionWhenAreaIsCleared() {
-        assertEquals("note", buildDescriptionWithArea("note", null))
+        assertEquals(
+            """.__ha_shoplist_meta__:{"type":"ha-shoplist-meta","version":1,"areas":{"uid-1":"dairy_eggs","uid-2":"drinks"}}""",
+            name
+        )
     }
 }

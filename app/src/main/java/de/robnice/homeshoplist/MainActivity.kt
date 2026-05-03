@@ -987,10 +987,12 @@ fun ShoppingScreen(
                                                 viewModel = viewModel,
                                                 onServerInteraction = triggerHeaderPulse,
                                                 onToggleChecked = { checked ->
-                                                    if (checked) {
-                                                        localOpenItems = localOpenItems.filterNot { it.id == item.id }
-                                                        pendingCommittedOrderIds =
-                                                            pendingCommittedOrderIds?.filterNot { it == item.id }
+                                                    localOpenItems = localOpenItems.map { openItem ->
+                                                        if (openItem.id == item.id) {
+                                                            openItem.copy(complete = checked)
+                                                        } else {
+                                                            openItem
+                                                        }
                                                     }
                                                 },
                                                 onAreaChanged = { area ->

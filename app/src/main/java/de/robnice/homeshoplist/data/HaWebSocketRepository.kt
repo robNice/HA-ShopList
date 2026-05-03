@@ -5,8 +5,9 @@ import de.robnice.homeshoplist.data.history.ProductHistoryRepository
 import de.robnice.homeshoplist.data.websocket.HaWebSocketClient
 import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingItem
-import de.robnice.homeshoplist.model.buildDescriptionWithArea
-import de.robnice.homeshoplist.model.parseAreaFromDescription
+import de.robnice.homeshoplist.model.encodeMetaItemName
+import de.robnice.homeshoplist.model.isMetaItemName
+import de.robnice.homeshoplist.model.parseMetaItemName
 import de.robnice.homeshoplist.util.Debug
 import de.robnice.homeshoplist.util.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +36,6 @@ class HaWebSocketRepository(
             val itemId: String,
             val name: String,
             val complete: Boolean,
-            val description: String?,
             val area: ShoppingArea?,
             val lastSentAtMillis: Long?
         ) : PendingAction
@@ -58,6 +58,11 @@ class HaWebSocketRepository(
         val complete: Boolean,
         val area: ShoppingArea?,
         val previousItemId: String?,
+        val lastSentAtMillis: Long?
+    )
+
+    private data class PendingMetaSync(
+        val desiredName: String?,
         val lastSentAtMillis: Long?
     )
 
@@ -92,6 +97,9 @@ class HaWebSocketRepository(
     private val pendingActions = mutableListOf<PendingAction>()
     private val pendingLocalAdds = linkedMapOf<String, PendingLocalAdd>()
     private var pendingMove: PendingMove? = null
+    private var pendingMetaSync: PendingMetaSync? = null
+    private var remoteMetaItemId: String? = null
+    private var remoteMetaItemName: String? = null
     private var lastRemoteItems: List<ShoppingItem> = emptyList()
     private var hadReadyOnce = false
     private var pendingRetryJob: Job? = null
@@ -222,30 +230,49 @@ class HaWebSocketRepository(
         array: JSONArray,
         isRealtimeEvent: Boolean
     ) {
-        val parsedRemote = mutableListOf<ShoppingItem>()
+        val parsedVisibleItems = mutableListOf<ShoppingItem>()
+        var parsedMetaId: String? = null
+        var parsedMetaName: String? = null
 
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
-            val description = item.optNullableString("description")
-            parsedRemote += ShoppingItem(
-                id = item.getString("uid"),
-                name = item.getString("summary"),
+            val itemId = item.getString("uid")
+            val itemName = item.getString("summary")
+
+            if (isMetaItemName(itemName)) {
+                parsedMetaId = itemId
+                parsedMetaName = itemName
+                continue
+            }
+
+            parsedVisibleItems += ShoppingItem(
+                id = itemId,
+                name = itemName,
                 complete = item.getString("status") == "completed",
-                description = description,
-                area = parseAreaFromDescription(description)
+                description = null,
+                area = null
             )
+        }
+
+        val parsedMetaAreas = parseMetaItemName(parsedMetaName)?.itemAreas.orEmpty()
+        val parsedRemote = parsedVisibleItems.map { item ->
+            item.copy(area = parsedMetaAreas[item.id])
         }
 
         val previousRemoteIds = lastRemoteItems.map { it.id }.toSet()
         lastRemoteItems = parsedRemote
 
         val finalItems = synchronized(lock) {
+            remoteMetaItemId = parsedMetaId
+            remoteMetaItemName = parsedMetaName
             reconcileLocalAdds(parsedRemote, previousRemoteIds)
             pruneSatisfiedPendingActions(parsedRemote)
             pruneSatisfiedPendingMove(parsedRemote)
+            pruneSatisfiedPendingMeta()
             val withPendingApplied = applyPendingMove(applyPendingActions(parsedRemote))
+            syncPendingMetaLocked(withPendingApplied)
             persistPendingChangesLocked()
-            withPendingApplied + pendingLocalAdds.values.map { it.toShoppingItem() }
+            withPendingApplied + visiblePendingLocalAddsLocked()
         }
 
         val previousItems = _items.value
@@ -277,16 +304,13 @@ class HaWebSocketRepository(
         val resolvedActions = mutableListOf<PendingAction>()
 
         pendingLocalAdds.values.toList().forEach { pendingAdd ->
-            val expectedDescription = buildDescriptionWithArea(null, pendingAdd.area)
             val matched = parsedRemote.firstOrNull { remote ->
                 remote.id !in usedRemoteIds &&
                     remote.name == pendingAdd.name &&
-                    remote.description == expectedDescription &&
                     remote.id !in previousRemoteIds
             } ?: parsedRemote.firstOrNull { remote ->
                 remote.id !in usedRemoteIds &&
-                    remote.name == pendingAdd.name &&
-                    remote.description == expectedDescription
+                    remote.name == pendingAdd.name
             } ?: parsedRemote.firstOrNull { remote ->
                 remote.id !in usedRemoteIds &&
                     remote.name == pendingAdd.name
@@ -299,12 +323,11 @@ class HaWebSocketRepository(
             usedRemoteIds += matched.id
             pendingLocalAdds.remove(pendingAdd.tempId)
 
-            if (pendingAdd.complete) {
+            if (pendingAdd.complete || pendingAdd.area != null) {
                 resolvedActions += PendingAction.Update(
                     itemId = matched.id,
                     name = pendingAdd.name,
-                    complete = true,
-                    description = buildDescriptionWithArea(null, pendingAdd.area),
+                    complete = pendingAdd.complete,
                     area = pendingAdd.area,
                     lastSentAtMillis = null
                 )
@@ -388,9 +411,10 @@ class HaWebSocketRepository(
                 id = tempId,
                 name = trimmed,
                 complete = false,
-                description = buildDescriptionWithArea(null, area),
+                description = null,
                 area = area
             )
+            syncPendingMetaLocked(_items.value)
             persistPendingChangesLocked()
         }
         if (client.isReady()) {
@@ -418,6 +442,7 @@ class HaWebSocketRepository(
             synchronized(lock) {
                 pendingLocalAdds[item.id]?.let { add ->
                     pendingLocalAdds[item.id] = add.copy(complete = newStatus)
+                    syncPendingMetaLocked(_items.value)
                     persistPendingChangesLocked()
                 }
             }
@@ -428,7 +453,6 @@ class HaWebSocketRepository(
             itemId = item.id,
             name = item.name,
             complete = newStatus,
-            description = item.description,
             area = item.area
         )
     }
@@ -442,7 +466,7 @@ class HaWebSocketRepository(
         updateLocalItem(item.id) { current ->
             current.copy(
                 name = trimmed,
-                description = buildDescriptionWithArea(current.description, area),
+                description = null,
                 area = area
             )
         }
@@ -456,6 +480,7 @@ class HaWebSocketRepository(
             synchronized(lock) {
                 pendingLocalAdds[item.id]?.let { add ->
                     pendingLocalAdds[item.id] = add.copy(name = trimmed, area = area)
+                    syncPendingMetaLocked(_items.value)
                     persistPendingChangesLocked()
                 }
             }
@@ -466,7 +491,6 @@ class HaWebSocketRepository(
             itemId = item.id,
             name = trimmed,
             complete = item.complete,
-            description = item.description,
             area = area
         )
     }
@@ -478,7 +502,7 @@ class HaWebSocketRepository(
         if (currentItem != null && area != currentItem.area) {
             updateLocalItem(itemId) { current ->
                 current.copy(
-                    description = buildDescriptionWithArea(current.description, area),
+                    description = null,
                     area = area
                 )
             }
@@ -500,7 +524,6 @@ class HaWebSocketRepository(
                     itemId = itemId,
                     name = currentItem.name,
                     complete = currentItem.complete,
-                    description = buildDescriptionWithArea(currentItem.description, area),
                     area = area,
                     lastSentAtMillis = null
                 )
@@ -510,6 +533,7 @@ class HaWebSocketRepository(
                 previousItemId = previousItemId,
                 lastSentAtMillis = null
             )
+            syncPendingMetaLocked(_items.value)
             persistPendingChangesLocked()
         }
 
@@ -542,6 +566,11 @@ class HaWebSocketRepository(
         }
 
         _items.value = itemsSnapshot.filterNot { it.complete }
+
+        synchronized(lock) {
+            syncPendingMetaLocked(_items.value)
+            persistPendingChangesLocked()
+        }
 
         completedItems
             .filterNot { it.id.startsWith(LOCAL_ID_PREFIX) }
@@ -583,11 +612,9 @@ class HaWebSocketRepository(
         itemId: String,
         name: String,
         complete: Boolean,
-        description: String?,
         area: ShoppingArea?
     ) {
-        val nextDescription = buildDescriptionWithArea(description, area)
-        val sentAtMillis = if (client.isReady() && sendUpdateItem(itemId, name, complete, nextDescription)) {
+        val sentAtMillis = if (client.isReady() && sendUpdateItem(itemId, name, complete)) {
             System.currentTimeMillis()
         } else {
             null
@@ -601,10 +628,10 @@ class HaWebSocketRepository(
                 itemId = itemId,
                 name = name,
                 complete = complete,
-                description = nextDescription,
                 area = area,
                 lastSentAtMillis = sentAtMillis
             )
+            syncPendingMetaLocked(_items.value)
             persistPendingChangesLocked()
         }
 
@@ -641,6 +668,7 @@ class HaWebSocketRepository(
                 itemId = itemId,
                 lastSentAtMillis = sentAtMillis
             )
+            syncPendingMetaLocked(_items.value)
             persistPendingChangesLocked()
         }
 
@@ -664,10 +692,12 @@ class HaWebSocketRepository(
             val localAdds: List<PendingLocalAdd>
             val queuedActions: List<PendingAction>
             val moveToSend: PendingMove?
+            val metaToSend: PendingMetaSync?
             synchronized(lock) {
                 localAdds = pendingLocalAdds.values.toList()
                 queuedActions = pendingActions.toList()
                 moveToSend = pendingMove
+                metaToSend = pendingMetaSync
             }
 
             val sentLocalAddIds = mutableSetOf<String>()
@@ -679,7 +709,7 @@ class HaWebSocketRepository(
                 .filter { shouldSendPending(it.lastSentAtMillis, now) }
                 .forEach { add ->
                     locallyAddedItemNames.add(add.name.trim())
-                    if (sendAddItem(add.name, add.area)) {
+                    if (sendAddItem(add.name)) {
                         sentLocalAddIds += add.tempId
                     }
                 }
@@ -706,8 +736,7 @@ class HaWebSocketRepository(
                                 sendUpdateItem(
                                     itemId = resolvedId,
                                     name = action.name,
-                                    complete = action.complete,
-                                    description = action.description
+                                    complete = action.complete
                                 )
                             ) {
                                 sentUpdateIds += action.itemId
@@ -728,8 +757,19 @@ class HaWebSocketRepository(
                     false
                 }
 
+            val shouldSendMeta = metaToSend != null && shouldSendPending(metaToSend.lastSentAtMillis, now)
+            val metaSent =
+                if (shouldSendMeta) {
+                    sendPendingMeta(metaToSend!!)
+                } else {
+                    false
+                }
+
             val sentAnyNonReorderChange =
-                sentLocalAddIds.isNotEmpty() || sentUpdateIds.isNotEmpty() || sentRemoveIds.isNotEmpty()
+                sentLocalAddIds.isNotEmpty() ||
+                    sentUpdateIds.isNotEmpty() ||
+                    sentRemoveIds.isNotEmpty() ||
+                    metaSent
 
             synchronized(lock) {
                 sentLocalAddIds.forEach { tempId ->
@@ -751,6 +791,9 @@ class HaWebSocketRepository(
                 if (moveSent) {
                     pendingMove = pendingMove?.copy(lastSentAtMillis = now)
                 }
+                if (metaSent) {
+                    pendingMetaSync = pendingMetaSync?.copy(lastSentAtMillis = now)
+                }
                 persistPendingChangesLocked()
             }
 
@@ -758,7 +801,8 @@ class HaWebSocketRepository(
                 sentLocalAddIds.size != localAdds.count { shouldSendPending(it.lastSentAtMillis, now) } ||
                 sentUpdateIds.size != queuedActions.count { it is PendingAction.Update && shouldSendPending(it.lastSentAtMillis, now) } ||
                 sentRemoveIds.size != queuedActions.count { it is PendingAction.Remove && shouldSendPending(it.lastSentAtMillis, now) } ||
-                (shouldSendPendingMove && !moveSent)
+                (shouldSendPendingMove && !moveSent) ||
+                (shouldSendMeta && !metaSent)
             ) {
                 _isOffline.value = true
                 _isConnecting.value = false
@@ -790,7 +834,7 @@ class HaWebSocketRepository(
                             item.copy(
                                 name = action.name,
                                 complete = action.complete,
-                                description = action.description,
+                                description = null,
                                 area = action.area
                             )
                         } else {
@@ -835,11 +879,52 @@ class HaWebSocketRepository(
                         remote.id == action.itemId &&
                             remote.name == action.name &&
                             remote.complete == action.complete &&
-                            remote.description == action.description
+                            remote.area == action.area
                     }
                 }
             }
         }
+    }
+
+    private fun pruneSatisfiedPendingMeta() {
+        val currentPending = pendingMetaSync ?: return
+        val desiredName = currentPending.desiredName
+
+        pendingMetaSync = when {
+            desiredName == null && remoteMetaItemId == null -> null
+            desiredName != null && remoteMetaItemName == desiredName -> null
+            else -> currentPending
+        }
+    }
+
+    private fun syncPendingMetaLocked(items: List<ShoppingItem>) {
+        val desiredAreaMap = buildDesiredMetaMap(items)
+        val desiredName = desiredAreaMap
+            .takeIf { it.isNotEmpty() }
+            ?.let { encodeMetaItemName(it) }
+
+        pendingMetaSync = when {
+            desiredName == remoteMetaItemName -> null
+            pendingMetaSync?.desiredName == desiredName -> pendingMetaSync
+            else -> PendingMetaSync(
+                desiredName = desiredName,
+                lastSentAtMillis = null
+            )
+        }
+    }
+
+    private fun buildDesiredMetaMap(items: List<ShoppingItem>): Map<String, ShoppingArea> {
+        val desired = linkedMapOf<String, ShoppingArea>()
+        items.forEach { item ->
+            if (item.id.startsWith(LOCAL_ID_PREFIX)) {
+                return@forEach
+            }
+
+            item.area?.let { area ->
+                desired[item.id] = area
+            }
+        }
+        return desired
     }
 
     private fun pruneSatisfiedPendingMove(remoteItems: List<ShoppingItem>) {
@@ -863,10 +948,9 @@ class HaWebSocketRepository(
         }
     }
 
-    private fun sendAddItem(name: String, area: ShoppingArea?): Boolean {
+    private fun sendAddItem(name: String): Boolean {
         val serviceData = JSONObject()
             .put("item", name)
-        buildDescriptionWithArea(null, area)?.let { serviceData.put("description", it) }
 
         return client.send(
             type = "call_service",
@@ -881,14 +965,11 @@ class HaWebSocketRepository(
         )
     }
 
-    private fun sendUpdateItem(itemId: String, name: String, complete: Boolean, description: String?): Boolean {
+    private fun sendUpdateItem(itemId: String, name: String, complete: Boolean): Boolean {
         val serviceData = JSONObject()
             .put("item", itemId)
             .put("rename", name)
             .put("status", if (complete) "completed" else "needs_action")
-        if (description != null) {
-            serviceData.put("description", description)
-        }
 
         return client.send(
             type = "call_service",
@@ -901,6 +982,20 @@ class HaWebSocketRepository(
                 .put("service_data", serviceData)
                 .put("return_response", false)
         )
+    }
+
+    private fun sendPendingMeta(pendingMeta: PendingMetaSync): Boolean {
+        val desiredName = pendingMeta.desiredName
+        return when {
+            desiredName == null && remoteMetaItemId == null -> true
+            desiredName == null -> sendRemoveItem(remoteMetaItemId ?: return false)
+            remoteMetaItemId == null -> sendAddItem(desiredName)
+            else -> sendUpdateItem(
+                itemId = remoteMetaItemId ?: return false,
+                name = desiredName,
+                complete = false
+            )
+        }
     }
 
     private fun sendPendingMove(move: PendingMove): Boolean {
@@ -973,6 +1068,10 @@ class HaWebSocketRepository(
         _items.value = currentItems
     }
 
+    private fun visiblePendingLocalAddsLocked(): List<ShoppingItem> {
+        return pendingLocalAdds.values.map { it.toShoppingItem() }
+    }
+
     private fun resolveRemoteId(itemId: String?): String? {
         if (itemId == null || !itemId.startsWith(LOCAL_ID_PREFIX)) {
             return itemId
@@ -987,7 +1086,10 @@ class HaWebSocketRepository(
 
     private fun schedulePendingRetryIfNeeded() {
         val retryDelayMillis = synchronized(lock) {
-            val hasCriticalPendingChanges = pendingLocalAdds.isNotEmpty() || pendingActions.isNotEmpty()
+            val hasCriticalPendingChanges =
+                pendingLocalAdds.isNotEmpty() ||
+                    pendingActions.isNotEmpty() ||
+                    pendingMetaSync != null
             val hasPendingMove = pendingMove != null
 
             when {
@@ -1022,6 +1124,7 @@ class HaWebSocketRepository(
                 }
             }
             pendingMove = pendingMove?.copy(lastSentAtMillis = null)
+            pendingMetaSync = pendingMetaSync?.copy(lastSentAtMillis = null)
             if (pendingMove != null) {
                 pendingMoveDispatchJob?.cancel()
             }
@@ -1065,7 +1168,6 @@ class HaWebSocketRepository(
                             itemId = action.optString("itemId"),
                             name = action.optString("name"),
                             complete = action.optBoolean("complete"),
-                            description = action.optNullableString("description"),
                             area = ShoppingArea.fromKey(action.optNullableString("area")),
                             lastSentAtMillis = action.optNullableLong("lastSentAtMillis")
                         )
@@ -1087,11 +1189,18 @@ class HaWebSocketRepository(
                         )
                     }
                 }
+
+                root.optJSONObject("meta")?.let { meta ->
+                    pendingMetaSync = PendingMetaSync(
+                        desiredName = meta.optNullableString("desiredName"),
+                        lastSentAtMillis = meta.optNullableLong("lastSentAtMillis")
+                    )
+                }
             }
 
             tempIdCounter.set(maxRestoredTempId + 1)
             if (pendingLocalAdds.isNotEmpty()) {
-                _items.value = pendingLocalAdds.values.map { it.toShoppingItem() }
+                _items.value = visiblePendingLocalAddsLocked()
                 _loaded.value = true
             }
             Debug.log("REPOSITORY: restored pending shopping-list changes")
@@ -1102,7 +1211,7 @@ class HaWebSocketRepository(
     }
 
     private fun persistPendingChangesLocked() {
-        if (pendingLocalAdds.isEmpty() && pendingActions.isEmpty() && pendingMove == null) {
+        if (pendingLocalAdds.isEmpty() && pendingActions.isEmpty() && pendingMove == null && pendingMetaSync == null) {
             pendingSyncPrefs.edit().remove(PENDING_SYNC_KEY).apply()
             return
         }
@@ -1137,7 +1246,6 @@ class HaWebSocketRepository(
                         .put("itemId", action.itemId)
                         .put("name", action.name)
                         .put("complete", action.complete)
-                        .put("description", action.description ?: JSONObject.NULL)
                         .put("area", action.area?.key ?: JSONObject.NULL)
                         .put("lastSentAtMillis", action.lastSentAtMillis ?: JSONObject.NULL)
                 )
@@ -1154,6 +1262,14 @@ class HaWebSocketRepository(
                         .put("itemId", move.itemId)
                         .put("previousItemId", move.previousItemId ?: JSONObject.NULL)
                         .put("lastSentAtMillis", move.lastSentAtMillis ?: JSONObject.NULL)
+                } ?: JSONObject.NULL
+            )
+            .put(
+                "meta",
+                pendingMetaSync?.let { meta ->
+                    JSONObject()
+                        .put("desiredName", meta.desiredName ?: JSONObject.NULL)
+                        .put("lastSentAtMillis", meta.lastSentAtMillis ?: JSONObject.NULL)
                 } ?: JSONObject.NULL
             )
 
@@ -1174,7 +1290,7 @@ class HaWebSocketRepository(
         id = tempId,
         name = name,
         complete = complete,
-        description = buildDescriptionWithArea(null, area),
+        description = null,
         area = area
     )
 
