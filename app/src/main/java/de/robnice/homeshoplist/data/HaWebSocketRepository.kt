@@ -100,6 +100,7 @@ class HaWebSocketRepository(
     private var pendingMetaSync: PendingMetaSync? = null
     private var remoteMetaItemId: String? = null
     private var remoteMetaItemName: String? = null
+    private var localMetaItemExists = false
     private var lastRemoteItems: List<ShoppingItem> = emptyList()
     private var hadReadyOnce = false
     private var pendingRetryJob: Job? = null
@@ -265,6 +266,7 @@ class HaWebSocketRepository(
         val finalItems = synchronized(lock) {
             remoteMetaItemId = parsedMetaId
             remoteMetaItemName = parsedMetaName
+            localMetaItemExists = parsedMetaId != null
             reconcileLocalAdds(parsedRemote, previousRemoteIds)
             pruneSatisfiedPendingActions(parsedRemote)
             pruneSatisfiedPendingMove(parsedRemote)
@@ -289,11 +291,6 @@ class HaWebSocketRepository(
             }
         }
 
-        if (client.isReady()) {
-            scope.launch {
-                flushPendingChanges()
-            }
-        }
     }
 
     private fun reconcileLocalAdds(
@@ -680,10 +677,11 @@ class HaWebSocketRepository(
     }
 
     private suspend fun flushPendingChanges() {
-        if (!client.isReady() || syncInProgress) {
-            if (client.isReady()) {
-                loadItems()
-            }
+        if (!client.isReady()) {
+            return
+        }
+
+        if (syncInProgress) {
             return
         }
 
@@ -813,7 +811,6 @@ class HaWebSocketRepository(
                 delay(150)
                 loadItems()
             }
-            schedulePendingRetryIfNeeded()
         } finally {
             syncInProgress = false
         }
@@ -891,8 +888,8 @@ class HaWebSocketRepository(
         val desiredName = currentPending.desiredName
 
         pendingMetaSync = when {
-            desiredName == null && remoteMetaItemId == null -> null
-            desiredName != null && remoteMetaItemName == desiredName -> null
+            desiredName == null && !localMetaItemExists -> null
+            desiredName != null && localMetaItemExists && remoteMetaItemName == desiredName -> null
             else -> currentPending
         }
     }
@@ -904,7 +901,8 @@ class HaWebSocketRepository(
             ?.let { encodeMetaItemName(it) }
 
         pendingMetaSync = when {
-            desiredName == remoteMetaItemName -> null
+            desiredName != null && localMetaItemExists && desiredName == remoteMetaItemName -> null
+            desiredName == null && !localMetaItemExists -> null
             pendingMetaSync?.desiredName == desiredName -> pendingMetaSync
             else -> PendingMetaSync(
                 desiredName = desiredName,
@@ -987,14 +985,28 @@ class HaWebSocketRepository(
     private fun sendPendingMeta(pendingMeta: PendingMetaSync): Boolean {
         val desiredName = pendingMeta.desiredName
         return when {
-            desiredName == null && remoteMetaItemId == null -> true
-            desiredName == null -> sendRemoveItem(remoteMetaItemId ?: return false)
-            remoteMetaItemId == null -> sendAddItem(desiredName)
-            else -> sendUpdateItem(
-                itemId = remoteMetaItemId ?: return false,
-                name = desiredName,
-                complete = false
-            )
+            desiredName == null && !localMetaItemExists -> true
+            desiredName == null -> {
+                val metaId = remoteMetaItemId ?: return false
+                sendRemoveItem(metaId).also { sent ->
+                    if (sent) {
+                        localMetaItemExists = false
+                    }
+                }
+            }
+            remoteMetaItemId != null -> {
+                sendUpdateItem(
+                    itemId = remoteMetaItemId ?: return false,
+                    name = desiredName,
+                    complete = false
+                )
+            }
+            localMetaItemExists -> false
+            else -> sendAddItem(desiredName).also { sent ->
+                if (sent) {
+                    localMetaItemExists = true
+                }
+            }
         }
     }
 
@@ -1084,34 +1096,6 @@ class HaWebSocketRepository(
         return lastSentAtMillis == null || now - lastSentAtMillis >= PENDING_RETRY_AFTER_MILLIS
     }
 
-    private fun schedulePendingRetryIfNeeded() {
-        val retryDelayMillis = synchronized(lock) {
-            val hasCriticalPendingChanges =
-                pendingLocalAdds.isNotEmpty() ||
-                    pendingActions.isNotEmpty() ||
-                    pendingMetaSync != null
-            val hasPendingMove = pendingMove != null
-
-            when {
-                hasCriticalPendingChanges -> PENDING_RETRY_AFTER_MILLIS
-                hasPendingMove -> PENDING_MOVE_RETRY_AFTER_MILLIS
-                else -> null
-            }
-        }
-        if (retryDelayMillis == null || pendingRetryJob?.isActive == true) {
-            return
-        }
-
-        pendingRetryJob = scope.launch {
-            delay(retryDelayMillis)
-            if (client.isReady()) {
-                flushPendingChanges()
-            } else {
-                client.ensureConnected()
-            }
-        }
-    }
-
     private fun markPendingChangesForRetry() {
         synchronized(lock) {
             pendingLocalAdds.replaceAll { _, add ->
@@ -1130,7 +1114,6 @@ class HaWebSocketRepository(
             }
             persistPendingChangesLocked()
         }
-        schedulePendingRetryIfNeeded()
     }
 
     private fun restorePendingChanges() {
