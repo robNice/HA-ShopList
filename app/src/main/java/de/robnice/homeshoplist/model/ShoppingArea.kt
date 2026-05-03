@@ -14,6 +14,21 @@ enum class ShoppingArea(
     FISH_SEAFOOD("fish_seafood", "\uD83D\uDC1F"),
     DAIRY_EGGS("dairy_eggs", "\uD83E\uDD5B"),
     CHEESE_DELI("cheese_deli", "\uD83E\uDDC0"),
+    GROCERIES("groceries", "\uD83D\uDED2"),
+    MILK("milk", "\uD83E\uDD5B"),
+    EGGS("eggs", "\uD83E\uDD5A"),
+    COLD_CUTS("cold_cuts", "\uD83E\uDD53"),
+    REFRIGERATED_CASES("refrigerated_cases", "\uD83E\uDDCA"),
+    BUTCHER_COUNTER("butcher_counter", "\uD83D\uDD2A"),
+    AREA_1("area_1", "1\uFE0F\u20E3"),
+    AREA_2("area_2", "2\uFE0F\u20E3"),
+    AREA_3("area_3", "3\uFE0F\u20E3"),
+    AREA_4("area_4", "4\uFE0F\u20E3"),
+    AREA_5("area_5", "5\uFE0F\u20E3"),
+    AREA_6("area_6", "6\uFE0F\u20E3"),
+    AREA_7("area_7", "7\uFE0F\u20E3"),
+    AREA_8("area_8", "8\uFE0F\u20E3"),
+    IMPULSE_BUY("impulse_buy", "\uD83C\uDF6C"),
     FROZEN("frozen", "\u2744\uFE0F"),
     DRY_GOODS("dry_goods", "\uD83C\uDF7E"),
     CANNED_JARS("canned_jars", "\uD83E\uDD6B"),
@@ -88,6 +103,21 @@ fun ShoppingArea.label(): String {
         ShoppingArea.FISH_SEAFOOD -> R.string.area_fish_seafood
         ShoppingArea.DAIRY_EGGS -> R.string.area_dairy_eggs
         ShoppingArea.CHEESE_DELI -> R.string.area_cheese_deli
+        ShoppingArea.GROCERIES -> R.string.area_groceries
+        ShoppingArea.MILK -> R.string.area_milk
+        ShoppingArea.EGGS -> R.string.area_eggs
+        ShoppingArea.COLD_CUTS -> R.string.area_cold_cuts
+        ShoppingArea.REFRIGERATED_CASES -> R.string.area_refrigerated_cases
+        ShoppingArea.BUTCHER_COUNTER -> R.string.area_butcher_counter
+        ShoppingArea.AREA_1 -> R.string.area_1
+        ShoppingArea.AREA_2 -> R.string.area_2
+        ShoppingArea.AREA_3 -> R.string.area_3
+        ShoppingArea.AREA_4 -> R.string.area_4
+        ShoppingArea.AREA_5 -> R.string.area_5
+        ShoppingArea.AREA_6 -> R.string.area_6
+        ShoppingArea.AREA_7 -> R.string.area_7
+        ShoppingArea.AREA_8 -> R.string.area_8
+        ShoppingArea.IMPULSE_BUY -> R.string.area_impulse_buy
         ShoppingArea.FROZEN -> R.string.area_frozen
         ShoppingArea.DRY_GOODS -> R.string.area_dry_goods
         ShoppingArea.CANNED_JARS -> R.string.area_canned_jars
