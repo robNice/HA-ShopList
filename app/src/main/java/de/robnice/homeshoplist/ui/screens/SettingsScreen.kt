@@ -764,30 +764,6 @@ fun SettingsScreen(
 
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(
-                    onClick = { showPrivacyDialog = true },
-                    modifier = Modifier.requiredHeightIn(min = 24.dp),
-                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
-                ) {
-                    Text(t(R.string.privacy_policy))
-                }
-
-                Text(
-                    text = "v${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.End
-                )
-            }
-
-            HorizontalDivider()
-
-            Row(
-                modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.End,
@@ -828,6 +804,28 @@ fun SettingsScreen(
                 ) {
                     Text(t(R.string.save))
                 }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = { showPrivacyDialog = true },
+                    modifier = Modifier.requiredHeightIn(min = 24.dp),
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
+                ) {
+                    Text(t(R.string.privacy_policy))
+                }
+
+                Text(
+                    text = "v${BuildConfig.VERSION_NAME}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End
+                )
             }
         }
     }
