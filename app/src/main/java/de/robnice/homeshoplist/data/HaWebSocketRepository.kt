@@ -272,7 +272,9 @@ class HaWebSocketRepository(
             pruneSatisfiedPendingActions(parsedRemote)
             pruneSatisfiedPendingMove(parsedRemote)
             pruneSatisfiedPendingMeta()
-            val withPendingApplied = applyPendingMove(applyPendingActions(parsedRemote))
+            val withPendingApplied = applyPendingMetaOverlay(
+                applyPendingMove(applyPendingActions(parsedRemote))
+            )
             syncPendingMetaLocked(withPendingApplied)
             persistPendingChangesLocked()
             withPendingApplied + visiblePendingLocalAddsLocked()
@@ -289,6 +291,12 @@ class HaWebSocketRepository(
         scope.launch {
             finalItems.forEach { item ->
                 productHistoryRepository.rememberProduct(item.name, item.area)
+            }
+        }
+
+        if (client.isReady()) {
+            scope.launch {
+                flushPendingChanges()
             }
         }
 
@@ -652,7 +660,11 @@ class HaWebSocketRepository(
             persistPendingChangesLocked()
         }
 
-        if (sentAtMillis == null) {
+        if (client.isReady()) {
+            scope.launch {
+                flushPendingChanges()
+            }
+        } else if (sentAtMillis == null) {
             _isOffline.value = true
             _isConnecting.value = false
             client.ensureConnected()
@@ -689,7 +701,11 @@ class HaWebSocketRepository(
             persistPendingChangesLocked()
         }
 
-        if (sentAtMillis == null) {
+        if (client.isReady()) {
+            scope.launch {
+                flushPendingChanges()
+            }
+        } else if (sentAtMillis == null) {
             _isOffline.value = true
             _isConnecting.value = false
             client.ensureConnected()
@@ -886,6 +902,22 @@ class HaWebSocketRepository(
         }
         mutableItems.add(targetIndex.coerceIn(0, mutableItems.size), movedItem)
         return mutableItems
+    }
+
+    private fun applyPendingMetaOverlay(items: List<ShoppingItem>): List<ShoppingItem> {
+        val pendingAreasById = parseMetaItemName(pendingMetaSync?.desiredName)?.itemAreas.orEmpty()
+        if (pendingAreasById.isEmpty()) {
+            return items
+        }
+
+        return items.map { item ->
+            val pendingArea = pendingAreasById[item.id]
+            if (pendingArea != null && pendingArea != item.area) {
+                item.copy(area = pendingArea)
+            } else {
+                item
+            }
+        }
     }
 
     private fun pruneSatisfiedPendingActions(remoteItems: List<ShoppingItem>) {
