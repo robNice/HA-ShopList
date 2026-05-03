@@ -4,64 +4,63 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 
+private const val META_ITEM_PREFIX = ".__ha_shoplist_meta__:"
 private const val META_TYPE = "ha-shoplist-meta"
 private const val META_VERSION = 1
 
 private val metaAdapter = Moshi.Builder()
     .addLast(KotlinJsonAdapterFactory())
     .build()
-    .adapter(NativeMeta::class.java)
+    .adapter(MetaItemPayload::class.java)
 
-fun parseAreaFromDescription(description: String?): ShoppingArea? {
-    val meta = parseNativeMeta(description) ?: return null
-    return ShoppingArea.fromKey(meta.area)
+data class ShoppingListMeta(
+    val itemAreas: Map<String, ShoppingArea>
+)
+
+fun parseMetaItemName(name: String?): ShoppingListMeta? {
+    val payload = parseMetaItemPayload(name) ?: return null
+    return ShoppingListMeta(
+        itemAreas = payload.areas
+            .mapNotNull { (itemId, areaKey) ->
+                ShoppingArea.fromKey(areaKey)?.let { area -> itemId to area }
+            }
+            .toMap()
+    )
 }
 
-fun buildDescriptionWithArea(existing: String?, area: ShoppingArea?): String? {
-    if (area == null) {
-        val existingMeta = parseNativeMeta(existing)
-        return when {
-            existingMeta?.text?.isNotBlank() == true -> existingMeta.text
-            existingMeta != null -> null
-            else -> existing
-        }
+fun encodeMetaItemName(itemAreas: Map<String, ShoppingArea>): String {
+    val sortedAreas = linkedMapOf<String, String>()
+    itemAreas.toSortedMap().forEach { (itemId, area) ->
+        sortedAreas[itemId] = area.key
     }
 
-    val existingMeta = parseNativeMeta(existing)
-    val preservedText = when {
-        existingMeta?.text?.isNotBlank() == true -> existingMeta.text
-        !existing.isNullOrBlank() && existingMeta == null -> existing
-        else -> null
-    }
-
-    return metaAdapter.toJson(
-        NativeMeta(
+    return META_ITEM_PREFIX + metaAdapter.toJson(
+        MetaItemPayload(
             type = META_TYPE,
             version = META_VERSION,
-            area = area.key,
-            text = preservedText
+            areas = sortedAreas
         )
     )
 }
 
-fun isNativeWayMeta(description: String?): Boolean {
-    return parseNativeMeta(description) != null
+fun isMetaItemName(name: String?): Boolean {
+    return parseMetaItemPayload(name) != null
 }
 
-private fun parseNativeMeta(description: String?): NativeMeta? {
-    if (description.isNullOrBlank()) {
+private fun parseMetaItemPayload(name: String?): MetaItemPayload? {
+    if (name.isNullOrBlank() || !name.startsWith(META_ITEM_PREFIX)) {
         return null
     }
 
-    return runCatching { metaAdapter.fromJson(description) }
+    val payload = name.removePrefix(META_ITEM_PREFIX)
+    return runCatching { metaAdapter.fromJson(payload) }
         .getOrNull()
         ?.takeIf { it.type == META_TYPE }
 }
 
 @JsonClass(generateAdapter = true)
-private data class NativeMeta(
+private data class MetaItemPayload(
     val type: String,
     val version: Int = META_VERSION,
-    val area: String? = null,
-    val text: String? = null
+    val areas: Map<String, String> = emptyMap()
 )
