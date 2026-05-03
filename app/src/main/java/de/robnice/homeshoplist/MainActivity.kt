@@ -1897,6 +1897,8 @@ fun ShoppingRow(
     var localChecked by remember(item.id) { mutableStateOf(item.complete) }
     val scope = rememberCoroutineScope()
     var editText by remember(item.id) { mutableStateOf(item.name) }
+    var displayedArea by remember(item.id) { mutableStateOf(item.area ?: ShoppingArea.OTHER) }
+    var pendingAreaSelection by remember(item.id) { mutableStateOf<ShoppingArea?>(null) }
     val isDarkTheme = isSystemInDarkTheme()
     val completedTextColor = if (isDarkTheme) {
         lerp(MaterialTheme.colorScheme.onSurface, BrandGreen, 0.48f)
@@ -1918,6 +1920,15 @@ fun ShoppingRow(
     }
     LaunchedEffect(item.complete) {
         localChecked = item.complete
+    }
+    LaunchedEffect(item.area) {
+        val latestArea = item.area ?: ShoppingArea.OTHER
+        if (pendingAreaSelection == null || latestArea == pendingAreaSelection) {
+            displayedArea = latestArea
+            if (latestArea == pendingAreaSelection) {
+                pendingAreaSelection = null
+            }
+        }
     }
 
 
@@ -1970,7 +1981,7 @@ fun ShoppingRow(
                     val nameChanged = editText.isNotBlank() && editText != item.name
                     if (editText.isNotBlank() && nameChanged) {
                         onServerInteraction()
-                        viewModel.updateItem(item, editText, item.area ?: ShoppingArea.OTHER)
+                        viewModel.updateItem(item, editText, displayedArea)
                     }
                     onStopEdit()
                 }
@@ -2030,10 +2041,12 @@ fun ShoppingRow(
                     )
 
                     AreaMenuButton(
-                        selectedArea = item.area ?: ShoppingArea.OTHER,
+                        selectedArea = displayedArea,
                         areas = selectableAreas,
                         onAreaSelected = { area ->
-                            if (area != (item.area ?: ShoppingArea.OTHER)) {
+                            if (area != displayedArea) {
+                                pendingAreaSelection = area
+                                displayedArea = area
                                 onStopEdit()
                                 onAreaChanged(area)
                                 onServerInteraction()
