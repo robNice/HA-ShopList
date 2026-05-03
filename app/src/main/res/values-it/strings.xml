@@ -111,4 +111,19 @@
     <string name="area_health">Salute</string>
     <string name="area_non_food">Non alimentare</string>
     <string name="area_other">Altro</string>
+    <string name="area_groceries">Generi alimentari</string>
+    <string name="area_milk">Latte</string>
+    <string name="area_eggs">Uova</string>
+    <string name="area_cold_cuts">Affettati</string>
+    <string name="area_refrigerated_cases">Banchi frigo</string>
+    <string name="area_butcher_counter">Banco macelleria</string>
+    <string name="area_1">Area 1</string>
+    <string name="area_2">Area 2</string>
+    <string name="area_3">Area 3</string>
+    <string name="area_4">Area 4</string>
+    <string name="area_5">Area 5</string>
+    <string name="area_6">Area 6</string>
+    <string name="area_7">Area 7</string>
+    <string name="area_8">Area 8</string>
+    <string name="area_impulse_buy">Acquisti d’impulso</string>
 </resources>

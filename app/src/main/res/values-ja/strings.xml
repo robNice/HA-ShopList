@@ -99,7 +99,7 @@
     <string name="area_sauces_spices">ソースと香辛料</string>
     <string name="area_breakfast">朝食</string>
     <string name="area_snacks_sweets">スナックとお菓子</string>
-    <string name="area_drinks">飲み物</string>
+each    <string name="area_drinks">飲み物</string>
     <string name="area_alcohol">アルコール</string>
     <string name="area_coffee_tea">コーヒーと紅茶</string>
     <string name="area_household">日用品</string>
@@ -111,4 +111,19 @@
     <string name="area_health">健康</string>
     <string name="area_non_food">食品以外</string>
     <string name="area_other">その他</string>
+    <string name="area_groceries">食料品</string>
+    <string name="area_milk">牛乳</string>
+    <string name="area_eggs">卵</string>
+    <string name="area_cold_cuts">ハム・コールドカット</string>
+    <string name="area_refrigerated_cases">冷蔵ケース</string>
+    <string name="area_butcher_counter">精肉カウンター</string>
+    <string name="area_1">エリア 1</string>
+    <string name="area_2">エリア 2</string>
+    <string name="area_3">エリア 3</string>
+    <string name="area_4">エリア 4</string>
+    <string name="area_5">エリア 5</string>
+    <string name="area_6">エリア 6</string>
+    <string name="area_7">エリア 7</string>
+    <string name="area_8">エリア 8</string>
+    <string name="area_impulse_buy">ついで買い</string>
 </resources>
