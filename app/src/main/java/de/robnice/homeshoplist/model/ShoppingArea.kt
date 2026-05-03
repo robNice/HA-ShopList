@@ -49,8 +49,101 @@ enum class ShoppingArea(
     OTHER("other", "\u2754");
 
     companion object {
+        private val legacyAliases = mapOf(
+            "fruit & vegetables" to PRODUCE,
+            "obst & gemüse" to PRODUCE,
+            "bread & bakery" to BAKERY,
+            "brot & backwaren" to BAKERY,
+            "meat & sausages" to MEAT,
+            "fleisch & wurst" to MEAT,
+            "fish & seafood" to FISH_SEAFOOD,
+            "fisch & meeresfrüchte" to FISH_SEAFOOD,
+            "dairy & eggs" to DAIRY_EGGS,
+            "molkerei & eier" to DAIRY_EGGS,
+            "cheese & deli" to CHEESE_DELI,
+            "käse & frischtheke" to CHEESE_DELI,
+            "groceries" to GROCERIES,
+            "lebensmittel" to GROCERIES,
+            "milk" to MILK,
+            "milch" to MILK,
+            "eggs" to EGGS,
+            "eier" to EGGS,
+            "cold cuts" to COLD_CUTS,
+            "aufschnitt" to COLD_CUTS,
+            "refrigerated cases" to REFRIGERATED_CASES,
+            "kühltheken" to REFRIGERATED_CASES,
+            "butcher counter" to BUTCHER_COUNTER,
+            "fleischtheke" to BUTCHER_COUNTER,
+            "area 1" to AREA_1,
+            "bereich 1" to AREA_1,
+            "area 2" to AREA_2,
+            "bereich 2" to AREA_2,
+            "area 3" to AREA_3,
+            "bereich 3" to AREA_3,
+            "area 4" to AREA_4,
+            "bereich 4" to AREA_4,
+            "area 5" to AREA_5,
+            "bereich 5" to AREA_5,
+            "area 6" to AREA_6,
+            "bereich 6" to AREA_6,
+            "area 7" to AREA_7,
+            "bereich 7" to AREA_7,
+            "area 8" to AREA_8,
+            "bereich 8" to AREA_8,
+            "impulse buy" to IMPULSE_BUY,
+            "quengelware" to IMPULSE_BUY,
+            "frozen" to FROZEN,
+            "tiefkühl" to FROZEN,
+            "dry goods" to DRY_GOODS,
+            "trockenware" to DRY_GOODS,
+            "cans & jars" to CANNED_JARS,
+            "dosen & gläser" to CANNED_JARS,
+            "sauces & spices" to SAUCES_SPICES,
+            "soßen & gewürze" to SAUCES_SPICES,
+            "sossen & gewurze" to SAUCES_SPICES,
+            "breakfast" to BREAKFAST,
+            "frühstück" to BREAKFAST,
+            "fruhstuck" to BREAKFAST,
+            "snacks & sweets" to SNACKS_SWEETS,
+            "snacks & süßes" to SNACKS_SWEETS,
+            "snacks & susses" to SNACKS_SWEETS,
+            "drinks" to DRINKS,
+            "getränke" to DRINKS,
+            "getranke" to DRINKS,
+            "alcohol" to ALCOHOL,
+            "alkohol" to ALCOHOL,
+            "coffee & tea" to COFFEE_TEA,
+            "kaffee & tee" to COFFEE_TEA,
+            "household" to HOUSEHOLD,
+            "haushalt" to HOUSEHOLD,
+            "cleaning" to CLEANING,
+            "reinigung" to CLEANING,
+            "paper goods" to PAPER_GOODS,
+            "papierwaren" to PAPER_GOODS,
+            "personal care" to PERSONAL_CARE,
+            "körperpflege" to PERSONAL_CARE,
+            "korperpflege" to PERSONAL_CARE,
+            "baby" to BABY,
+            "pet supplies" to PET,
+            "tierbedarf" to PET,
+            "health" to HEALTH,
+            "gesundheit" to HEALTH,
+            "non-food" to NON_FOOD,
+            "nicht-lebensmittel" to NON_FOOD,
+            "other" to OTHER,
+            "sonstiges" to OTHER
+        )
+
         fun fromKey(key: String?): ShoppingArea? {
-            return entries.firstOrNull { it.key == key }
+            val normalizedKey = key
+                ?.trim()
+                ?.lowercase()
+                ?.takeIf { it.isNotEmpty() }
+                ?: return null
+
+            return entries.firstOrNull { it.key == normalizedKey }
+                ?: entries.firstOrNull { it.name.lowercase() == normalizedKey }
+                ?: legacyAliases[normalizedKey]
         }
 
         fun orderedFromStorage(storedOrder: String?): List<ShoppingArea> {

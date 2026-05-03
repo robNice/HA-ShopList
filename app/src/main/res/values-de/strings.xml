@@ -31,6 +31,9 @@
     <string name="appIsRunning">HomeShopList läuft</string>
     <string name="reconnected">Verbindung zu Home Assistant wiederhergestellt</string>
     <string name="settings_list">Liste</string>
+    <string name="list_display_mode_label">Listenanzeige</string>
+    <string name="list_display_mode_simple">Simpel</string>
+    <string name="list_display_mode_categorized">Kategorisiert</string>
     <string name="loading_failed">Laden fehlgeschlagen</string>
     <string name="loading_lists">Listen werden geladen</string>
     <string name="error_list_not_loaded">Listen konnten nicht geladen werden</string>
