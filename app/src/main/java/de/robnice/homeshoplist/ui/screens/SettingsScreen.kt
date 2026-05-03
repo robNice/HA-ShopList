@@ -58,6 +58,7 @@ import de.robnice.homeshoplist.data.update.InstallStartResult
 import de.robnice.homeshoplist.data.update.UpdateCheckResult
 import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingList
+import de.robnice.homeshoplist.model.ShoppingListDisplayMode
 import de.robnice.homeshoplist.model.label
 import de.robnice.homeshoplist.ui.navigation.Screen
 import de.robnice.homeshoplist.ui.util.t
@@ -170,6 +171,7 @@ fun SettingsScreen(
     val storedTodoEntity by dataStore.todoEntity.collectAsState(initial = "todo.einkaufsliste")
     val storedAreaOrder by dataStore.areaOrder.collectAsState(initial = "")
     val storedEnabledAreas by dataStore.enabledAreas.collectAsState(initial = "")
+    val storedListDisplayMode by dataStore.listDisplayMode.collectAsState(initial = "categorized")
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
     val updateLastCheckMillis by dataStore.updateLastCheckMillis.collectAsState(initial = 0L)
     val updateVersionName by dataStore.updateVersionName.collectAsState(initial = "")
@@ -210,6 +212,7 @@ fun SettingsScreen(
     var url by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
     var todoEntity by remember { mutableStateOf("") }
+    var listDisplayMode by remember { mutableStateOf(ShoppingListDisplayMode.CATEGORIZED) }
     var areaOrderDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
     var enabledAreasDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
     var todoOptions by remember { mutableStateOf<List<ShoppingList>>(emptyList()) }
@@ -226,10 +229,18 @@ fun SettingsScreen(
     var updateDownloading by remember { mutableStateOf(false) }
     var updateStatusText by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(storedUrl, storedToken, storedTodoEntity, storedAreaOrder, storedEnabledAreas) {
+    LaunchedEffect(
+        storedUrl,
+        storedToken,
+        storedTodoEntity,
+        storedAreaOrder,
+        storedEnabledAreas,
+        storedListDisplayMode
+    ) {
         url = storedUrl
         token = storedToken
         todoEntity = storedTodoEntity
+        listDisplayMode = ShoppingListDisplayMode.fromStorage(storedListDisplayMode)
         val restoredAreaOrder = ShoppingArea.orderedFromStorage(storedAreaOrder)
         areaOrderDraft = restoredAreaOrder
         enabledAreasDraft = ShoppingArea.enabledFromStorage(storedEnabledAreas, restoredAreaOrder)
@@ -497,45 +508,25 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                SettingFieldHeader(
+                    text = t(R.string.list_display_mode_label),
+                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListSelection }
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(
-                        onClick = {
-                            val cleanedUrl = normalizeHaUrl(url)
-                            val cleanedToken = token.trim()
-
-                            coroutineScope.launch {
-                                dataStore.saveHaUrl(cleanedUrl)
-                                dataStore.saveHaToken(cleanedToken)
-                                dataStore.saveTodoEntity(todoEntity)
-                                dataStore.saveAreaOrder(
-                                    ShoppingArea.serializeOrder(areaOrderDraft)
-                                )
-                                dataStore.saveEnabledAreas(
-                                    ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
-                                )
-                                navController.navigate(Screen.Shopping.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        inclusive = true
-                                    }
-                                    launchSingleTop = true
-                                }
-                            }
-                        }
-                    ) {
-                        Text(t(R.string.save))
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    OutlinedButton(
-                        onClick = { navController.popBackStack() }
-                    ) {
-                        Text(t(R.string.clear_completed_confirm_btn_cancel))
-                    }
+                    FilterChip(
+                        selected = listDisplayMode == ShoppingListDisplayMode.SIMPLE,
+                        onClick = { listDisplayMode = ShoppingListDisplayMode.SIMPLE },
+                        label = { Text(t(R.string.list_display_mode_simple)) }
+                    )
+                    FilterChip(
+                        selected = listDisplayMode == ShoppingListDisplayMode.CATEGORIZED,
+                        onClick = { listDisplayMode = ShoppingListDisplayMode.CATEGORIZED },
+                        label = { Text(t(R.string.list_display_mode_categorized)) }
+                    )
                 }
 
                 if (todoLoadError != null) {
@@ -792,6 +783,52 @@ fun SettingsScreen(
                     textAlign = TextAlign.End
                 )
             }
+
+            HorizontalDivider()
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = { navController.popBackStack() }
+                ) {
+                    Text(t(R.string.clear_completed_confirm_btn_cancel))
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = {
+                        val cleanedUrl = normalizeHaUrl(url)
+                        val cleanedToken = token.trim()
+
+                        coroutineScope.launch {
+                            dataStore.saveHaUrl(cleanedUrl)
+                            dataStore.saveHaToken(cleanedToken)
+                            dataStore.saveTodoEntity(todoEntity)
+                            dataStore.saveAreaOrder(
+                                ShoppingArea.serializeOrder(areaOrderDraft)
+                            )
+                            dataStore.saveEnabledAreas(
+                                ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
+                            )
+                            dataStore.saveListDisplayMode(listDisplayMode.storageValue)
+                            navController.navigate(Screen.Shopping.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                ) {
+                    Text(t(R.string.save))
+                }
+            }
         }
     }
 
@@ -1011,6 +1048,7 @@ private fun PrivacyPolicyDialog(
                     }
                 }
             }
+
         }
     }
 }

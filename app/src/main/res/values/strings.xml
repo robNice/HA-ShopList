@@ -31,6 +31,9 @@
     <string name="appIsRunning">HomeShopList running</string>
     <string name="reconnected">Reconnected to HomeAssistant</string>
     <string name="settings_list">List</string>
+    <string name="list_display_mode_label">List display</string>
+    <string name="list_display_mode_simple">Simple</string>
+    <string name="list_display_mode_categorized">Categorized</string>
     <string name="loading_failed">Loading failed</string>
     <string name="loading_lists">Loading lists</string>
     <string name="error_list_not_loaded">Lists could not be loaded</string>

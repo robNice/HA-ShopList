@@ -5,8 +5,10 @@ import de.robnice.homeshoplist.data.history.ProductHistoryRepository
 import de.robnice.homeshoplist.data.websocket.HaWebSocketClient
 import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingItem
+import de.robnice.homeshoplist.model.buildDescriptionWithArea
 import de.robnice.homeshoplist.model.encodeMetaItemName
 import de.robnice.homeshoplist.model.isMetaItemName
+import de.robnice.homeshoplist.model.parseAreaFromDescription
 import de.robnice.homeshoplist.model.parseMetaItemName
 import de.robnice.homeshoplist.util.Debug
 import de.robnice.homeshoplist.util.NotificationHelper
@@ -36,6 +38,7 @@ class HaWebSocketRepository(
             val itemId: String,
             val name: String,
             val complete: Boolean,
+            val description: String?,
             val area: ShoppingArea?,
             val lastSentAtMillis: Long?
         ) : PendingAction
@@ -239,6 +242,7 @@ class HaWebSocketRepository(
             val item = array.getJSONObject(i)
             val itemId = item.getString("uid")
             val itemName = item.getString("summary")
+            val description = item.optNullableString("description")
 
             if (isMetaItemName(itemName)) {
                 parsedMetaId = itemId
@@ -250,14 +254,14 @@ class HaWebSocketRepository(
                 id = itemId,
                 name = itemName,
                 complete = item.getString("status") == "completed",
-                description = null,
+                description = description,
                 area = null
             )
         }
 
         val parsedMetaAreas = parseMetaItemName(parsedMetaName)?.itemAreas.orEmpty()
         val parsedRemote = parsedVisibleItems.map { item ->
-            item.copy(area = parsedMetaAreas[item.id])
+            item.copy(area = parsedMetaAreas[item.id] ?: parseAreaFromDescription(item.description))
         }
 
         val previousRemoteIds = lastRemoteItems.map { it.id }.toSet()
@@ -326,6 +330,7 @@ class HaWebSocketRepository(
                     itemId = matched.id,
                     name = pendingAdd.name,
                     complete = pendingAdd.complete,
+                    description = buildDescriptionWithArea(null, pendingAdd.area),
                     area = pendingAdd.area,
                     lastSentAtMillis = null
                 )
@@ -409,7 +414,7 @@ class HaWebSocketRepository(
                 id = tempId,
                 name = trimmed,
                 complete = false,
-                description = null,
+                description = buildDescriptionWithArea(null, area),
                 area = area
             )
             syncPendingMetaLocked(_items.value)
@@ -451,6 +456,7 @@ class HaWebSocketRepository(
             itemId = item.id,
             name = item.name,
             complete = newStatus,
+            description = item.description,
             area = item.area
         )
     }
@@ -464,7 +470,7 @@ class HaWebSocketRepository(
         updateLocalItem(item.id) { current ->
             current.copy(
                 name = trimmed,
-                description = null,
+                description = buildDescriptionWithArea(current.description, area),
                 area = area
             )
         }
@@ -489,6 +495,7 @@ class HaWebSocketRepository(
             itemId = item.id,
             name = trimmed,
             complete = item.complete,
+            description = item.description,
             area = area
         )
     }
@@ -500,7 +507,7 @@ class HaWebSocketRepository(
         if (currentItem != null && area != currentItem.area) {
             updateLocalItem(itemId) { current ->
                 current.copy(
-                    description = null,
+                    description = buildDescriptionWithArea(current.description, area),
                     area = area
                 )
             }
@@ -522,6 +529,7 @@ class HaWebSocketRepository(
                     itemId = itemId,
                     name = currentItem.name,
                     complete = currentItem.complete,
+                    description = buildDescriptionWithArea(currentItem.description, area),
                     area = area,
                     lastSentAtMillis = null
                 )
@@ -610,9 +618,14 @@ class HaWebSocketRepository(
         itemId: String,
         name: String,
         complete: Boolean,
+        description: String?,
         area: ShoppingArea?
     ) {
-        val sentAtMillis = if (client.isReady() && sendUpdateItem(itemId, name, complete)) {
+        val nextDescription = buildDescriptionWithArea(description, area)
+        val sentAtMillis = if (
+            client.isReady() &&
+            sendUpdateItem(itemId, name, complete, nextDescription)
+        ) {
             System.currentTimeMillis()
         } else {
             null
@@ -626,6 +639,7 @@ class HaWebSocketRepository(
                 itemId = itemId,
                 name = name,
                 complete = complete,
+                description = nextDescription,
                 area = area,
                 lastSentAtMillis = sentAtMillis
             )
@@ -712,7 +726,7 @@ class HaWebSocketRepository(
                 .filter { shouldSendPending(it.lastSentAtMillis, now) }
                 .forEach { add ->
                     locallyAddedItemNames.add(add.name.trim())
-                    if (sendAddItem(add.name)) {
+                    if (sendAddItem(add.name, add.area)) {
                         sentLocalAddIds += add.tempId
                     }
                 }
@@ -739,7 +753,8 @@ class HaWebSocketRepository(
                                 sendUpdateItem(
                                     itemId = resolvedId,
                                     name = action.name,
-                                    complete = action.complete
+                                    complete = action.complete,
+                                    description = action.description
                                 )
                             ) {
                                 sentUpdateIds += action.itemId
@@ -836,7 +851,7 @@ class HaWebSocketRepository(
                             item.copy(
                                 name = action.name,
                                 complete = action.complete,
-                                description = null,
+                                description = action.description,
                                 area = action.area
                             )
                         } else {
@@ -881,6 +896,7 @@ class HaWebSocketRepository(
                         remote.id == action.itemId &&
                             remote.name == action.name &&
                             remote.complete == action.complete &&
+                            remote.description == action.description &&
                             remote.area == action.area
                     }
                 }
@@ -951,9 +967,12 @@ class HaWebSocketRepository(
         }
     }
 
-    private fun sendAddItem(name: String): Boolean {
+    private fun sendAddItem(name: String, area: ShoppingArea?): Boolean {
         val serviceData = JSONObject()
             .put("item", name)
+        buildDescriptionWithArea(null, area)?.let { description ->
+            serviceData.put("description", description)
+        }
 
         return client.send(
             type = "call_service",
@@ -968,11 +987,19 @@ class HaWebSocketRepository(
         )
     }
 
-    private fun sendUpdateItem(itemId: String, name: String, complete: Boolean): Boolean {
+    private fun sendUpdateItem(
+        itemId: String,
+        name: String,
+        complete: Boolean,
+        description: String?
+    ): Boolean {
         val serviceData = JSONObject()
             .put("item", itemId)
             .put("rename", name)
             .put("status", if (complete) "completed" else "needs_action")
+        if (description != null) {
+            serviceData.put("description", description)
+        }
 
         return client.send(
             type = "call_service",
@@ -1003,11 +1030,12 @@ class HaWebSocketRepository(
                 sendUpdateItem(
                     itemId = remoteMetaItemId ?: return false,
                     name = desiredName,
-                    complete = false
+                    complete = false,
+                    description = null
                 )
             }
             localMetaItemExists -> false
-            else -> sendAddItem(desiredName).also { sent ->
+            else -> sendAddItem(desiredName, area = null).also { sent ->
                 if (sent) {
                     localMetaItemExists = true
                 }
@@ -1156,6 +1184,7 @@ class HaWebSocketRepository(
                             itemId = action.optString("itemId"),
                             name = action.optString("name"),
                             complete = action.optBoolean("complete"),
+                            description = action.optNullableString("description"),
                             area = ShoppingArea.fromKey(action.optNullableString("area")),
                             lastSentAtMillis = action.optNullableLong("lastSentAtMillis")
                         )
@@ -1234,6 +1263,7 @@ class HaWebSocketRepository(
                         .put("itemId", action.itemId)
                         .put("name", action.name)
                         .put("complete", action.complete)
+                        .put("description", action.description ?: JSONObject.NULL)
                         .put("area", action.area?.key ?: JSONObject.NULL)
                         .put("lastSentAtMillis", action.lastSentAtMillis ?: JSONObject.NULL)
                 )
@@ -1278,7 +1308,7 @@ class HaWebSocketRepository(
         id = tempId,
         name = name,
         complete = complete,
-        description = null,
+        description = buildDescriptionWithArea(null, area),
         area = area
     )
 
