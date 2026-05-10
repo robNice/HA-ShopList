@@ -1,12 +1,22 @@
 package de.robnice.homeshoplist.util
 
+import android.util.Log
+import de.robnice.homeshoplist.BuildConfig
+
 object Debug {
 
-    var enabled: Boolean = false
+    private const val TAG = "HASL"
+
+    var enabled: Boolean = BuildConfig.DEBUG
 
     fun log(message: Any?) {
         if (enabled) {
-            println("HASL: $message")
+            val rendered = message?.toString() ?: "null"
+            try {
+                Log.d(TAG, rendered)
+            } catch (_: RuntimeException) {
+                println("$TAG: $rendered")
+            }
         }
     }
 }

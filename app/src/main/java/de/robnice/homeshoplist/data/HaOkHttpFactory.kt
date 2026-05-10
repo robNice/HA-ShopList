@@ -11,7 +11,6 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
 object HaOkHttpFactory {
-
     fun newBuilder(): OkHttpClient.Builder {
         val builder = if (BuildConfig.ALLOW_INSECURE_HA) {
             buildInsecureBuilder()
@@ -19,7 +18,10 @@ object HaOkHttpFactory {
             OkHttpClient.Builder()
         }
 
-        return builder.pingInterval(10, TimeUnit.SECONDS)
+        return builder
+            .retryOnConnectionFailure(true)
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .pingInterval(10, TimeUnit.SECONDS)
     }
 
     private fun buildInsecureBuilder(): OkHttpClient.Builder {

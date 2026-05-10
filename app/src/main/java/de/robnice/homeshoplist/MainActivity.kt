@@ -126,16 +126,17 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 val updateRepository = remember(context) { AppUpdateRepository(context.applicationContext) }
 
                 val configFlow = remember(dataStore) {
-                    combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity) { url, token, entity ->
-                        Triple(url, token, entity)
+                    combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity, dataStore.todoListName) { url, token, entity, listName ->
+                        arrayOf(url, token, entity, listName)
                     }
                 }
 
                 val config by configFlow.collectAsState(initial = null)
                 val updateLastCheckMillis by dataStore.updateLastCheckMillis.collectAsState(initial = 0L)
-                val haUrl = config?.first
-                val haToken = config?.second
-                val todoEntity = config?.third
+                val haUrl = config?.getOrNull(0)
+                val haToken = config?.getOrNull(1)
+                val todoEntity = config?.getOrNull(2)
+                val todoListName = config?.getOrNull(3)
 
                 val startDestination =
                     if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
@@ -182,15 +183,7 @@ class MainActivity : androidx.activity.ComponentActivity() {
                     }
                 }
 
-                LaunchedEffect(haUrl, haToken, todoEntity, notificationsEnabled) {
-                    if (!notificationsEnabled) {
-                        Debug.log("MainActivity: notifications disabled -> disconnect repo")
-                        HaRuntime.repository?.setReconnectAllowed(false)
-                        HaRuntime.repository?.disconnect()
-                        runtimeRepository = null
-                        return@LaunchedEffect
-                    }
-
+                LaunchedEffect(haUrl, haToken, todoEntity, todoListName) {
                     if (haUrl.isNullOrBlank() || haToken.isNullOrBlank() || todoEntity.isNullOrBlank()) {
                         runtimeRepository = null
                         return@LaunchedEffect
@@ -201,7 +194,8 @@ class MainActivity : androidx.activity.ComponentActivity() {
                         repo == null ||
                                 HaRuntime.baseUrl != haUrl ||
                                 HaRuntime.token != haToken ||
-                                HaRuntime.todoEntity != todoEntity
+                                HaRuntime.todoEntity != todoEntity ||
+                                HaRuntime.todoListName != todoListName
 
                     if (configChanged) {
                         Debug.log("MainActivity: recreate repository because config changed")
@@ -211,18 +205,23 @@ class MainActivity : androidx.activity.ComponentActivity() {
                         HaRuntime.baseUrl = haUrl
                         HaRuntime.token = haToken
                         HaRuntime.todoEntity = todoEntity
+                        HaRuntime.todoListName = todoListName
 
                         HaRuntime.repository = de.robnice.homeshoplist.data.HaWebSocketRepository(
                             haUrl,
                             haToken,
                             context.applicationContext,
-                            todoEntity
+                            todoEntity,
+                            todoListName
                         )
                         runtimeRepository = HaRuntime.repository
                     } else {
                         Debug.log("MainActivity: repository already exists with same config")
                         runtimeRepository = repo
                     }
+
+                    runtimeRepository?.setReconnectAllowed(true)
+                    runtimeRepository?.ensureConnected()
                 }
 
                 if (config == null) {
@@ -268,14 +267,15 @@ fun ShoppingScreen(
     val dataStore = remember { SettingsDataStore(context) }
     val productHistoryRepository = remember(context) { ProductHistoryRepository.getInstance(context) }
     val configFlow = remember(dataStore) {
-        combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity) { url, token, entity ->
-            Triple(url, token, entity)
+        combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity, dataStore.todoListName) { url, token, entity, listName ->
+            arrayOf(url, token, entity, listName)
         }
     }
     val config by configFlow.collectAsState(initial = null)
-    val haUrl = config?.first
-    val haToken = config?.second
-    val todoEntity = config?.third
+    val haUrl = config?.getOrNull(0)
+    val haToken = config?.getOrNull(1)
+    val todoEntity = config?.getOrNull(2)
+    val todoListName = config?.getOrNull(3)
     val areaOrderRaw by dataStore.areaOrder.collectAsState(initial = "")
     val enabledAreasRaw by dataStore.enabledAreas.collectAsState(initial = "")
     val listDisplayModeRaw by dataStore.listDisplayMode.collectAsState(initial = "categorized")
@@ -288,7 +288,8 @@ fun ShoppingScreen(
     val listDisplayMode = remember(listDisplayModeRaw) {
         ShoppingListDisplayMode.fromStorage(listDisplayModeRaw)
     }
-    val isCategorizedListMode = listDisplayMode == ShoppingListDisplayMode.CATEGORIZED
+    val effectiveListDisplayMode = listDisplayMode
+    val isCategorizedListMode = effectiveListDisplayMode == ShoppingListDisplayMode.CATEGORIZED
     var editingItemId by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showOfflineInfo by remember { mutableStateOf(false) }
@@ -345,11 +346,9 @@ fun ShoppingScreen(
         headerPulseKey += 1
     }
 
-    LaunchedEffect(activeRepo, notificationsEnabled) {
-        if (notificationsEnabled) {
-            activeRepo.setReconnectAllowed(true)
-            viewModel.ensureConnection()
-        }
+    LaunchedEffect(activeRepo) {
+        activeRepo.setReconnectAllowed(true)
+        viewModel.ensureConnection()
     }
 
     LaunchedEffect(activeRepo) {
@@ -374,14 +373,15 @@ fun ShoppingScreen(
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             when (event) {
                 androidx.lifecycle.Lifecycle.Event.ON_START -> {
-                    if (notificationsEnabled) {
-                        activeRepo.setReconnectAllowed(true)
-                        viewModel.ensureConnection()
-                    }
+                    activeRepo.setReconnectAllowed(true)
+                    viewModel.ensureConnection()
                 }
 
                 androidx.lifecycle.Lifecycle.Event.ON_STOP -> {
                     activeRepo.setReconnectAllowed(false)
+                    if (!notificationsEnabled) {
+                        activeRepo.disconnect()
+                    }
                 }
 
                 else -> Unit
@@ -653,7 +653,7 @@ fun ShoppingScreen(
                                             canDelete = suggestion.normalizedName !in currentItemNames,
                                             onSelect = {
                                                 triggerHeaderPulse()
-                                                val suggestionArea =
+                                                val suggestionArea: ShoppingArea =
                                                     ShoppingArea.fromKey(suggestion.areaKey) ?: selectedArea
                                                 viewModel.addItem(suggestion.displayName, suggestionArea)
                                                 selectedArea = suggestionArea
@@ -710,14 +710,17 @@ fun ShoppingScreen(
                     var localOpenItems by remember {
                         mutableStateOf<List<ShoppingItem>>(emptyList())
                     }
+                    var dragPreviewItems by remember {
+                        mutableStateOf<List<ShoppingItem>?>(null)
+                    }
                     var deferredOpenItems by remember {
                         mutableStateOf<List<ShoppingItem>?>(null)
                     }
                     var pendingCommittedOrderIds by remember {
                         mutableStateOf<List<String>?>(null)
                     }
-                    val normalizedOpenItems = remember(openItems, orderedAreas, listDisplayMode) {
-                        normalizeOpenItemsForDisplay(openItems, orderedAreas, listDisplayMode)
+                    val normalizedOpenItems = remember(openItems, orderedAreas, effectiveListDisplayMode) {
+                        normalizeOpenItemsForDisplay(openItems, orderedAreas, effectiveListDisplayMode)
                     }
 
                     val lazyListState = rememberLazyListState()
@@ -730,21 +733,37 @@ fun ShoppingScreen(
                     var listTopInRoot by remember { mutableStateOf(0f) }
                     val itemBounds = remember { mutableStateMapOf<String, ItemDragBounds>() }
                     val slotBounds = remember { mutableStateMapOf<String, DropSlotBounds>() }
+                    val headerBounds = remember { mutableStateMapOf<String, HeaderBounds>() }
+                    var dragStartItemBounds by remember { mutableStateOf<Map<String, ItemDragBounds>>(emptyMap()) }
+                    var dragStartSlotBounds by remember { mutableStateOf<Map<String, DropSlotBounds>>(emptyMap()) }
+                    var dragStartHeaderBounds by remember { mutableStateOf<Map<String, HeaderBounds>>(emptyMap()) }
+                    var dragStartItemSlotAnchors by remember { mutableStateOf<Map<String, ItemSlotAnchors>>(emptyMap()) }
+                    var dragStartDropSlotsByKey by remember { mutableStateOf<Map<String, DropSlotData>>(emptyMap()) }
+                    var dragStartAllowedSlotKeys by remember { mutableStateOf<Set<String>>(emptySet()) }
+                    val displayedOpenItems =
+                        if (dragPreviewItems != null) {
+                            dragPreviewItems ?: localOpenItems
+                        } else {
+                            localOpenItems
+                        }
                     val openDisplayEntries = remember(
-                        localOpenItems,
+                        displayedOpenItems,
                         activeDropSlotKey,
                         draggingItemId,
                         orderedAreas,
-                        listDisplayMode
+                        effectiveListDisplayMode
                     ) {
-                        when (listDisplayMode) {
+                        when (effectiveListDisplayMode) {
                             ShoppingListDisplayMode.CATEGORIZED -> buildOpenDisplayEntries(
-                                items = localOpenItems,
+                                items = displayedOpenItems,
                                 activeDropSlotKey = activeDropSlotKey,
                                 draggingItemId = draggingItemId,
                                 orderedAreas = orderedAreas
                             )
-                            ShoppingListDisplayMode.SIMPLE -> buildSimpleOpenDisplayEntries(localOpenItems)
+                            ShoppingListDisplayMode.SIMPLE -> buildSimpleOpenDisplayEntries(
+                                items = displayedOpenItems,
+                                draggingItemId = draggingItemId
+                            )
                         }
                     }
                     val activeDropCandidateKeys = remember(openDisplayEntries) {
@@ -760,7 +779,14 @@ fun ShoppingScreen(
                     val itemSlotAnchors = remember(openDisplayEntries) {
                         buildItemSlotAnchors(openDisplayEntries)
                     }
-                    LaunchedEffect(normalizedOpenItems, draggingItemId, listDisplayMode) {
+                    val currentLocalOpenItems by rememberUpdatedState(localOpenItems)
+                    val currentDisplayedOpenItems by rememberUpdatedState(displayedOpenItems)
+                    val currentOpenDisplayEntries by rememberUpdatedState(openDisplayEntries)
+                    val currentItemSlotAnchors by rememberUpdatedState(itemSlotAnchors)
+                    val currentActiveDropCandidateKeys by rememberUpdatedState(activeDropCandidateKeys)
+                    val currentOrderedAreas by rememberUpdatedState(orderedAreas)
+                    val currentEffectiveListDisplayMode by rememberUpdatedState(effectiveListDisplayMode)
+                    LaunchedEffect(normalizedOpenItems, draggingItemId, effectiveListDisplayMode) {
                         if (draggingItemId != null) {
                             deferredOpenItems = normalizedOpenItems
                         } else {
@@ -773,25 +799,50 @@ fun ShoppingScreen(
 
                             if (pendingIds == null || pendingIds == incomingOrderIds || itemSetChanged) {
                                 localOpenItems = incomingItems
+                                dragPreviewItems = null
                                 deferredOpenItems = null
                                 pendingCommittedOrderIds = null
+                                dragStartItemBounds = emptyMap()
+                                dragStartSlotBounds = emptyMap()
+                                dragStartHeaderBounds = emptyMap()
+                                dragStartItemSlotAnchors = emptyMap()
+                                dragStartDropSlotsByKey = emptyMap()
+                                dragStartAllowedSlotKeys = emptySet()
+                                activeDropSlotKey = null
                             }
                         }
                     }
-                    LaunchedEffect(listDisplayMode) {
+                    LaunchedEffect(effectiveListDisplayMode) {
                         draggingItemId = null
                         activeDropSlotKey = null
                         droppedItemId = null
+                        dragPreviewItems = null
                         deferredOpenItems = null
                         pendingCommittedOrderIds = null
+                        dragStartItemBounds = emptyMap()
+                        dragStartSlotBounds = emptyMap()
+                        dragStartHeaderBounds = emptyMap()
+                        dragStartItemSlotAnchors = emptyMap()
+                        dragStartDropSlotsByKey = emptyMap()
+                        dragStartAllowedSlotKeys = emptySet()
                     }
                     LaunchedEffect(openDisplayEntries) {
+                        val itemIds = openDisplayEntries
+                            .mapNotNull { entry -> (entry as? OpenListEntry.ItemEntry)?.item?.id }
+                            .toSet()
                         val slotKeys = openDisplayEntries
                             .mapNotNull { entry ->
                                 if (entry is OpenListEntry.DropSlotEntry) entry.slot.key else null
                             }
                             .toSet()
+                        val headerKeys = openDisplayEntries
+                            .mapNotNull { entry ->
+                                (entry as? OpenListEntry.HeaderEntry)?.area?.key
+                            }
+                            .toSet()
+                        itemBounds.keys.retainAll(itemIds)
                         slotBounds.keys.retainAll(slotKeys)
+                        headerBounds.keys.retainAll(headerKeys)
                     }
                     LaunchedEffect(droppedItemId) {
                         if (droppedItemId != null) {
@@ -829,12 +880,22 @@ fun ShoppingScreen(
                             ) { entry ->
                                 when (entry) {
                                     is OpenListEntry.HeaderEntry -> {
-                                        AreaHeader(area = entry.area)
+                                        AreaHeader(
+                                            area = entry.area,
+                                            modifier = Modifier.onGloballyPositioned { coords ->
+                                                val top = coords.positionInRoot().y
+                                                headerBounds[entry.area.key] = HeaderBounds(
+                                                    topInRoot = top,
+                                                    bottomInRoot = top + coords.size.height
+                                                )
+                                            }
+                                        )
                                     }
 
                                     is OpenListEntry.DropSlotEntry -> {
                                         DropSlotSpacer(
-                                            active = !entry.slot.isNoOp && activeDropSlotKey == entry.slot.key,
+                                            active = draggingItemId != null && !entry.slot.isNoOp && activeDropSlotKey == entry.slot.key,
+                                            visible = !entry.slot.isNoOp,
                                             modifier = Modifier.onGloballyPositioned { coords ->
                                                 val top = coords.positionInRoot().y
                                                 slotBounds[entry.slot.key] = DropSlotBounds(
@@ -891,7 +952,6 @@ fun ShoppingScreen(
                                             targetValue = if (isDraggingThisItem) 1.03f else 1f,
                                             label = "dragScale"
                                         )
-
                                         Card(
                                             elevation = CardDefaults.cardElevation(elevation),
                                             shape = MaterialTheme.shapes.large,
@@ -917,7 +977,7 @@ fun ShoppingScreen(
                                                     )
                                                 }
                                                 .then(
-                                                    if (isCategorizedListMode) {
+                                                    if (activeDropCandidateKeys.isNotEmpty()) {
                                                         Modifier.pointerInput(item.id) {
                                                             detectDragGesturesAfterLongPress(
                                                                 onDragStart = { offset ->
@@ -926,44 +986,102 @@ fun ShoppingScreen(
                                                                     draggingItemId = item.id
                                                                     droppedItemId = null
                                                                     pendingCommittedOrderIds = null
+                                                                    dragStartItemBounds = itemBounds.toMap()
+                                                                    dragStartSlotBounds = slotBounds.toMap()
+                                                                    dragStartHeaderBounds = headerBounds.toMap()
+                                                                    dragStartItemSlotAnchors = currentItemSlotAnchors
+                                                                    dragStartDropSlotsByKey =
+                                                                        currentOpenDisplayEntries
+                                                                            .mapNotNull { displayEntry ->
+                                                                                (displayEntry as? OpenListEntry.DropSlotEntry)?.slot
+                                                                            }
+                                                                            .associateBy { it.key }
+                                                                    dragStartAllowedSlotKeys = currentActiveDropCandidateKeys
                                                                     dragPointerYInRoot = bounds.topInRoot + offset.y
                                                                     dragTouchOffsetY = offset.y
-                                                                    activeDropSlotKey = resolveActiveDropSlotKey(
-                                                                        pointerYInRoot = dragPointerYInRoot,
-                                                                        draggedItemId = item.id,
-                                                                        itemBounds = itemBounds,
-                                                                        itemSlotAnchors = itemSlotAnchors,
-                                                                        slotBounds = slotBounds,
-                                                                        allowedSlotKeys = activeDropCandidateKeys
-                                                                    )
+                                                                    val activeSlot = when (currentEffectiveListDisplayMode) {
+                                                                        ShoppingListDisplayMode.SIMPLE -> resolveSimpleDropSlot(
+                                                                            items = currentDisplayedOpenItems,
+                                                                            draggedItemId = item.id,
+                                                                            itemBounds = itemBounds,
+                                                                            pointerYInRoot = dragPointerYInRoot
+                                                                        )
+                                                                        ShoppingListDisplayMode.CATEGORIZED -> resolveActiveDropSlotKey(
+                                                                            pointerYInRoot = dragPointerYInRoot,
+                                                                            draggedItemId = item.id,
+                                                                            itemBounds = dragStartItemBounds,
+                                                                            headerBounds = dragStartHeaderBounds,
+                                                                            itemSlotAnchors = dragStartItemSlotAnchors,
+                                                                            slotBounds = dragStartSlotBounds,
+                                                                            allowedSlotKeys = dragStartAllowedSlotKeys
+                                                                        )?.let(dragStartDropSlotsByKey::get)
+                                                                    }
+                                                                    activeDropSlotKey = activeSlot?.key
+                                                                    dragPreviewItems = activeSlot?.let { slot ->
+                                                                        applyDropSlotToItems(
+                                                                            items = currentLocalOpenItems,
+                                                                            itemId = item.id,
+                                                                            slot = slot,
+                                                                            orderedAreas = currentOrderedAreas,
+                                                                            displayMode = currentEffectiveListDisplayMode
+                                                                        )
+                                                                    }
                                                                 },
                                                                 onDrag = { change, dragAmount ->
                                                                     change.consume()
                                                                     dragPointerYInRoot += dragAmount.y
-                                                                    activeDropSlotKey = resolveActiveDropSlotKey(
-                                                                        pointerYInRoot = dragPointerYInRoot,
-                                                                        draggedItemId = item.id,
-                                                                        itemBounds = itemBounds,
-                                                                        itemSlotAnchors = itemSlotAnchors,
-                                                                        slotBounds = slotBounds,
-                                                                        allowedSlotKeys = activeDropCandidateKeys
-                                                                    )
+                                                                    val activeSlot = when (currentEffectiveListDisplayMode) {
+                                                                        ShoppingListDisplayMode.SIMPLE -> resolveSimpleDropSlot(
+                                                                            items = currentDisplayedOpenItems,
+                                                                            draggedItemId = item.id,
+                                                                            itemBounds = itemBounds,
+                                                                            pointerYInRoot = dragPointerYInRoot
+                                                                        )
+                                                                        ShoppingListDisplayMode.CATEGORIZED -> resolveActiveDropSlotKey(
+                                                                            pointerYInRoot = dragPointerYInRoot,
+                                                                            draggedItemId = item.id,
+                                                                            itemBounds = dragStartItemBounds,
+                                                                            headerBounds = dragStartHeaderBounds,
+                                                                            itemSlotAnchors = dragStartItemSlotAnchors,
+                                                                            slotBounds = dragStartSlotBounds,
+                                                                            allowedSlotKeys = dragStartAllowedSlotKeys
+                                                                        )?.let(dragStartDropSlotsByKey::get)
+                                                                    }
+                                                                    activeDropSlotKey = activeSlot?.key
+                                                                    dragPreviewItems = activeSlot?.let { slot ->
+                                                                        applyDropSlotToItems(
+                                                                            items = currentLocalOpenItems,
+                                                                            itemId = item.id,
+                                                                            slot = slot,
+                                                                            orderedAreas = currentOrderedAreas,
+                                                                            displayMode = currentEffectiveListDisplayMode
+                                                                        )
+                                                                    }
                                                                 },
                                                                 onDragEnd = {
                                                                     val draggedId = draggingItemId
-                                                                    val activeSlot = openDisplayEntries
-                                                                        .mapNotNull { displayEntry ->
-                                                                            (displayEntry as? OpenListEntry.DropSlotEntry)?.slot
-                                                                        }
-                                                                        .firstOrNull { it.key == activeDropSlotKey }
+                                                                    val activeSlot = when (currentEffectiveListDisplayMode) {
+                                                                        ShoppingListDisplayMode.SIMPLE ->
+                                                                            draggedId?.let { id ->
+                                                                                resolveSimpleDropSlot(
+                                                                                    items = currentLocalOpenItems,
+                                                                                    draggedItemId = id,
+                                                                                    itemBounds = itemBounds,
+                                                                                    pointerYInRoot = dragPointerYInRoot
+                                                                                )
+                                                                            }
+                                                                        ShoppingListDisplayMode.CATEGORIZED ->
+                                                                            activeDropSlotKey?.let(dragStartDropSlotsByKey::get)
+                                                                    }
                                                                     val draggedItem =
-                                                                        localOpenItems.firstOrNull { it.id == draggedId }
+                                                                        currentLocalOpenItems.firstOrNull { it.id == draggedId }
                                                                     if (draggedId != null && activeSlot != null && draggedItem != null) {
                                                                         val finalPreviewItems = applyDropSlotToItems(
-                                                                            items = localOpenItems,
+                                                                            items = currentLocalOpenItems,
                                                                             itemId = draggedId,
                                                                             slot = activeSlot,
-                                                                            orderedAreas = orderedAreas
+                                                                            orderedAreas = currentOrderedAreas,
+                                                                            displayMode = currentEffectiveListDisplayMode
                                                                         )
                                                                         val finalDraggedItem =
                                                                             finalPreviewItems.firstOrNull { it.id == draggedId }
@@ -972,10 +1090,11 @@ fun ShoppingScreen(
                                                                         val previousItemId =
                                                                             finalPreviewItems.getOrNull(finalIndex - 1)?.id
                                                                         val changed =
-                                                                            finalPreviewItems.map { it.id } != localOpenItems.map { it.id } ||
+                                                                            finalPreviewItems.map { it.id } != currentLocalOpenItems.map { it.id } ||
                                                                                 finalDraggedItem?.area != draggedItem.area
                                                                         if (changed) {
                                                                             localOpenItems = finalPreviewItems
+                                                                            dragPreviewItems = null
                                                                             deferredOpenItems = finalPreviewItems
                                                                             pendingCommittedOrderIds =
                                                                                 finalPreviewItems.map { it.id }
@@ -990,10 +1109,24 @@ fun ShoppingScreen(
                                                                     }
                                                                     draggingItemId = null
                                                                     activeDropSlotKey = null
+                                                                    dragPreviewItems = null
+                                                                    dragStartItemBounds = emptyMap()
+                                                                    dragStartSlotBounds = emptyMap()
+                                                                    dragStartHeaderBounds = emptyMap()
+                                                                    dragStartItemSlotAnchors = emptyMap()
+                                                                    dragStartDropSlotsByKey = emptyMap()
+                                                                    dragStartAllowedSlotKeys = emptySet()
                                                                 },
                                                                 onDragCancel = {
                                                                     draggingItemId = null
                                                                     activeDropSlotKey = null
+                                                                    dragPreviewItems = null
+                                                                    dragStartItemBounds = emptyMap()
+                                                                    dragStartSlotBounds = emptyMap()
+                                                                    dragStartHeaderBounds = emptyMap()
+                                                                    dragStartItemSlotAnchors = emptyMap()
+                                                                    dragStartDropSlotsByKey = emptyMap()
+                                                                    dragStartAllowedSlotKeys = emptySet()
                                                                 }
                                                             )
                                                         }
@@ -1038,7 +1171,7 @@ fun ShoppingScreen(
                                                             }
                                                         },
                                                         orderedAreas = orderedAreas,
-                                                        displayMode = listDisplayMode
+                                                        displayMode = effectiveListDisplayMode
                                                     )
                                                 },
                                                 onAreaPersisted = { area ->
@@ -1048,7 +1181,8 @@ fun ShoppingScreen(
                                                             area = area
                                                         )
                                                     }
-                                                }
+                                                },
+                                                showAreaMenu = true
                                             )
                                         }
                                     }
@@ -1122,22 +1256,14 @@ fun ShoppingScreen(
                                             onAreaChanged = {},
                                             onAreaPersisted = {},
                                             animateVisibility = false,
+                                            showAreaMenu = false,
+                                            allowRename = false,
                                             modifier = Modifier.padding(horizontal = 4.dp)
                                         )
                                     }
                                 }
                                 }
                             }
-                        }
-
-                        val activeDropBounds = activeDropSlotKey?.let(slotBounds::get)
-                        if (activeDropBounds != null) {
-                            ActiveDropIndicator(
-                                centerY = activeDropBounds.centerY - listTopInRoot,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .zIndex(1f)
-                            )
                         }
 
                         val dragPreviewOffsetX = with(LocalDensity.current) { 12.dp.roundToPx() }
@@ -1518,9 +1644,13 @@ private fun HistorySuggestionRow(
 }
 
 @Composable
-private fun AreaHeader(area: ShoppingArea, visible: Boolean = true) {
+private fun AreaHeader(
+    area: ShoppingArea,
+    visible: Boolean = true,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(top = 10.dp, bottom = 6.dp)
             .graphicsLayer {
@@ -1584,6 +1714,11 @@ private data class DropSlotBounds(
         get() = (topInRoot + bottomInRoot) / 2f
 }
 
+private data class HeaderBounds(
+    val topInRoot: Float,
+    val bottomInRoot: Float
+)
+
 private data class ItemSlotAnchors(
     val beforeSlotKey: String,
     val afterSlotKey: String
@@ -1619,8 +1754,46 @@ private sealed interface OpenListEntry {
 }
 
 private fun buildSimpleOpenDisplayEntries(
-    items: List<ShoppingItem>
-): List<OpenListEntry> = items.map(OpenListEntry::ItemEntry)
+    items: List<ShoppingItem>,
+    draggingItemId: String?
+): List<OpenListEntry> {
+    if (items.isEmpty()) return emptyList()
+
+    val entries = mutableListOf<OpenListEntry>()
+    val startSlot = DropSlotData(
+        key = "slot_simple_start",
+        insertBeforeItemId = items.first().id,
+        area = ShoppingArea.OTHER,
+        isNoOp = isNoOpDropSlot(
+            insertBeforeItemId = items.first().id,
+            draggingItemId = draggingItemId,
+            previousItemId = null
+        )
+    )
+    if (!startSlot.isNoOp) {
+        entries += OpenListEntry.DropSlotEntry(startSlot)
+    }
+
+    items.forEachIndexed { index, item ->
+        entries += OpenListEntry.ItemEntry(item)
+        val nextItemId = items.getOrNull(index + 1)?.id
+        val afterSlot = DropSlotData(
+            key = "slot_simple_after_${item.id}",
+            insertBeforeItemId = nextItemId,
+            area = ShoppingArea.OTHER,
+            isNoOp = isNoOpDropSlot(
+                insertBeforeItemId = nextItemId,
+                draggingItemId = draggingItemId,
+                previousItemId = item.id
+            )
+        )
+        if (!afterSlot.isNoOp) {
+            entries += OpenListEntry.DropSlotEntry(afterSlot)
+        }
+    }
+
+    return entries
+}
 
 private fun buildOpenDisplayEntries(
     items: List<ShoppingItem>,
@@ -1701,10 +1874,22 @@ private fun resolveActiveDropSlotKey(
     pointerYInRoot: Float,
     draggedItemId: String,
     itemBounds: Map<String, ItemDragBounds>,
+    headerBounds: Map<String, HeaderBounds>,
     itemSlotAnchors: Map<String, ItemSlotAnchors>,
     slotBounds: Map<String, DropSlotBounds>,
     allowedSlotKeys: Set<String>
 ): String? {
+    headerBounds.entries
+        .asSequence()
+        .filter { (areaKey, bounds) ->
+            "slot_${areaKey}_start" in allowedSlotKeys &&
+                pointerYInRoot in bounds.topInRoot..bounds.bottomInRoot
+        }
+        .minByOrNull { (_, bounds) -> bounds.topInRoot }
+        ?.let { (areaKey, _) ->
+            return "slot_${areaKey}_start"
+        }
+
     slotBounds.entries
         .asSequence()
         .filter { (key, bounds) ->
@@ -1740,11 +1925,55 @@ private fun resolveActiveDropSlotKey(
         ?.key
 }
 
+private fun resolveSimpleDropSlot(
+    items: List<ShoppingItem>,
+    draggedItemId: String,
+    itemBounds: Map<String, ItemDragBounds>,
+    pointerYInRoot: Float
+): DropSlotData? {
+    val visibleItems = items.filter { it.id != draggedItemId }
+    if (visibleItems.isEmpty()) {
+        return null
+    }
+
+    visibleItems.forEachIndexed { index, item ->
+        val bounds = itemBounds[item.id] ?: return@forEachIndexed
+        val midpoint = bounds.topInRoot + bounds.height / 2f
+        if (pointerYInRoot < midpoint) {
+            return if (index == 0) {
+                DropSlotData(
+                    key = "slot_simple_start",
+                    insertBeforeItemId = item.id,
+                    area = ShoppingArea.OTHER,
+                    isNoOp = false
+                )
+            } else {
+                val previousItemId = visibleItems[index - 1].id
+                DropSlotData(
+                    key = "slot_simple_after_$previousItemId",
+                    insertBeforeItemId = item.id,
+                    area = ShoppingArea.OTHER,
+                    isNoOp = false
+                )
+            }
+        }
+    }
+
+    val lastItemId = visibleItems.lastOrNull()?.id ?: return null
+    return DropSlotData(
+        key = "slot_simple_after_$lastItemId",
+        insertBeforeItemId = null,
+        area = ShoppingArea.OTHER,
+        isNoOp = false
+    )
+}
+
 private fun applyDropSlotToItems(
     items: List<ShoppingItem>,
     itemId: String,
     slot: DropSlotData,
-    orderedAreas: List<ShoppingArea>
+    orderedAreas: List<ShoppingArea>,
+    displayMode: ShoppingListDisplayMode
 ): List<ShoppingItem> {
     val movedItem = items.firstOrNull { it.id == itemId } ?: return items
     val remainingItems = items.filterNot { it.id == itemId }.toMutableList()
@@ -1767,37 +1996,30 @@ private fun applyDropSlotToItems(
             else -> slot.area
         }
 
+    val movedArea = if (displayMode == ShoppingListDisplayMode.SIMPLE) movedItem.area else effectiveArea
+
     remainingItems.add(
         targetIndex.coerceIn(0, remainingItems.size),
-        movedItem.copy(area = effectiveArea)
+        movedItem.copy(area = movedArea)
     )
-    return normalizeOpenItemsForAreaGrouping(remainingItems, orderedAreas)
+    return when (displayMode) {
+        ShoppingListDisplayMode.CATEGORIZED -> normalizeOpenItemsForAreaGrouping(remainingItems, orderedAreas)
+        ShoppingListDisplayMode.SIMPLE -> remainingItems
+    }
 }
 
 @Composable
 private fun DropSlotSpacer(
     active: Boolean,
+    visible: Boolean,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(14.dp),
+            .height(if (visible) 14.dp else 0.dp),
         contentAlignment = Alignment.Center
-    ) {
-        if (active) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(2.dp)
-                    .padding(horizontal = 18.dp)
-                    .background(
-                        color = BrandOrange.copy(alpha = 0.18f),
-                        shape = RoundedCornerShape(999.dp)
-                    )
-            )
-        }
-    }
+    ) {}
 }
 
 @Composable
@@ -1892,7 +2114,9 @@ fun ShoppingRow(
     onAreaChanged: (ShoppingArea) -> Unit = {},
     onAreaPersisted: (ShoppingArea) -> Unit = {},
     modifier: Modifier = Modifier,
-    animateVisibility: Boolean = true
+    animateVisibility: Boolean = true,
+    showAreaMenu: Boolean = true,
+    allowRename: Boolean = true
 ) {
     var localChecked by remember(item.id) { mutableStateOf(item.complete) }
     val scope = rememberCoroutineScope()
@@ -1975,7 +2199,7 @@ fun ShoppingRow(
             )
 
 
-            if (isEditing) {
+            if (isEditing && allowRename) {
 
                 val saveEdit = {
                     val nameChanged = editText.isNotBlank() && editText != item.name
@@ -2025,10 +2249,16 @@ fun ShoppingRow(
                         text = item.name,
                         modifier = Modifier
                             .weight(1f)
-                            .clickable {
-                                onStartEdit(item.id)
-                                editText = item.name
-                            },
+                            .then(
+                                if (allowRename) {
+                                    Modifier.clickable {
+                                        onStartEdit(item.id)
+                                        editText = item.name
+                                    }
+                                } else {
+                                    Modifier
+                                }
+                            ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = if (localChecked)
@@ -2040,21 +2270,23 @@ fun ShoppingRow(
                             MaterialTheme.typography.bodyLarge
                     )
 
-                    AreaMenuButton(
-                        selectedArea = displayedArea,
-                        areas = selectableAreas,
-                        onAreaSelected = { area ->
-                            if (area != displayedArea) {
-                                pendingAreaSelection = area
-                                displayedArea = area
-                                onStopEdit()
-                                onAreaChanged(area)
-                                onServerInteraction()
-                                viewModel.updateItem(item, item.name, area)
-                                onAreaPersisted(area)
+                    if (showAreaMenu) {
+                        AreaMenuButton(
+                            selectedArea = displayedArea,
+                            areas = selectableAreas,
+                            onAreaSelected = { area ->
+                                if (area != displayedArea) {
+                                    pendingAreaSelection = area
+                                    displayedArea = area
+                                    onStopEdit()
+                                    onAreaChanged(area)
+                                    onServerInteraction()
+                                    viewModel.updateItem(item, item.name, area)
+                                    onAreaPersisted(area)
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -2113,8 +2345,4 @@ private fun AreaMenuButton(
         }
     }
 }
-
-
-
-
 

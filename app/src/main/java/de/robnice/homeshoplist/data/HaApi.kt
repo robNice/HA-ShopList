@@ -1,12 +1,12 @@
 package de.robnice.homeshoplist.data
 
 import de.robnice.homeshoplist.data.dto.UpdateItemRequest
+import de.robnice.homeshoplist.data.dto.TemplateRequest
+import de.robnice.homeshoplist.data.dto.TodoGetItemsRequest
 import de.robnice.homeshoplist.model.ShoppingItem
 import de.robnice.homeshoplist.data.dto.AddItemRequest
-import de.robnice.homeshoplist.data.dto.HaStateDto
 import okhttp3.ResponseBody
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -37,9 +37,17 @@ interface HaApi {
         @Header("Authorization") token: String
     )
 
-    @GET("api/states")
-    suspend fun getStatesRaw(
+    @POST("api/services/todo/get_items?return_response")
+    suspend fun getTodoItemsRaw(
+        @Header("Authorization") token: String,
+        @Body body: TodoGetItemsRequest
+    ): ResponseBody
+
+    @POST("api/template")
+    suspend fun renderTemplate(
         @Header("Authorization") token: String
+        ,
+        @Body body: TemplateRequest
     ): ResponseBody
 
 }

@@ -18,8 +18,10 @@ Standalone-Android-App für die **Home Assistant Todo-Listen** mit Live-Updates 
 - [Installation](#installation)
 - [Long-Lived Access Token in Home Assistant erstellen](#long-lived-access-token-in-home-assistant-erstellen)
 - [Konfiguration](#konfiguration)
+- [Items kategorisieren](#items-kategorisieren)
 - [Items umbenennen](#items-umbenennen)
 - [Items sortieren](#items-sortieren)
+- [Settings](#settings)
 - [Erledigte Items löschen](#erledigte-items-löschen)
 - [Screenshots](#screenshots)
 ---
@@ -70,6 +72,23 @@ Die ausgewählte Liste wird gespeichert und beim nächsten Start automatisch wie
 
 ---
 
+## Items kategorisieren
+
+Items können auf mehreren Wegen Kategorien zugewiesen werden.
+
+### Beim Hinzufügen
+
+Vor dem Hinzufügen kann neben dem Eingabefeld die gewünschte Kategorie ausgewählt werden.
+
+### In der Liste
+
+Offene Items lassen sich direkt in der Liste kategorisieren:
+
+1. Ein Item in eine andere Kategorie einsortieren, um Position und Kategorie gleichzeitig zu ändern
+2. Die Kategorie über den Kategorie-Button am Item ändern
+
+---
+
 ## Items umbenennen
 
 Ein vorhandenes Item kann direkt in der Liste umbenannt werden.
@@ -99,6 +118,26 @@ Die neue Reihenfolge wird automatisch in Home Assistant gespeichert.
 
 ---
 
+## Settings
+
+Im Settings-Screen gibt es außerdem Optionen für Listenanzeige und Bereiche.
+
+### Listenanzeige
+
+Die Liste kann wahlweise angezeigt werden als:
+
+- **Simple**
+- **Kategorisiert**
+
+### Bereichseditor
+
+Im Bereichseditor lassen sich:
+
+- Bereiche aktivieren oder deaktivieren
+- die Reihenfolge der Bereiche ändern
+
+---
+
 ## Erledigte Items löschen
 
 Erledigte Items können gesammelt entfernt werden.
@@ -112,7 +151,13 @@ Vorgehen:
 Alle erledigten Items werden anschließend aus der Liste entfernt.
 
 ## Screenshots
-<img src="docs/list_dark.png" alt="List dark mode" width="250">
-<img src="docs/list_dark2b.png" alt="List dark mode" width="250">
-<img src="docs/list_light.png" alt="List light mode" width="250">
-<img src="docs/list_light2.png" alt="List light mode" width="250">
+<img src="docs/hsl_dark_categories.png" alt="Dark mode categories" width="250">
+<img src="docs/hsl_dark_categorized.png" alt="Dark mode categorized list" width="250">
+<img src="docs/hsl_dark_categorized_completed.png" alt="Dark mode categorized completed items" width="250">
+<img src="docs/hsl_dark_simple.png" alt="Dark mode simple list" width="250">
+<img src="docs/hsl_dark_simple_completed.png" alt="Dark mode simple completed items" width="250">
+<img src="docs/hsl_light_categories.png" alt="Light mode categories" width="250">
+<img src="docs/hsl_light_categorized.png" alt="Light mode categorized list" width="250">
+<img src="docs/hsl_light_categorized_completed.png" alt="Light mode categorized completed items" width="250">
+<img src="docs/hsl_light_simple.png" alt="Light mode simple list" width="250">
+<img src="docs/hsl_light_simple_completed.png" alt="Light mode simple completed items" width="250">

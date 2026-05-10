@@ -1,15 +1,16 @@
 package de.robnice.homeshoplist.data
 
 import android.content.Context
-import de.robnice.homeshoplist.data.history.ProductHistoryRepository
+import de.robnice.homeshoplist.data.dto.TodoGetItemsRequest
 import de.robnice.homeshoplist.data.websocket.HaWebSocketClient
 import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingItem
-import de.robnice.homeshoplist.model.encodeMetaItemName
+import de.robnice.homeshoplist.model.ShoppingList
+import de.robnice.homeshoplist.model.encodeManagedItemName
 import de.robnice.homeshoplist.model.isMetaItemName
+import de.robnice.homeshoplist.model.parseManagedItemName
 import de.robnice.homeshoplist.model.parseMetaItemName
 import de.robnice.homeshoplist.util.Debug
-import de.robnice.homeshoplist.util.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,12 +25,82 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicLong
 
+private fun parseTodoItemsFromServiceResponsePayload(
+    payload: String,
+    todoEntity: String
+): List<ShoppingItem> {
+    val root = JSONObject(payload)
+    val serviceResponse = root.optJSONObject("service_response") ?: return emptyList()
+    val entityResponse = serviceResponse.optJSONObject(todoEntity) ?: return emptyList()
+    val items = entityResponse.optJSONArray("items") ?: return emptyList()
+
+    val parsedVisibleItems = mutableListOf<ShoppingItem>()
+    val parsedMetaNames = mutableListOf<String>()
+
+    for (index in 0 until items.length()) {
+        val item = items.optJSONObject(index) ?: continue
+        val itemId = item.optString("uid").takeIf { it.isNotBlank() } ?: continue
+        val itemName = item.optString("summary")
+        val itemDescription = if (item.has("description") && !item.isNull("description")) {
+            item.optString("description")
+        } else {
+            null
+        }
+
+        if (isMetaItemName(itemName)) {
+            parsedMetaNames += itemName
+            continue
+        }
+
+        val managedItemName = parseManagedItemName(itemName)
+        parsedVisibleItems += ShoppingItem(
+            id = itemId,
+            name = managedItemName.visibleName,
+            complete = item.optString("status") == "completed",
+            description = itemDescription,
+            area = managedItemName.area
+        )
+    }
+
+    val parsedMetaAreas = parseMetaItemName(parsedMetaNames.firstOrNull())?.itemAreas.orEmpty()
+    return parsedVisibleItems.map { item ->
+        item.copy(
+            area = item.area ?: parsedMetaAreas[item.id]
+        )
+    }
+}
+
 class HaWebSocketRepository(
-    baseUrl: String,
-    token: String,
-    private val appContext: Context,
-    private val todoEntity: String
+    private val client: HaRealtimeClient,
+    private val pendingSyncStore: PendingSyncStore,
+    private val productHistoryRecorder: ProductHistoryRecorder,
+    private val notifier: ShoppingNotifier,
+    private val todoEntity: String,
+    private val todoListName: String? = null,
+    private val initialSnapshotBaseUrl: String? = null,
+    private val initialSnapshotToken: String? = null,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+    private val currentTimeMillis: () -> Long = System::currentTimeMillis
 ) {
+
+    constructor(
+        baseUrl: String,
+        token: String,
+        appContext: Context,
+        todoEntity: String,
+        todoListName: String? = null,
+        scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    ) : this(
+        client = HaWebSocketClient(baseUrl, token),
+        pendingSyncStore = SharedPreferencesPendingSyncStore(appContext),
+        productHistoryRecorder = RepositoryProductHistoryRecorder(appContext),
+        notifier = SystemShoppingNotifier(appContext),
+        todoEntity = todoEntity,
+        todoListName = todoListName,
+        initialSnapshotBaseUrl = baseUrl,
+        initialSnapshotToken = token,
+        scope = scope
+    )
 
     private sealed interface PendingAction {
         data class Update(
@@ -61,15 +132,6 @@ class HaWebSocketRepository(
         val lastSentAtMillis: Long?
     )
 
-    private data class PendingMetaSync(
-        val desiredName: String?,
-        val lastSentAtMillis: Long?
-    )
-
-    private val client = HaWebSocketClient(baseUrl, token)
-    private val pendingSyncPrefs = appContext.getSharedPreferences(PENDING_SYNC_PREFS, Context.MODE_PRIVATE)
-    private val productHistoryRepository = ProductHistoryRepository.getInstance(appContext)
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val lock = Any()
     private val tempIdCounter = AtomicLong(1)
 
@@ -97,10 +159,6 @@ class HaWebSocketRepository(
     private val pendingActions = mutableListOf<PendingAction>()
     private val pendingLocalAdds = linkedMapOf<String, PendingLocalAdd>()
     private var pendingMove: PendingMove? = null
-    private var pendingMetaSync: PendingMetaSync? = null
-    private var remoteMetaItemId: String? = null
-    private var remoteMetaItemName: String? = null
-    private var localMetaItemExists = false
     private var hasLoadedRemoteItems = false
     private var lastRemoteItems: List<ShoppingItem> = emptyList()
     private var hadReadyOnce = false
@@ -111,7 +169,45 @@ class HaWebSocketRepository(
 
     init {
         restorePendingChanges()
+        _isConnecting.value = true
+        _isOffline.value = false
         client.connect()
+
+        if (!initialSnapshotBaseUrl.isNullOrBlank() && !initialSnapshotToken.isNullOrBlank()) {
+            scope.launch {
+                Debug.log("REPOSITORY: initial snapshot start")
+                val startedAt = currentTimeMillis()
+                val snapshot = runCatching {
+                    val api = HaServiceFactory.create(initialSnapshotBaseUrl)
+                    val response = api.getTodoItemsRaw(
+                        token = "Bearer ${initialSnapshotToken.trim()}",
+                        body = TodoGetItemsRequest(entity_id = todoEntity)
+                    )
+                    parseTodoItemsFromServiceResponsePayload(
+                        payload = response.string(),
+                        todoEntity = todoEntity
+                    )
+                }.onFailure { error ->
+                    Debug.log("REPOSITORY: initial snapshot failed: ${error.message}")
+                }.getOrNull() ?: return@launch
+                if (hasLoadedRemoteItems) {
+                    Debug.log("REPOSITORY: initial snapshot ignored because remote items already loaded")
+                    return@launch
+                }
+
+                val previousItems = _items.value
+                if (previousItems.isNotEmpty()) {
+                    Debug.log("REPOSITORY: initial snapshot ignored because local items already exist")
+                    return@launch
+                }
+
+                Debug.log(
+                    "REPOSITORY: initial snapshot success items=${snapshot.size} took=${currentTimeMillis() - startedAt}ms"
+                )
+                _items.value = snapshot
+                _loaded.value = true
+            }
+        }
 
         scope.launch {
             client.authFailed.collect {
@@ -127,7 +223,7 @@ class HaWebSocketRepository(
                 _connectionErrors.value = true
                 _isOffline.value = true
                 _isConnecting.value = false
-                if (_items.value.isEmpty()) {
+                if (hasLoadedRemoteItems || _items.value.isNotEmpty()) {
                     _loaded.value = true
                 }
             }
@@ -142,7 +238,7 @@ class HaWebSocketRepository(
                 Debug.log("REPOSITORY: disconnected")
                 _isOffline.value = true
                 _isConnecting.value = false
-                if (_items.value.isEmpty()) {
+                if (hasLoadedRemoteItems || _items.value.isNotEmpty()) {
                     _loaded.value = true
                 }
             }
@@ -161,7 +257,7 @@ class HaWebSocketRepository(
                 Debug.log("WS READY (RECONNECTED=$wasReconnect)")
 
                 if (wasReconnect) {
-                    _reconnected.value = System.currentTimeMillis()
+                    _reconnected.value = currentTimeMillis()
                 }
 
                 val subscribeSent = client.send(
@@ -191,8 +287,10 @@ class HaWebSocketRepository(
                     when (json.optString("type")) {
                         "result" -> {
                             if (!json.optBoolean("success")) {
-                                Debug.log("REPOSITORY: websocket command result failed -> retry pending changes")
-                                markPendingChangesForRetry()
+                                if (!handleFailedCommandResult(json)) {
+                                    Debug.log("REPOSITORY: websocket command result failed -> retry pending changes")
+                                    markPendingChangesForRetry()
+                                }
                                 return@collect
                             }
 
@@ -232,32 +330,37 @@ class HaWebSocketRepository(
         isRealtimeEvent: Boolean
     ) {
         val parsedVisibleItems = mutableListOf<ShoppingItem>()
-        var parsedMetaId: String? = null
-        var parsedMetaName: String? = null
+        val parsedMetaIds = mutableListOf<String>()
+        val parsedMetaNames = mutableListOf<String>()
 
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
             val itemId = item.getString("uid")
             val itemName = item.getString("summary")
+            val itemDescription = item.optNullableString("description")
 
             if (isMetaItemName(itemName)) {
-                parsedMetaId = itemId
-                parsedMetaName = itemName
+                parsedMetaIds += itemId
+                parsedMetaNames += itemName
                 continue
             }
 
+            val managedItemName = parseManagedItemName(itemName)
+
             parsedVisibleItems += ShoppingItem(
                 id = itemId,
-                name = itemName,
+                name = managedItemName.visibleName,
                 complete = item.getString("status") == "completed",
-                description = null,
-                area = null
+                description = itemDescription,
+                area = managedItemName.area
             )
         }
 
-        val parsedMetaAreas = parseMetaItemName(parsedMetaName)?.itemAreas.orEmpty()
+        val parsedMetaAreas = parseMetaItemName(parsedMetaNames.firstOrNull())?.itemAreas.orEmpty()
         val parsedRemote = parsedVisibleItems.map { item ->
-            item.copy(area = parsedMetaAreas[item.id])
+            item.copy(
+                area = item.area ?: parsedMetaAreas[item.id]
+            )
         }
 
         val previousRemoteIds = lastRemoteItems.map { it.id }.toSet()
@@ -265,16 +368,11 @@ class HaWebSocketRepository(
 
         val finalItems = synchronized(lock) {
             hasLoadedRemoteItems = true
-            remoteMetaItemId = parsedMetaId
-            remoteMetaItemName = parsedMetaName
-            localMetaItemExists = parsedMetaId != null
+            reconcileLegacyMetaItems(parsedMetaIds)
             reconcileLocalAdds(parsedRemote, previousRemoteIds)
             pruneSatisfiedPendingActions(parsedRemote)
             pruneSatisfiedPendingMove(parsedRemote)
-            pruneSatisfiedPendingMeta()
-            val withPendingApplied = applyPendingMetaOverlay(
-                applyPendingMove(applyPendingActions(parsedRemote))
-            )
+            val withPendingApplied = applyPendingMove(applyPendingActions(parsedRemote))
             syncPendingMetaLocked(withPendingApplied)
             persistPendingChangesLocked()
             withPendingApplied + visiblePendingLocalAddsLocked()
@@ -290,7 +388,7 @@ class HaWebSocketRepository(
 
         scope.launch {
             finalItems.forEach { item ->
-                productHistoryRepository.rememberProduct(item.name, item.area)
+                productHistoryRecorder.rememberProduct(item.name, item.area)
             }
         }
 
@@ -329,7 +427,7 @@ class HaWebSocketRepository(
             usedRemoteIds += matched.id
             pendingLocalAdds.remove(pendingAdd.tempId)
 
-            if (pendingAdd.complete || pendingAdd.area != null) {
+            if (pendingAdd.complete) {
                 resolvedActions += PendingAction.Update(
                     itemId = matched.id,
                     name = pendingAdd.name,
@@ -375,8 +473,61 @@ class HaWebSocketRepository(
                 }
 
                 _newItems.tryEmit(item)
-                NotificationHelper.showNewItemNotification(appContext, item)
+                notifier.showNewItemNotification(item)
             }
+    }
+
+    private fun parseTodoListsFromStates(states: JSONArray): List<ShoppingList> {
+        return buildList {
+            for (index in 0 until states.length()) {
+                val state = states.optJSONObject(index) ?: continue
+                val entityId = state.optString("entity_id").takeIf { it.startsWith("todo.") } ?: continue
+                val friendlyName = state
+                    .optJSONObject("attributes")
+                    ?.optString("friendly_name")
+                    ?.takeIf { it.isNotBlank() }
+
+                add(
+                    ShoppingList(
+                        id = entityId,
+                        name = friendlyName ?: entityId
+                    )
+                )
+            }
+        }.sortedBy { it.name.lowercase() }
+    }
+
+    private fun parseShoppingItems(items: JSONArray): List<ShoppingItem> {
+        val parsedVisibleItems = mutableListOf<ShoppingItem>()
+        val parsedMetaNames = mutableListOf<String>()
+
+        for (index in 0 until items.length()) {
+            val item = items.optJSONObject(index) ?: continue
+            val itemId = item.optString("uid").takeIf { it.isNotBlank() } ?: continue
+            val itemName = item.optString("summary")
+            val itemDescription = item.optNullableString("description")
+
+            if (isMetaItemName(itemName)) {
+                parsedMetaNames += itemName
+                continue
+            }
+
+            val managedItemName = parseManagedItemName(itemName)
+            parsedVisibleItems += ShoppingItem(
+                id = itemId,
+                name = managedItemName.visibleName,
+                complete = item.optString("status") == "completed",
+                description = itemDescription,
+                area = managedItemName.area
+            )
+        }
+
+        val parsedMetaAreas = parseMetaItemName(parsedMetaNames.firstOrNull())?.itemAreas.orEmpty()
+        return parsedVisibleItems.map { item ->
+            item.copy(
+                area = item.area ?: parsedMetaAreas[item.id]
+            )
+        }
     }
 
     fun loadItems() {
@@ -395,6 +546,24 @@ class HaWebSocketRepository(
             _isConnecting.value = false
             client.ensureConnected()
         }
+    }
+
+    suspend fun loadAvailableLists(timeoutMillis: Long = 3_000L): List<ShoppingList>? {
+        if (!awaitReady(timeoutMillis)) {
+            return null
+        }
+
+        val response = client.request(
+            type = "get_states",
+            timeoutMillis = timeoutMillis
+        ) ?: return null
+
+        if (!response.optBoolean("success")) {
+            return null
+        }
+
+        val states = response.optJSONArray("result") ?: return null
+        return parseTodoListsFromStates(states)
     }
 
     fun addItem(name: String, area: ShoppingArea?) {
@@ -417,7 +586,6 @@ class HaWebSocketRepository(
                 id = tempId,
                 name = trimmed,
                 complete = false,
-                description = null,
                 area = area
             )
             syncPendingMetaLocked(_items.value)
@@ -434,7 +602,7 @@ class HaWebSocketRepository(
         }
         _loaded.value = true
         scope.launch {
-            productHistoryRepository.recordProductUse(trimmed, area)
+            productHistoryRecorder.recordProductUse(trimmed, area)
         }
     }
 
@@ -474,13 +642,12 @@ class HaWebSocketRepository(
         updateLocalItem(item.id) { current ->
             current.copy(
                 name = trimmed,
-                description = null,
                 area = area
             )
         }
         if (nameChanged) {
             scope.launch {
-                productHistoryRepository.recordProductUse(trimmed, area)
+                productHistoryRecorder.recordProductUse(trimmed, area)
             }
         }
 
@@ -503,20 +670,12 @@ class HaWebSocketRepository(
                 area = area
             )
         } else if (areaChanged) {
-            synchronized(lock) {
-                syncPendingMetaLocked(_items.value)
-                persistPendingChangesLocked()
-            }
-
-            if (client.isReady()) {
-                scope.launch {
-                    flushPendingChanges()
-                }
-            } else {
-                _isOffline.value = true
-                _isConnecting.value = false
-                client.ensureConnected()
-            }
+            enqueueOrSendUpdate(
+                itemId = item.id,
+                name = trimmed,
+                complete = item.complete,
+                area = area
+            )
         }
     }
 
@@ -527,7 +686,6 @@ class HaWebSocketRepository(
         if (currentItem != null && area != currentItem.area) {
             updateLocalItem(itemId) { current ->
                 current.copy(
-                    description = null,
                     area = area
                 )
             }
@@ -616,15 +774,17 @@ class HaWebSocketRepository(
             Debug.log("REPOSITORY: already connected -> sync pending + reload")
             scope.launch {
                 flushPendingChanges()
+                loadItems()
             }
             return
         }
 
+        _isOffline.value = false
+        _isConnecting.value = true
         if (_items.value.isEmpty()) {
             _loaded.value = false
         } else {
             _loaded.value = true
-            _isConnecting.value = true
         }
         client.ensureConnected()
     }
@@ -633,14 +793,31 @@ class HaWebSocketRepository(
         client.setReconnectAllowed(allowed)
     }
 
+    private suspend fun awaitReady(timeoutMillis: Long): Boolean {
+        if (client.isReady()) {
+            return true
+        }
+
+        client.ensureConnected()
+        val deadline = currentTimeMillis() + timeoutMillis
+        while (currentTimeMillis() < deadline) {
+            if (client.isReady()) {
+                return true
+            }
+            delay(100)
+        }
+
+        return client.isReady()
+    }
+
     private fun enqueueOrSendUpdate(
         itemId: String,
         name: String,
         complete: Boolean,
         area: ShoppingArea?
     ) {
-        val sentAtMillis = if (client.isReady() && sendUpdateItem(itemId, name, complete)) {
-            System.currentTimeMillis()
+        val sentAtMillis = if (client.isReady() && sendUpdateItem(itemId, name, complete, area)) {
+            currentTimeMillis()
         } else {
             null
         }
@@ -681,7 +858,7 @@ class HaWebSocketRepository(
 
     private fun enqueueOrSendRemove(itemId: String) {
         val sentAtMillis = if (client.isReady() && sendRemoveItem(itemId)) {
-            System.currentTimeMillis()
+            currentTimeMillis()
         } else {
             null
         }
@@ -730,24 +907,22 @@ class HaWebSocketRepository(
             val localAdds: List<PendingLocalAdd>
             val queuedActions: List<PendingAction>
             val moveToSend: PendingMove?
-            val metaToSend: PendingMetaSync?
             synchronized(lock) {
                 localAdds = pendingLocalAdds.values.toList()
                 queuedActions = pendingActions.toList()
                 moveToSend = pendingMove
-                metaToSend = pendingMetaSync
             }
 
             val sentLocalAddIds = mutableSetOf<String>()
             val sentUpdateIds = mutableSetOf<String>()
             val sentRemoveIds = mutableSetOf<String>()
-            val now = System.currentTimeMillis()
+            val now = currentTimeMillis()
 
             localAdds
                 .filter { shouldSendPending(it.lastSentAtMillis, now) }
                 .forEach { add ->
                     locallyAddedItemNames.add(add.name.trim())
-                    if (sendAddItem(add.name)) {
+                    if (sendAddItem(add.name, add.area)) {
                         sentLocalAddIds += add.tempId
                     }
                 }
@@ -774,7 +949,8 @@ class HaWebSocketRepository(
                                 sendUpdateItem(
                                     itemId = resolvedId,
                                     name = action.name,
-                                    complete = action.complete
+                                    complete = action.complete,
+                                    area = action.area
                                 )
                             ) {
                                 sentUpdateIds += action.itemId
@@ -794,20 +970,6 @@ class HaWebSocketRepository(
                 } else {
                     false
                 }
-
-            val shouldSendMeta = metaToSend != null && shouldSendPending(metaToSend.lastSentAtMillis, now)
-            val metaSent =
-                if (shouldSendMeta) {
-                    sendPendingMeta(metaToSend!!)
-                } else {
-                    false
-                }
-
-            val sentAnyNonReorderChange =
-                sentLocalAddIds.isNotEmpty() ||
-                    sentUpdateIds.isNotEmpty() ||
-                    sentRemoveIds.isNotEmpty() ||
-                    metaSent
 
             synchronized(lock) {
                 sentLocalAddIds.forEach { tempId ->
@@ -829,9 +991,6 @@ class HaWebSocketRepository(
                 if (moveSent) {
                     pendingMove = pendingMove?.copy(lastSentAtMillis = now)
                 }
-                if (metaSent) {
-                    pendingMetaSync = pendingMetaSync?.copy(lastSentAtMillis = now)
-                }
                 persistPendingChangesLocked()
             }
 
@@ -839,18 +998,13 @@ class HaWebSocketRepository(
                 sentLocalAddIds.size != localAdds.count { shouldSendPending(it.lastSentAtMillis, now) } ||
                 sentUpdateIds.size != queuedActions.count { it is PendingAction.Update && shouldSendPending(it.lastSentAtMillis, now) } ||
                 sentRemoveIds.size != queuedActions.count { it is PendingAction.Remove && shouldSendPending(it.lastSentAtMillis, now) } ||
-                (shouldSendPendingMove && !moveSent) ||
-                (shouldSendMeta && !metaSent)
+                (shouldSendPendingMove && !moveSent)
             ) {
                 _isOffline.value = true
                 _isConnecting.value = false
                 client.ensureConnected()
             }
 
-            if (sentAnyNonReorderChange) {
-                delay(150)
-                loadItems()
-            }
         } finally {
             syncInProgress = false
         }
@@ -871,7 +1025,6 @@ class HaWebSocketRepository(
                             item.copy(
                                 name = action.name,
                                 complete = action.complete,
-                                description = null,
                                 area = action.area
                             )
                         } else {
@@ -904,18 +1057,16 @@ class HaWebSocketRepository(
         return mutableItems
     }
 
-    private fun applyPendingMetaOverlay(items: List<ShoppingItem>): List<ShoppingItem> {
-        val pendingAreasById = parseMetaItemName(pendingMetaSync?.desiredName)?.itemAreas.orEmpty()
-        if (pendingAreasById.isEmpty()) {
-            return items
-        }
-
-        return items.map { item ->
-            val pendingArea = pendingAreasById[item.id]
-            if (pendingArea != null && pendingArea != item.area) {
-                item.copy(area = pendingArea)
-            } else {
-                item
+    private fun reconcileLegacyMetaItems(metaItemIds: List<String>) {
+        metaItemIds.forEach { duplicateId ->
+            pendingActions.removeAll { action ->
+                action is PendingAction.Update && action.itemId == duplicateId
+            }
+            if (pendingActions.none { action -> action is PendingAction.Remove && action.itemId == duplicateId }) {
+                pendingActions += PendingAction.Remove(
+                    itemId = duplicateId,
+                    lastSentAtMillis = null
+                )
             }
         }
     }
@@ -939,46 +1090,8 @@ class HaWebSocketRepository(
         }
     }
 
-    private fun pruneSatisfiedPendingMeta() {
-        val currentPending = pendingMetaSync ?: return
-        val desiredName = currentPending.desiredName
-
-        pendingMetaSync = when {
-            desiredName == null && !localMetaItemExists -> null
-            desiredName != null && localMetaItemExists && remoteMetaItemName == desiredName -> null
-            else -> currentPending
-        }
-    }
-
     private fun syncPendingMetaLocked(items: List<ShoppingItem>) {
-        val desiredAreaMap = buildDesiredMetaMap(items)
-        val desiredName = desiredAreaMap
-            .takeIf { it.isNotEmpty() }
-            ?.let { encodeMetaItemName(it) }
-
-        pendingMetaSync = when {
-            desiredName != null && localMetaItemExists && desiredName == remoteMetaItemName -> null
-            desiredName == null && !localMetaItemExists -> null
-            pendingMetaSync?.desiredName == desiredName -> pendingMetaSync
-            else -> PendingMetaSync(
-                desiredName = desiredName,
-                lastSentAtMillis = null
-            )
-        }
-    }
-
-    private fun buildDesiredMetaMap(items: List<ShoppingItem>): Map<String, ShoppingArea> {
-        val desired = linkedMapOf<String, ShoppingArea>()
-        items.forEach { item ->
-            if (item.id.startsWith(LOCAL_ID_PREFIX)) {
-                return@forEach
-            }
-
-            item.area?.let { area ->
-                desired[item.id] = area
-            }
-        }
-        return desired
+        // Legacy meta-item sync is disabled. Area metadata is stored in the item name suffix.
     }
 
     private fun pruneSatisfiedPendingMove(remoteItems: List<ShoppingItem>) {
@@ -1002,9 +1115,9 @@ class HaWebSocketRepository(
         }
     }
 
-    private fun sendAddItem(name: String): Boolean {
+    private fun sendAddItem(name: String, area: ShoppingArea?): Boolean {
         val serviceData = JSONObject()
-            .put("item", name)
+            .put("item", managedNameForService(name, area))
 
         return client.send(
             type = "call_service",
@@ -1019,10 +1132,10 @@ class HaWebSocketRepository(
         )
     }
 
-    private fun sendUpdateItem(itemId: String, name: String, complete: Boolean): Boolean {
+    private fun sendUpdateItem(itemId: String, name: String, complete: Boolean, area: ShoppingArea?): Boolean {
         val serviceData = JSONObject()
             .put("item", itemId)
-            .put("rename", name)
+            .put("rename", managedNameForService(name, area))
             .put("status", if (complete) "completed" else "needs_action")
 
         return client.send(
@@ -1036,34 +1149,6 @@ class HaWebSocketRepository(
                 .put("service_data", serviceData)
                 .put("return_response", false)
         )
-    }
-
-    private fun sendPendingMeta(pendingMeta: PendingMetaSync): Boolean {
-        val desiredName = pendingMeta.desiredName
-        return when {
-            desiredName == null && !localMetaItemExists -> true
-            desiredName == null -> {
-                val metaId = remoteMetaItemId ?: return false
-                sendRemoveItem(metaId).also { sent ->
-                    if (sent) {
-                        localMetaItemExists = false
-                    }
-                }
-            }
-            remoteMetaItemId != null -> {
-                sendUpdateItem(
-                    itemId = remoteMetaItemId ?: return false,
-                    name = desiredName,
-                    complete = false
-                )
-            }
-            localMetaItemExists -> false
-            else -> sendAddItem(desiredName).also { sent ->
-                if (sent) {
-                    localMetaItemExists = true
-                }
-            }
-        }
     }
 
     private fun sendPendingMove(move: PendingMove): Boolean {
@@ -1152,6 +1237,47 @@ class HaWebSocketRepository(
         return lastSentAtMillis == null || now - lastSentAtMillis >= PENDING_RETRY_AFTER_MILLIS
     }
 
+    private fun handleFailedCommandResult(json: JSONObject): Boolean {
+        val error = json.optJSONObject("error") ?: return false
+        val errorCode = error.optString("code")
+        if (errorCode != "service_validation_error") {
+            return false
+        }
+
+        val translationKey = error.optString("translation_key")
+        if (translationKey != "item_not_found") {
+            return false
+        }
+
+        val missingItemId = error
+            .optJSONObject("translation_placeholders")
+            ?.optNullableString("item")
+            ?.takeIf { it.isNotBlank() }
+            ?: return false
+
+        Debug.log("REPOSITORY: dropping stale pending changes for missing item=$missingItemId")
+        dropPendingChangesForMissingItem(missingItemId)
+        return true
+    }
+
+    private fun dropPendingChangesForMissingItem(itemId: String) {
+        synchronized(lock) {
+            pendingActions.removeAll { action ->
+                when (action) {
+                    is PendingAction.Remove -> action.itemId == itemId
+                    is PendingAction.Update -> action.itemId == itemId
+                }
+            }
+
+            pendingMove = pendingMove?.takeUnless { move ->
+                move.itemId == itemId || move.previousItemId == itemId
+            }
+
+            _items.value = _items.value.filterNot { it.id == itemId }
+            persistPendingChangesLocked()
+        }
+    }
+
     private fun markPendingChangesForRetry() {
         synchronized(lock) {
             pendingLocalAdds.replaceAll { _, add ->
@@ -1164,7 +1290,6 @@ class HaWebSocketRepository(
                 }
             }
             pendingMove = pendingMove?.copy(lastSentAtMillis = null)
-            pendingMetaSync = pendingMetaSync?.copy(lastSentAtMillis = null)
             if (pendingMove != null) {
                 pendingMoveDispatchJob?.cancel()
             }
@@ -1173,7 +1298,7 @@ class HaWebSocketRepository(
     }
 
     private fun restorePendingChanges() {
-        val raw = pendingSyncPrefs.getString(PENDING_SYNC_KEY, null) ?: return
+        val raw = pendingSyncStore.readPendingChanges() ?: return
 
         try {
             val root = JSONObject(raw)
@@ -1229,12 +1354,6 @@ class HaWebSocketRepository(
                     }
                 }
 
-                root.optJSONObject("meta")?.let { meta ->
-                    pendingMetaSync = PendingMetaSync(
-                        desiredName = meta.optNullableString("desiredName"),
-                        lastSentAtMillis = meta.optNullableLong("lastSentAtMillis")
-                    )
-                }
             }
 
             tempIdCounter.set(maxRestoredTempId + 1)
@@ -1245,13 +1364,13 @@ class HaWebSocketRepository(
             Debug.log("REPOSITORY: restored pending shopping-list changes")
         } catch (e: Exception) {
             Debug.log("REPOSITORY: failed to restore pending changes: ${e.message}")
-            pendingSyncPrefs.edit().remove(PENDING_SYNC_KEY).apply()
+            pendingSyncStore.clearPendingChanges()
         }
     }
 
     private fun persistPendingChangesLocked() {
-        if (pendingLocalAdds.isEmpty() && pendingActions.isEmpty() && pendingMove == null && pendingMetaSync == null) {
-            pendingSyncPrefs.edit().remove(PENDING_SYNC_KEY).apply()
+        if (pendingLocalAdds.isEmpty() && pendingActions.isEmpty() && pendingMove == null) {
+            pendingSyncStore.clearPendingChanges()
             return
         }
 
@@ -1303,16 +1422,8 @@ class HaWebSocketRepository(
                         .put("lastSentAtMillis", move.lastSentAtMillis ?: JSONObject.NULL)
                 } ?: JSONObject.NULL
             )
-            .put(
-                "meta",
-                pendingMetaSync?.let { meta ->
-                    JSONObject()
-                        .put("desiredName", meta.desiredName ?: JSONObject.NULL)
-                        .put("lastSentAtMillis", meta.lastSentAtMillis ?: JSONObject.NULL)
-                } ?: JSONObject.NULL
-            )
 
-        pendingSyncPrefs.edit().putString(PENDING_SYNC_KEY, root.toString()).apply()
+        pendingSyncStore.writePendingChanges(root.toString())
     }
 
     private fun JSONObject.optNullableString(key: String): String? {
@@ -1325,18 +1436,19 @@ class HaWebSocketRepository(
 
     private fun nextTempId(): String = "$LOCAL_ID_PREFIX${tempIdCounter.getAndIncrement()}"
 
+    private fun managedNameForService(name: String, area: ShoppingArea?): String {
+        return encodeManagedItemName(name, area)
+    }
+
     private fun PendingLocalAdd.toShoppingItem(): ShoppingItem = ShoppingItem(
         id = tempId,
         name = name,
         complete = complete,
-        description = null,
         area = area
     )
 
     companion object {
         private const val LOCAL_ID_PREFIX = "local:"
-        private const val PENDING_SYNC_PREFS = "pending_shopping_list_sync"
-        private const val PENDING_SYNC_KEY = "pending_changes"
         private const val PENDING_RETRY_AFTER_MILLIS = 10_000L
         private const val PENDING_MOVE_DEBOUNCE_MILLIS = 750L
         private const val PENDING_MOVE_RETRY_AFTER_MILLIS = 30_000L

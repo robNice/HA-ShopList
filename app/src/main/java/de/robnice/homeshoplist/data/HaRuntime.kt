@@ -5,4 +5,5 @@ object HaRuntime {
     var baseUrl: String? = null
     var token: String? = null
     var todoEntity: String? = null
+    var todoListName: String? = null
 }
