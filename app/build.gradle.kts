@@ -16,7 +16,7 @@ android {
         applicationId = "de.robnice.homeshoplist"
         minSdk = 24
         targetSdk = 36
-        versionCode = 901
+        versionCode = 920
         versionName = "1.9.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
