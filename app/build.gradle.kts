@@ -17,7 +17,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 901
-        versionName = "1.9.1.7"
+        versionName = "1.9.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -106,6 +106,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     add("ksp", libs.androidx.room.compiler)
     testImplementation(libs.junit)
+    testImplementation(libs.json)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

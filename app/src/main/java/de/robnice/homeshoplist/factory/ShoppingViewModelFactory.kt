@@ -10,12 +10,19 @@ class ShoppingViewModelFactory(
     private val context: android.content.Context,
     private val url: String,
     private val token: String,
-    private val todoEntity: String
+    private val todoEntity: String,
+    private val todoListName: String?
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ShoppingViewModel::class.java)) {
-            val repository = HaRuntime.repository ?: HaWebSocketRepository(url, token, context.applicationContext, todoEntity).also {
+            val repository = HaRuntime.repository ?: HaWebSocketRepository(
+                url,
+                token,
+                context.applicationContext,
+                todoEntity,
+                todoListName
+            ).also {
                 HaRuntime.repository = it
             }
             @Suppress("UNCHECKED_CAST")

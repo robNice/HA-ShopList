@@ -50,6 +50,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import de.robnice.homeshoplist.BuildConfig
 import de.robnice.homeshoplist.R
+import de.robnice.homeshoplist.data.HaRuntime
 import de.robnice.homeshoplist.data.SettingsDataStore
 import de.robnice.homeshoplist.data.history.ProductHistoryRepository
 import de.robnice.homeshoplist.data.update.AppUpdateInfo
@@ -63,7 +64,10 @@ import de.robnice.homeshoplist.model.label
 import de.robnice.homeshoplist.ui.navigation.Screen
 import de.robnice.homeshoplist.ui.util.t
 import de.robnice.homeshoplist.util.normalizeHaUrl
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private sealed interface MarkdownBlock {
     data class H1(val text: String) : MarkdownBlock
@@ -169,6 +173,7 @@ fun SettingsScreen(
     val storedUrl by dataStore.haUrl.collectAsState(initial = "")
     val storedToken by dataStore.haToken.collectAsState(initial = "")
     val storedTodoEntity by dataStore.todoEntity.collectAsState(initial = "todo.einkaufsliste")
+    val storedTodoListName by dataStore.todoListName.collectAsState(initial = "")
     val storedAreaOrder by dataStore.areaOrder.collectAsState(initial = "")
     val storedEnabledAreas by dataStore.enabledAreas.collectAsState(initial = "")
     val storedListDisplayMode by dataStore.listDisplayMode.collectAsState(initial = "categorized")
@@ -212,6 +217,7 @@ fun SettingsScreen(
     var url by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
     var todoEntity by remember { mutableStateOf("") }
+    var todoListName by remember { mutableStateOf("") }
     var listDisplayMode by remember { mutableStateOf(ShoppingListDisplayMode.CATEGORIZED) }
     var areaOrderDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
     var enabledAreasDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
@@ -233,6 +239,7 @@ fun SettingsScreen(
         storedUrl,
         storedToken,
         storedTodoEntity,
+        storedTodoListName,
         storedAreaOrder,
         storedEnabledAreas,
         storedListDisplayMode
@@ -240,6 +247,7 @@ fun SettingsScreen(
         url = storedUrl
         token = storedToken
         todoEntity = storedTodoEntity
+        todoListName = storedTodoListName
         listDisplayMode = ShoppingListDisplayMode.fromStorage(storedListDisplayMode)
         val restoredAreaOrder = ShoppingArea.orderedFromStorage(storedAreaOrder)
         areaOrderDraft = restoredAreaOrder
@@ -326,20 +334,58 @@ fun SettingsScreen(
         todoLoading = true
 
         try {
-            val api = de.robnice.homeshoplist.data.HaServiceFactory.create(cleanedUrl)
-            val repo = de.robnice.homeshoplist.data.HaTodoListRepository(api)
-            val loaded = repo.loadTodoLists(cleanedToken)
+            val loaded = withContext(Dispatchers.IO) {
+                val runtimeRepo = HaRuntime.repository
+                    ?.takeIf {
+                        HaRuntime.baseUrl == cleanedUrl &&
+                            HaRuntime.token == cleanedToken
+                    }
 
-            todoOptions = loaded
+                runtimeRepo?.loadAvailableLists()
+                    ?: run {
+                        val api = de.robnice.homeshoplist.data.HaServiceFactory.create(cleanedUrl)
+                        val repo = de.robnice.homeshoplist.data.HaTodoListRepository(api)
+                        repo.loadTodoLists(cleanedToken)
+                    }
+            }
 
-            if (loaded.isEmpty()) {
+            val mergedLoaded = buildList {
+                addAll(loaded)
+                if (todoEntity.isNotBlank() && loaded.none { it.id == todoEntity }) {
+                    add(
+                        ShoppingList(
+                            id = todoEntity,
+                            name = todoListName.ifBlank { todoEntity }
+                        )
+                    )
+                }
+            }.distinctBy { it.id }
+                .sortedBy { it.name.lowercase() }
+
+            todoOptions = mergedLoaded
+
+            if (loaded.isEmpty() && todoEntity.isBlank()) {
                 todoLoadError = context.getString(R.string.error_no_lists_found)
             } else if (todoEntity.isBlank()) {
-                todoEntity = loaded.firstOrNull()?.id.orEmpty()
-            } else if (loaded.none { it.id == todoEntity }) {
-                todoEntity = loaded.firstOrNull()?.id.orEmpty()
+                todoEntity = mergedLoaded.firstOrNull()?.id.orEmpty()
+                todoListName = mergedLoaded.firstOrNull()?.name.orEmpty()
+            } else if (mergedLoaded.none { it.id == todoEntity }) {
+                todoEntity = mergedLoaded.firstOrNull()?.id.orEmpty()
+                todoListName = mergedLoaded.firstOrNull()?.name.orEmpty()
+            } else {
+                todoListName = mergedLoaded.firstOrNull { it.id == todoEntity }?.name.orEmpty()
             }
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            if (todoOptions.isEmpty() && todoEntity.isNotBlank()) {
+                todoOptions = listOf(
+                    ShoppingList(
+                        id = todoEntity,
+                        name = todoListName.ifBlank { todoEntity }
+                    )
+                )
+            }
             todoLoadError = e.message ?: context.getString(R.string.loading_failed)
         } finally {
             todoLoading = false
@@ -497,12 +543,51 @@ fun SettingsScreen(
                                         },
                                         onClick = {
                                             todoEntity = option.id
+                                            todoListName = option.name
                                             todoExpanded = false
                                         }
                                     )
                                 }
                             }
                         }
+                    }
+
+                    else -> {
+                        OutlinedTextField(
+                            value = todoEntity,
+                            onValueChange = {
+                                todoEntity = it
+                                if (todoListName.isBlank()) {
+                                    todoListName = it
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = settingsTextFieldColors()
+                        )
+                    }
+                }
+
+                if (todoLoadError != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = t(R.string.error_list_not_loaded),
+                        color = MaterialTheme.colorScheme.error
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = todoLoadError.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedButton(onClick = { todoReloadKey++ }) {
+                        Text(t(R.string.retry))
                     }
                 }
 
@@ -527,29 +612,6 @@ fun SettingsScreen(
                         onClick = { listDisplayMode = ShoppingListDisplayMode.CATEGORIZED },
                         label = { Text(t(R.string.list_display_mode_categorized)) }
                     )
-                }
-
-                if (todoLoadError != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = t(R.string.error_list_not_loaded),
-                        color = MaterialTheme.colorScheme.error
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = todoLoadError.orEmpty(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedButton(onClick = { todoReloadKey++ }) {
-                        Text(t(R.string.retry))
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -770,7 +832,26 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedButton(
-                    onClick = { navController.popBackStack() }
+                    onClick = {
+                        val popped = navController.popBackStack()
+                        if (!popped) {
+                            if (storedUrl.isNotBlank() && storedToken.isNotBlank()) {
+                                navController.navigate(Screen.Shopping.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
+                                }
+                            } else {
+                                navController.navigate(Screen.Settings.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                    }
                 ) {
                     Text(t(R.string.clear_completed_confirm_btn_cancel))
                 }
@@ -786,6 +867,11 @@ fun SettingsScreen(
                             dataStore.saveHaUrl(cleanedUrl)
                             dataStore.saveHaToken(cleanedToken)
                             dataStore.saveTodoEntity(todoEntity)
+                            dataStore.saveTodoListName(
+                                todoListName.ifBlank {
+                                    todoOptions.firstOrNull { it.id == todoEntity }?.name.orEmpty()
+                                }
+                            )
                             dataStore.saveAreaOrder(
                                 ShoppingArea.serializeOrder(areaOrderDraft)
                             )

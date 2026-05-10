@@ -1,5 +1,6 @@
 package de.robnice.homeshoplist.data
 
+import de.robnice.homeshoplist.BuildConfig
 import de.robnice.homeshoplist.util.Debug
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -22,7 +23,11 @@ object HaServiceFactory {
         Debug.log("BASE URL: $normalizedBaseUrl")
 
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BASIC
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
 
         val client = HaOkHttpFactory.newBuilder()

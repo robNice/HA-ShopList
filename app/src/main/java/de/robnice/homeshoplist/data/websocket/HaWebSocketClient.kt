@@ -1,18 +1,28 @@
 package de.robnice.homeshoplist.data.websocket
 
+import de.robnice.homeshoplist.data.HaRealtimeClient
 import de.robnice.homeshoplist.data.HaOkHttpFactory
 import de.robnice.homeshoplist.util.Debug
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.*
 import org.json.JSONObject
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlinx.coroutines.*
 class HaWebSocketClient(
 
     private val baseUrl: String,
     private val token: String
-) {
+) : HaRealtimeClient {
 
     private fun isStaleSocket(socket: WebSocket): Boolean {
         return socket !== webSocket
@@ -25,27 +35,28 @@ class HaWebSocketClient(
 
     private var webSocket: WebSocket? = null
     private val messageId = AtomicInteger(1)
+    private val pendingRequests = ConcurrentHashMap<Int, CompletableDeferred<JSONObject>>()
 
     private val _events = MutableSharedFlow<JSONObject>(
         replay = 1
     )
 
-    val events = _events.asSharedFlow()
+    override val events = _events.asSharedFlow()
 
     private val _ready = MutableSharedFlow<Unit>(replay = 1)
-    val ready = _ready.asSharedFlow()
+    override val ready = _ready.asSharedFlow()
 
     private var isConnected = false
     private var isAuthenticated = false
 
     private val _authFailed = MutableSharedFlow<Unit>(replay = 1)
-    val authFailed = _authFailed.asSharedFlow()
+    override val authFailed = _authFailed.asSharedFlow()
 
     private val _connectionErrors = MutableSharedFlow<String>(replay = 1)
-    val connectionErrors = _connectionErrors.asSharedFlow()
+    override val connectionErrors = _connectionErrors.asSharedFlow()
 
     private val _disconnected = MutableSharedFlow<Unit>(replay = 1)
-    val disconnected = _disconnected.asSharedFlow()
+    override val disconnected = _disconnected.asSharedFlow()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var reconnectJob: Job? = null
@@ -58,7 +69,7 @@ class HaWebSocketClient(
     private var lastServerMessageAt = 0L
 
 
-    fun connect() {
+    override fun connect() {
         if (!reconnectAllowed) {
             Debug.log("WS connect skipped (not allowed)")
             return
@@ -128,6 +139,7 @@ class HaWebSocketClient(
             isConnecting = false
             this@HaWebSocketClient.webSocket = null
             stopHeartbeat()
+            failPendingRequests("WebSocket closed")
             Debug.log("WS CLOSED $code $reason")
             _disconnected.tryEmit(Unit)
             scheduleReconnect()
@@ -168,6 +180,13 @@ class HaWebSocketClient(
                     isAuthenticated = false
                     isConnected = false
                     isConnecting = false
+                    stopHeartbeat()
+                    failPendingRequests("WebSocket auth invalid")
+                    try {
+                        webSocket.close(1000, "Auth invalid")
+                    } catch (_: Exception) {
+                    }
+                    this@HaWebSocketClient.webSocket = null
                     _disconnected.tryEmit(Unit)
                     _authFailed.tryEmit(Unit)
                 }
@@ -179,6 +198,11 @@ class HaWebSocketClient(
 
                 else -> {
                     lastServerMessageAt = System.currentTimeMillis()
+                    json.optInt("id")
+                        .takeIf { it > 0 }
+                        ?.let { id ->
+                            pendingRequests.remove(id)?.complete(json)
+                        }
                     _events.tryEmit(json)
                 }
             }
@@ -198,6 +222,7 @@ class HaWebSocketClient(
             isConnecting = false
             this@HaWebSocketClient.webSocket = null
             stopHeartbeat()
+            failPendingRequests(t.message ?: "WebSocket failure")
             Debug.log("WS FAILURE")
             t.printStackTrace()
 
@@ -211,11 +236,46 @@ class HaWebSocketClient(
 
     fun isConnected(): Boolean = isConnected
 
-    fun isReady(): Boolean = isConnected && isAuthenticated && webSocket != null
+    override fun isReady(): Boolean = isConnected && isAuthenticated && webSocket != null
 
-    fun send(type: String, payload: JSONObject = JSONObject()): Boolean {
+    override fun send(type: String, payload: JSONObject): Boolean {
+        return sendInternal(
+            id = messageId.getAndIncrement(),
+            type = type,
+            payload = payload
+        )
+    }
+
+    override suspend fun request(type: String, payload: JSONObject, timeoutMillis: Long): JSONObject? {
+        if (!isReady()) {
+            return null
+        }
+
         val id = messageId.getAndIncrement()
+        val deferred = CompletableDeferred<JSONObject>()
+        pendingRequests[id] = deferred
 
+        val sent = sendInternal(
+            id = id,
+            type = type,
+            payload = payload
+        )
+
+        if (!sent) {
+            pendingRequests.remove(id)
+            return null
+        }
+
+        return try {
+            withTimeoutOrNull(timeoutMillis) {
+                deferred.await()
+            }
+        } finally {
+            pendingRequests.remove(id)
+        }
+    }
+
+    private fun sendInternal(id: Int, type: String, payload: JSONObject): Boolean {
         val msg = JSONObject()
             .put("id", id)
             .put("type", type)
@@ -234,7 +294,7 @@ class HaWebSocketClient(
         return sent
     }
 
-    fun ensureConnected() {
+    override fun ensureConnected() {
         if (!reconnectAllowed) return
         if (isConnecting) return
 
@@ -257,7 +317,7 @@ class HaWebSocketClient(
     }
 
 
-    fun setReconnectAllowed(allowed: Boolean) {
+    override fun setReconnectAllowed(allowed: Boolean) {
         reconnectAllowed = allowed
         Debug.log("WS reconnectAllowed=$allowed")
 
@@ -267,7 +327,7 @@ class HaWebSocketClient(
         }
     }
 
-    fun disconnect() {
+    override fun disconnect() {
         Debug.log("WS disconnect() called")
         manualDisconnect = true
         reconnectJob?.cancel()
@@ -321,9 +381,22 @@ class HaWebSocketClient(
         }
 
         webSocket = null
+        failPendingRequests("WebSocket connection reset")
         _disconnected.tryEmit(Unit)
         _connectionErrors.tryEmit(reason)
         scheduleReconnect()
+    }
+
+    private fun failPendingRequests(reason: String) {
+        if (pendingRequests.isEmpty()) {
+            return
+        }
+
+        val error = CancellationException(reason)
+        pendingRequests.values.forEach { deferred ->
+            deferred.completeExceptionally(error)
+        }
+        pendingRequests.clear()
     }
 
     private fun scheduleReconnect() {

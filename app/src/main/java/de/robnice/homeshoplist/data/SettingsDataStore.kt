@@ -15,6 +15,7 @@ class SettingsDataStore(private val context: Context) {
         private val HA_TOKEN = stringPreferencesKey("ha_token")
         private val KEY_NOTIFICATIONS = booleanPreferencesKey("notifications_enabled")
         private val TODO_ENTITY = stringPreferencesKey("todo_entity")
+        private val TODO_LIST_NAME = stringPreferencesKey("todo_list_name")
         private val LAST_USED_AREA = stringPreferencesKey("last_used_area")
         private val AREA_ORDER = stringPreferencesKey("area_order")
         private val ENABLED_AREAS = stringPreferencesKey("enabled_areas")
@@ -38,6 +39,9 @@ class SettingsDataStore(private val context: Context) {
 
     val todoEntity: Flow<String> = context.dataStore.data
         .map { it[TODO_ENTITY] ?: "todo.einkaufsliste" }
+
+    val todoListName: Flow<String> = context.dataStore.data
+        .map { it[TODO_LIST_NAME] ?: "" }
 
     val lastUsedArea: Flow<String> = context.dataStore.data
         .map { it[LAST_USED_AREA] ?: "" }
@@ -88,6 +92,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveTodoEntity(entity: String) {
         context.dataStore.edit {
             it[TODO_ENTITY] = entity
+        }
+    }
+
+    suspend fun saveTodoListName(name: String) {
+        context.dataStore.edit {
+            it[TODO_LIST_NAME] = name
         }
     }
 

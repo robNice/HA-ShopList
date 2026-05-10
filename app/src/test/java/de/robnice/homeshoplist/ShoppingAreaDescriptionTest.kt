@@ -1,8 +1,12 @@
 package de.robnice.homeshoplist
 
 import de.robnice.homeshoplist.model.ShoppingArea
+import de.robnice.homeshoplist.model.encodeAreaDescription
+import de.robnice.homeshoplist.model.encodeManagedItemName
 import de.robnice.homeshoplist.model.encodeMetaItemName
 import de.robnice.homeshoplist.model.isMetaItemName
+import de.robnice.homeshoplist.model.parseAreaDescription
+import de.robnice.homeshoplist.model.parseManagedItemName
 import de.robnice.homeshoplist.model.parseMetaItemName
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -11,6 +15,26 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ShoppingAreaDescriptionTest {
+
+    @Test
+    fun `parse managed area description`() {
+        val description = """.__ha_shoplist_area__:{"type":"ha-shoplist-area","version":1,"area":"dairy_eggs"}"""
+
+        assertEquals(ShoppingArea.DAIRY_EGGS, parseAreaDescription(description))
+    }
+
+    @Test
+    fun `ignore broken managed area description`() {
+        assertNull(parseAreaDescription(".__ha_shoplist_area__:{broken"))
+    }
+
+    @Test
+    fun `encode managed area description`() {
+        assertEquals(
+            """.__ha_shoplist_area__:{"type":"ha-shoplist-area","version":1,"area":"drinks"}""",
+            encodeAreaDescription(ShoppingArea.DRINKS)
+        )
+    }
 
     @Test
     fun `parse meta item name with known areas`() {
@@ -52,5 +76,23 @@ class ShoppingAreaDescriptionTest {
             """.__ha_shoplist_meta__:{"type":"ha-shoplist-meta","version":1,"areas":{"uid-1":"dairy_eggs","uid-2":"drinks"}}""",
             name
         )
+    }
+
+    @Test
+    fun `managed item name uses nullbyte separator`() {
+        val encoded = encodeManagedItemName("Tomaten", ShoppingArea.PRODUCE)
+        val managed = parseManagedItemName(encoded)
+
+        assertEquals("Tomaten\u0000 | produce", encoded)
+        assertEquals("Tomaten", managed.visibleName)
+        assertEquals(ShoppingArea.PRODUCE, managed.area)
+    }
+
+    @Test
+    fun `legacy visible pipe suffix is no longer parsed as area`() {
+        val managed = parseManagedItemName("Tomaten | other | produce")
+
+        assertEquals("Tomaten | other | produce", managed.visibleName)
+        assertNull(managed.area)
     }
 }
