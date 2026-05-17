@@ -101,10 +101,16 @@ class HaWebSocketClient(
 
         Debug.log("WS URL: $wsUrl")
 
-        val request = Request.Builder()
-            .url(wsUrl)
-            .header("Origin", baseUrl)
-            .build()
+        val request = try {
+            Request.Builder()
+                .url(wsUrl)
+                .header("Origin", baseUrl)
+                .build()
+        } catch (e: IllegalArgumentException) {
+            isConnecting = false
+            scope.launch { _connectionErrors.emit("Invalid URL: $baseUrl") }
+            return
+        }
 
         webSocket = client.newWebSocket(request, socketListener)
     }
