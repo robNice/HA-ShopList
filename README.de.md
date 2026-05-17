@@ -42,7 +42,7 @@ So erstellst du ihn:
 2. Klicke unten links auf dein **Benutzerprofil**
 3. Scrolle zum Abschnitt **Long-Lived Access Tokens**
 4. Klicke auf **Create Token**
-5. Vergib einen Namen (z. B. `HA Shopping List`)
+5. Vergib einen Namen (z. B. `Home Shopping List`)
 6. Kopiere den erzeugten Token
 
 ⚠️ Der Token wird **nur einmal angezeigt**. Speichere ihn daher direkt ab.
