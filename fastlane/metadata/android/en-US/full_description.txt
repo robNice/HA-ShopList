@@ -6,6 +6,11 @@ Features:
 - connect to a Home Assistant instance
 - use a selected shopping or todo list
 - add, check, uncheck, rename, sort, and delete items
+- assign categories when adding items
+- organize items in simple or categorized list view
+- change an item's category directly in the list
+- move items between categories with drag and drop
+- customize visible categories and their order in settings
 - receive live updates via Home Assistant WebSocket
 - simple interface focused on fast list usage while away from home
 
