@@ -1066,7 +1066,7 @@ fun ShoppingScreen(
                                                                                 resolveSimpleDropSlot(
                                                                                     items = currentLocalOpenItems,
                                                                                     draggedItemId = id,
-                                                                                    itemBounds = itemBounds,
+                                                                                    itemBounds = dragStartItemBounds,
                                                                                     pointerYInRoot = dragPointerYInRoot
                                                                                 )
                                                                             }
@@ -1728,7 +1728,8 @@ private data class DropSlotData(
     val key: String,
     val insertBeforeItemId: String?,
     val area: ShoppingArea,
-    val isNoOp: Boolean
+    val isNoOp: Boolean,
+    val isStartSlot: Boolean = false
 )
 
 private sealed interface OpenListEntry {
@@ -1760,15 +1761,17 @@ private fun buildSimpleOpenDisplayEntries(
     if (items.isEmpty()) return emptyList()
 
     val entries = mutableListOf<OpenListEntry>()
+    val startInsertBeforeId = items.firstOrNull { it.id != draggingItemId }?.id
     val startSlot = DropSlotData(
         key = "slot_simple_start",
-        insertBeforeItemId = items.first().id,
+        insertBeforeItemId = startInsertBeforeId,
         area = ShoppingArea.OTHER,
         isNoOp = isNoOpDropSlot(
-            insertBeforeItemId = items.first().id,
+            insertBeforeItemId = startInsertBeforeId,
             draggingItemId = draggingItemId,
             previousItemId = null
-        )
+        ),
+        isStartSlot = true
     )
     if (!startSlot.isNoOp) {
         entries += OpenListEntry.DropSlotEntry(startSlot)
@@ -1810,15 +1813,17 @@ private fun buildOpenDisplayEntries(
         if (areaItems.isEmpty()) return@forEach
 
         entries += OpenListEntry.HeaderEntry(area)
+        val areaStartInsertBeforeId = areaItems.firstOrNull { it.id != draggingItemId }?.id
         val startSlot = DropSlotData(
             key = "slot_${area.key}_start",
-            insertBeforeItemId = areaItems.first().id,
+            insertBeforeItemId = areaStartInsertBeforeId,
             area = area,
             isNoOp = isNoOpDropSlot(
-                insertBeforeItemId = areaItems.first().id,
+                insertBeforeItemId = areaStartInsertBeforeId,
                 draggingItemId = draggingItemId,
                 previousItemId = null
-            )
+            ),
+            isStartSlot = true
         )
         entries += OpenListEntry.DropSlotEntry(startSlot)
 
@@ -1978,12 +1983,16 @@ private fun applyDropSlotToItems(
     val movedItem = items.firstOrNull { it.id == itemId } ?: return items
     val remainingItems = items.filterNot { it.id == itemId }.toMutableList()
     val targetIndex =
-        slot.insertBeforeItemId
-            ?.let { insertBeforeId ->
-                remainingItems.indexOfFirst { it.id == insertBeforeId }
-                    .takeIf { it >= 0 }
-            }
-            ?: remainingItems.size
+        if (slot.isStartSlot && slot.insertBeforeItemId == itemId) {
+            0
+        } else {
+            slot.insertBeforeItemId
+                ?.let { insertBeforeId ->
+                    remainingItems.indexOfFirst { it.id == insertBeforeId }
+                        .takeIf { it >= 0 }
+                }
+                ?: remainingItems.size
+        }
 
     val currentArea = movedItem.area ?: ShoppingArea.OTHER
     val previousArea = remainingItems.getOrNull(targetIndex - 1)?.area ?: ShoppingArea.OTHER
