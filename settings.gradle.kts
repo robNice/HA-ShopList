@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "HomeAsssistant-ShoppingList"
 include(":app")
+include(":wear")

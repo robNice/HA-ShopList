@@ -3,7 +3,28 @@
     "allow": [
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\cornice\\\\AndroidStudioProjects\\\\HomeAsssistantShoppingList\" -Recurse -File)",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(~/Android/Sdk/platform-tools/adb logcat *)"
+      "Bash(~/Android/Sdk/platform-tools/adb logcat *)",
+      "Bash(mkdir -p \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/java/de/robnice/homeshoplist/wear/data\")",
+      "Bash(mkdir -p \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/java/de/robnice/homeshoplist/wear/model\")",
+      "Bash(mkdir -p \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/java/de/robnice/homeshoplist/wear/ui\")",
+      "Bash(mkdir -p \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/res/values\")",
+      "Bash(mkdir -p \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/res/xml\")",
+      "Bash(powershell *)",
+      "Bash(cp -r \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/app/src/main/res/mipmap-hdpi\" \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/res/\")",
+      "Bash(cp -r \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/app/src/main/res/mipmap-mdpi\" \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/res/\")",
+      "Bash(cp -r \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/app/src/main/res/mipmap-xhdpi\" \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/res/\")",
+      "Bash(cp -r \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/app/src/main/res/mipmap-xxhdpi\" \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/res/\")",
+      "Bash(cp -r \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/app/src/main/res/mipmap-xxxhdpi\" \"C:/Users/cornice/AndroidStudioProjects/HomeAsssistantShoppingList/wear/src/main/res/\")",
+      "Bash(./gradlew :wear:assembleDebug --stacktrace)",
+      "Bash(./gradlew :wear:assembleDebug)",
+      "Bash(./gradlew :app:assembleGithubDebug)",
+      "Bash(adb devices *)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices -l)",
+      "Bash(./gradlew :wear:assembleDebug :app:assembleGithubDebug)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\cornice\\\\AndroidStudioProjects\\\\HomeAsssistantShoppingList\\\\wear\\\\src\\\\main\\\\java\\\\de\\\\robnice\\\\homeshoplist\\\\wear\\\\tile\")",
+      "Bash(Out-Null)",
+      "Bash(Write-Host \"created\")",
+      "PowerShell(New-Item *)"
     ]
   }
 }

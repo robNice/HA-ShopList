@@ -23,6 +23,7 @@ Standalone-Android-App für die **Home Assistant Todo-Listen** mit Live-Updates 
 - [Items sortieren](#items-sortieren)
 - [Settings](#settings)
 - [Erledigte Items löschen](#erledigte-items-löschen)
+- [Wear OS Companion App](#wear-os-companion-app)
 - [Screenshots](#screenshots)
 ---
 
@@ -149,6 +150,41 @@ Vorgehen:
 3. Löschvorgang im Dialog bestätigen
 
 Alle erledigten Items werden anschließend aus der Liste entfernt.
+
+## Wear OS Companion App
+
+Die App enthält eine **Wear OS Companion App** für den schnellen Zugriff auf deine Einkaufsliste direkt von der Uhr aus.
+
+### Funktionen
+
+- Items abhaken und wieder öffnen
+- Kategorisierte Ansicht mit Bereichs-Icons (spiegelt den in der Handy-App eingestellten Anzeigemodus)
+- Alle erledigten Items löschen (mit Bestätigungsdialog)
+- Einstellungen (URL, Token, Liste, Anzeigemodus) werden automatisch von der Handy-App übertragen — keine manuelle Konfiguration an der Uhr notwendig
+
+### Installation
+
+Die Wear OS App ist in der gleichen APK enthalten wie die Handy-App. Sobald die Handy-App installiert ist, wird die Watch-App automatisch auf der gekoppelten Wear OS Uhr bereitgestellt, wenn beide Geräte per Bluetooth verbunden sind.
+
+> Die Handy-App muss **nicht geöffnet** sein, damit die Watch-App funktioniert. Die Einstellungen werden im Hintergrund auf die Uhr übertragen.
+
+### Kachel
+
+Zusätzlich zur App steht eine **Kachel** für das Zifferblatt-Karussell zur Verfügung.
+
+- Zeigt bis zu 7 Items direkt auf der Kachel
+- Auf ein Item tippen, um es sofort zu erledigen oder wieder zu öffnen
+- Aktualisiert sich automatisch alle 10 Minuten
+- Verwendet denselben Anzeigemodus (einfach oder kategorisiert mit Bereichs-Icons) wie die Handy-App
+
+**Kachel hinzufügen:**
+
+1. Zifferblatt lang drücken
+2. Nach links zum Kachel-Karussell wischen
+3. Auf **+** tippen
+4. **Home ShopList** auswählen
+
+---
 
 ## Screenshots
 <img src="docs/hsl_dark_categories.png" alt="Dark mode categories" width="250">

@@ -16,8 +16,8 @@ android {
         applicationId = "de.robnice.homeshoplist"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1009004
-        versionName = "1.9.4"
+        versionCode = 1010000
+        versionName = "1.10.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -79,6 +79,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.play.services.wearable)
     implementation(libs.reorderable)
     implementation(libs.moshi.kotlin.v1150)
     implementation(libs.retrofit)
