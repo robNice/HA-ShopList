@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">HomeShopList</string>
     <string name="settings">Instellingen</string>
     <string name="settings_cta">Instellingen openen</string>
@@ -31,6 +31,9 @@
     <string name="appIsRunning">HomeShopList actief</string>
     <string name="reconnected">Verbinding hersteld</string>
     <string name="settings_list">Lijst</string>
+    <string name="list_display_mode_label">Lijstweergave</string>
+    <string name="list_display_mode_simple">Eenvoudig</string>
+    <string name="list_display_mode_categorized">Gecategoriseerd</string>
     <string name="loading_failed">Laden mislukt</string>
     <string name="loading_lists">Lijsten laden</string>
     <string name="error_list_not_loaded">Lijsten konden niet worden geladen</string>

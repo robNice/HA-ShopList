@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lista de la compra</string>
+    <string name="status_open">%d pendientes</string>
+    <string name="confirm_delete_title">¿Borrar completados?</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete">Eliminar</string>
+    <string name="cd_delete_completed">Borrar completados</string>
+    <string name="setup_hint">Abre la app del teléfono – los ajustes se transferirán automáticamente.</string>
+    <string name="tile_setup">Abrir app del teléfono</string>
+    <string name="tile_error">Error al cargar</string>
+    <string name="tile_empty">¡Todo listo!</string>
+    <string name="tile_overflow">+%d más</string>
+</resources>

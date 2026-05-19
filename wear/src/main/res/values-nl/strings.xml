@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Boodschappenlijst</string>
+    <string name="status_open">%d open</string>
+    <string name="confirm_delete_title">Voltooide verwijderen?</string>
+    <string name="cancel">Annuleren</string>
+    <string name="delete">Verwijderen</string>
+    <string name="cd_delete_completed">Voltooide items wissen</string>
+    <string name="setup_hint">Open de telefoon-app – instellingen worden automatisch overgedragen.</string>
+    <string name="tile_setup">Telefoon-app openen</string>
+    <string name="tile_error">Laadfout</string>
+    <string name="tile_empty">Alles klaar!</string>
+    <string name="tile_overflow">+%d meer</string>
+</resources>

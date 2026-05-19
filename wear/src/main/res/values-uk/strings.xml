@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Список покупок</string>
+    <string name="status_open">%d відкрито</string>
+    <string name="confirm_delete_title">Видалити виконані?</string>
+    <string name="cancel">Скасувати</string>
+    <string name="delete">Видалити</string>
+    <string name="cd_delete_completed">Очистити виконані</string>
+    <string name="setup_hint">Відкрийте додаток на телефоні – налаштування передадуться автоматично.</string>
+    <string name="tile_setup">Відкрити додаток</string>
+    <string name="tile_error">Помилка завантаження</string>
+    <string name="tile_empty">Все готово!</string>
+    <string name="tile_overflow">+%d ще</string>
+</resources>

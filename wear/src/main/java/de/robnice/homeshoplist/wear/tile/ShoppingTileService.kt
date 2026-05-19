@@ -16,6 +16,7 @@ import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
 import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
+import de.robnice.homeshoplist.R
 import de.robnice.homeshoplist.wear.WearSettingsStore
 import de.robnice.homeshoplist.wear.data.HaWearClient
 import de.robnice.homeshoplist.wear.model.AREA_EMOJIS
@@ -39,7 +40,7 @@ class ShoppingTileService : TileService() {
                 val store = WearSettingsStore(this@ShoppingTileService)
                 val settings = store.getSettings()
                 if (settings == null) {
-                    future.set(buildSimpleTile("Handy-App öffnen", COLOR_HINT))
+                    future.set(buildSimpleTile(getString(R.string.tile_setup), COLOR_HINT))
                     return@launch
                 }
                 val client = HaWearClient(settings.url, settings.token, settings.entity)
@@ -61,7 +62,7 @@ class ShoppingTileService : TileService() {
 
                 future.set(buildTile(items, store.getDisplayMode()))
             } catch (e: Exception) {
-                future.set(buildSimpleTile("Fehler beim Laden", COLOR_ERROR))
+                future.set(buildSimpleTile(getString(R.string.tile_error), COLOR_ERROR))
             }
         }
         return future
@@ -92,7 +93,7 @@ class ShoppingTileService : TileService() {
         var itemsShown = 0
 
         if (items.isEmpty()) {
-            column.addContent(simpleText("Keine Einträge", COLOR_HINT, 14f))
+            column.addContent(simpleText(getString(R.string.tile_empty), COLOR_HINT, 14f))
         } else {
             // Unchecked items — categorized with emoji headers or flat
             if (categorized) {
@@ -130,7 +131,7 @@ class ShoppingTileService : TileService() {
 
             val overflow = items.size - itemsShown
             if (overflow > 0) {
-                column.addContent(simpleText("+$overflow weitere", COLOR_HINT, 11f))
+                column.addContent(simpleText(getString(R.string.tile_overflow, overflow), COLOR_HINT, 11f))
             }
         }
 

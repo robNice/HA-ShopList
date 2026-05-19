@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">HomeShopList</string>
     <string name="settings">Configurações</string>
     <string name="settings_cta">Abrir configurações</string>
@@ -31,6 +31,9 @@
     <string name="appIsRunning">HomeShopList em execução</string>
     <string name="reconnected">Conexão restabelecida</string>
     <string name="settings_list">Lista</string>
+    <string name="list_display_mode_label">Exibição da lista</string>
+    <string name="list_display_mode_simple">Simples</string>
+    <string name="list_display_mode_categorized">Categorizado</string>
     <string name="loading_failed">Falha ao carregar</string>
     <string name="loading_lists">Carregando listas</string>
     <string name="error_list_not_loaded">Não foi possível carregar as listas</string>

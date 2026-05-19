@@ -24,11 +24,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import de.robnice.homeshoplist.R
 import androidx.wear.compose.material.AutoCenteringParams
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -149,7 +151,7 @@ private fun ShoppingListScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.DeleteSweep,
-                        contentDescription = "Erledigte löschen",
+                        contentDescription = stringResource(R.string.cd_delete_completed),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -162,13 +164,13 @@ private fun ShoppingListScreen(
         onDismissRequest = { showConfirmDelete = false }
     ) {
         Alert(
-            title = { Text("Erledigte löschen?") },
+            title = { Text(stringResource(R.string.confirm_delete_title)) },
             negativeButton = {
                 Button(
                     onClick = { showConfirmDelete = false },
                     colors = ButtonDefaults.secondaryButtonColors()
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Abbrechen")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel))
                 }
             },
             positiveButton = {
@@ -176,7 +178,7 @@ private fun ShoppingListScreen(
                     onClearCompleted()
                     showConfirmDelete = false
                 }) {
-                    Icon(Icons.Default.Check, contentDescription = "Löschen")
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.delete))
                 }
             }
         )
@@ -210,7 +212,7 @@ private fun StatusRow(uncheckedCount: Int, isLoading: Boolean, error: String?) {
             modifier = Modifier.size(20.dp)
         )
         else -> Text(
-            text = "$uncheckedCount offen",
+            text = stringResource(R.string.status_open, uncheckedCount),
             style = MaterialTheme.typography.caption2,
             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
         )
@@ -261,7 +263,7 @@ private fun SetupScreen() {
             tint = MaterialTheme.colors.primary
         )
         Text(
-            text = "Handy-App öffnen – Einstellungen werden automatisch übertragen.",
+            text = stringResource(R.string.setup_hint),
             style = MaterialTheme.typography.caption2,
             modifier = Modifier.padding(top = 8.dp)
         )
