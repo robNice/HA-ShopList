@@ -23,6 +23,7 @@ Standalone Android app for **Home Assistant Todo Lists** with live updates via t
 - [Sort Items](#sort-items)
 - [Settings](#settings)
 - [Delete Completed Items](#delete-completed-items)
+- [Wear OS Companion App](#wear-os-companion-app)
 - [Screenshots](#screenshots)
 
 ---
@@ -151,6 +152,41 @@ Steps:
 
 All completed items will then be removed from the list.
 
+
+## Wear OS Companion App
+
+The app includes a **Wear OS companion app** for quick access to your shopping list directly from your watch.
+
+### Features
+
+- Check and uncheck items
+- Categorized view with area icons (mirrors the display mode set in the phone app)
+- Delete all completed items (with confirmation dialog)
+- Settings (URL, token, list, display mode) are synced automatically from the phone app — no manual setup required on the watch
+
+### Installation
+
+The Wear OS app is bundled in the same APK as the phone app. Once the phone app is installed, the watch app is automatically deployed to your paired Wear OS watch when both devices are connected via Bluetooth.
+
+> The phone app does **not** need to be open for the watch app to work. Settings are transferred to the watch in the background.
+
+### Tile
+
+In addition to the app, a **tile** is available for the watch face carousel.
+
+- Shows up to 7 items directly on the tile
+- Tap any item to check or uncheck it instantly
+- Refreshes automatically every 10 minutes
+- Reflects the same display mode (simple or categorized with area icons) as the phone app
+
+**To add the tile:**
+
+1. Long-press the watch face
+2. Swipe left to the tile carousel
+3. Tap the **+** button
+4. Select **Home ShopList**
+
+---
 
 ## Screenshots
 <img src="docs/hsl_dark_categories.png" alt="Dark mode categories" width="250">

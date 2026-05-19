@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Einkaufsliste</string>
+    <string name="status_open">%d offen</string>
+    <string name="confirm_delete_title">Erledigte löschen?</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="delete">Löschen</string>
+    <string name="cd_delete_completed">Erledigte löschen</string>
+    <string name="setup_hint">Handy-App öffnen – Einstellungen werden automatisch übertragen.</string>
+    <string name="tile_setup">Handy-App öffnen</string>
+    <string name="tile_error">Fehler beim Laden</string>
+    <string name="tile_empty">Alles erledigt!</string>
+    <string name="tile_overflow">+%d weitere</string>
+</resources>

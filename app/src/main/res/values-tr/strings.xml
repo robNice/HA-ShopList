@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">HomeShopList</string>
     <string name="settings">Ayarlar</string>
     <string name="settings_cta">Ayarları aç</string>
@@ -31,6 +31,9 @@
     <string name="appIsRunning">HomeShopList çalışıyor</string>
     <string name="reconnected">Bağlantı yeniden kuruldu</string>
     <string name="settings_list">Liste</string>
+    <string name="list_display_mode_label">Liste görünümü</string>
+    <string name="list_display_mode_simple">Basit</string>
+    <string name="list_display_mode_categorized">Kategorize</string>
     <string name="loading_failed">Yükleme başarısız</string>
     <string name="loading_lists">Listeler yükleniyor</string>
     <string name="error_list_not_loaded">Listeler yüklenemedi</string>

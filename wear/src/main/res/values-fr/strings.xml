@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Liste de courses</string>
+    <string name="status_open">%d en cours</string>
+    <string name="confirm_delete_title">Supprimer les terminés ?</string>
+    <string name="cancel">Annuler</string>
+    <string name="delete">Supprimer</string>
+    <string name="cd_delete_completed">Supprimer les éléments terminés</string>
+    <string name="setup_hint">Ouvrez l\'app téléphone – les paramètres seront transférés automatiquement.</string>
+    <string name="tile_setup">Ouvrir l\'app téléphone</string>
+    <string name="tile_error">Erreur de chargement</string>
+    <string name="tile_empty">Tout est fait !</string>
+    <string name="tile_overflow">+%d autres</string>
+</resources>

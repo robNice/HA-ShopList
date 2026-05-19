@@ -64,6 +64,8 @@ import de.robnice.homeshoplist.model.label
 import de.robnice.homeshoplist.ui.navigation.Screen
 import de.robnice.homeshoplist.ui.util.t
 import de.robnice.homeshoplist.util.normalizeHaUrl
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -879,6 +881,18 @@ fun SettingsScreen(
                                 ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
                             )
                             dataStore.saveListDisplayMode(listDisplayMode.storageValue)
+                            if (cleanedUrl.isNotBlank() && cleanedToken.isNotBlank()) {
+                                runCatching {
+                                    val putRequest = PutDataMapRequest.create("/ha_settings").apply {
+                                        dataMap.putString("ha_url", cleanedUrl)
+                                        dataMap.putString("ha_token", cleanedToken)
+                                        dataMap.putString("todo_entity", todoEntity)
+                                        dataMap.putString("list_display_mode", listDisplayMode.storageValue)
+                                        dataMap.putLong("timestamp", System.currentTimeMillis())
+                                    }.asPutDataRequest().setUrgent()
+                                    Wearable.getDataClient(context).putDataItem(putRequest)
+                                }
+                            }
                             navController.navigate(Screen.Shopping.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     inclusive = true

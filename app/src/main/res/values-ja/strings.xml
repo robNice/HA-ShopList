@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">HomeShopList</string>
     <string name="settings">設定</string>
     <string name="settings_cta">設定を開く</string>
@@ -31,6 +31,9 @@
     <string name="appIsRunning">HomeShopList 実行中</string>
     <string name="reconnected">接続が復旧しました</string>
     <string name="settings_list">リスト</string>
+    <string name="list_display_mode_label">リスト表示</string>
+    <string name="list_display_mode_simple">シンプル</string>
+    <string name="list_display_mode_categorized">カテゴリ別</string>
     <string name="loading_failed">読み込みに失敗しました</string>
     <string name="loading_lists">リストを読み込み中</string>
     <string name="error_list_not_loaded">リストを読み込めませんでした</string>

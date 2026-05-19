@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">HomeShopList</string>
     <string name="settings">설정</string>
     <string name="settings_cta">설정 열기</string>
@@ -31,6 +31,9 @@
     <string name="appIsRunning">HomeShopList 실행 중</string>
     <string name="reconnected">연결이 복구되었습니다</string>
     <string name="settings_list">목록</string>
+    <string name="list_display_mode_label">목록 표시</string>
+    <string name="list_display_mode_simple">단순</string>
+    <string name="list_display_mode_categorized">분류별</string>
     <string name="loading_failed">로드 실패</string>
     <string name="loading_lists">목록 불러오는 중</string>
     <string name="error_list_not_loaded">목록을 불러올 수 없습니다</string>

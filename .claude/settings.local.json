@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\cornice\\\\AndroidStudioProjects\\\\HomeAsssistantShoppingList\" -Recurse -File)",
-      "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(~/Android/Sdk/platform-tools/adb logcat *)"
-    ]
-  }
-}
