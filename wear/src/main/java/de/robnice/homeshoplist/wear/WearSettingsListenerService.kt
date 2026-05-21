@@ -1,8 +1,10 @@
 package de.robnice.homeshoplist.wear
 
+import androidx.wear.tiles.TileService
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.WearableListenerService
+import de.robnice.homeshoplist.wear.tile.ShoppingTileService
 
 class WearSettingsListenerService : WearableListenerService() {
 
@@ -17,6 +19,10 @@ class WearSettingsListenerService : WearableListenerService() {
             val store = WearSettingsStore(applicationContext)
             store.saveSettings(url, token, entity)
             dataMap.getString("list_display_mode")?.let { store.saveDisplayMode(it) }
+            runCatching {
+                TileService.getUpdater(applicationContext)
+                    .requestUpdate(ShoppingTileService::class.java)
+            }
         }
     }
 }
