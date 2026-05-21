@@ -28,9 +28,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.robnice.homeshoplist.R
+import kotlinx.coroutines.launch
 import androidx.wear.compose.material.AutoCenteringParams
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -40,8 +47,10 @@ import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.CompactButton
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyColumn
+import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.Vignette
@@ -49,6 +58,7 @@ import androidx.wear.compose.material.VignettePosition
 import androidx.wear.compose.material.dialog.Alert
 import androidx.wear.compose.material.dialog.Dialog
 import androidx.wear.compose.material.items
+import androidx.wear.compose.material.rememberScalingLazyListState
 import de.robnice.homeshoplist.wear.WearViewModel
 import de.robnice.homeshoplist.wear.model.AREA_EMOJIS
 import de.robnice.homeshoplist.wear.model.WearShoppingItem
@@ -71,9 +81,12 @@ fun WearApp(viewModel: WearViewModel) {
         }
     }
 
+    val listState = rememberScalingLazyListState()
+
     Scaffold(
         timeText = { TimeText() },
-        vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) }
+        vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) },
+        positionIndicator = { PositionIndicator(scalingLazyListState = listState) }
     ) {
         if (!hasSettings) {
             SetupScreen()
@@ -84,7 +97,8 @@ fun WearApp(viewModel: WearViewModel) {
                 error = error,
                 listDisplayMode = listDisplayMode,
                 onToggle = viewModel::toggleItem,
-                onClearCompleted = viewModel::clearCompleted
+                onClearCompleted = viewModel::clearCompleted,
+                listState = listState
             )
         }
     }
@@ -97,16 +111,29 @@ private fun ShoppingListScreen(
     error: String?,
     listDisplayMode: String,
     onToggle: (WearShoppingItem) -> Unit,
-    onClearCompleted: () -> Unit
+    onClearCompleted: () -> Unit,
+    listState: ScalingLazyListState
 ) {
     val unchecked = items.filter { !it.complete }
     val checked = items.filter { it.complete }
     val categorized = listDisplayMode == "categorized"
     var showConfirmDelete by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     ScalingLazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        autoCentering = AutoCenteringParams(itemIndex = 0)
+        modifier = Modifier
+            .fillMaxSize()
+            .focusRequester(focusRequester)
+            .onRotaryScrollEvent { event ->
+                coroutineScope.launch { listState.scrollBy(event.verticalScrollPixels) }
+                true
+            }
+            .focusable(),
+        autoCentering = AutoCenteringParams(itemIndex = 0),
+        state = listState
     ) {
         item(key = "status_row") {
             StatusRow(uncheckedCount = unchecked.size, isLoading = isLoading, error = error)

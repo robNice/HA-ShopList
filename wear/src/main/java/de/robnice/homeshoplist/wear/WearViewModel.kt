@@ -1,6 +1,8 @@
 package de.robnice.homeshoplist.wear
 
 import android.app.Application
+import android.content.SharedPreferences
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.DataEvent
@@ -31,6 +33,25 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
     val listDisplayMode = _listDisplayMode.asStateFlow()
 
     private var haClient: HaWearClient? = null
+    private var activeSettings: WearSettingsStore.WearSettings? = null
+
+    // SharedPreferences backing WearSettingsStore — must match the name used there.
+    private val prefs: SharedPreferences =
+        app.getSharedPreferences("wear_ha_settings", android.content.Context.MODE_PRIVATE)
+
+    // Fires on the main thread immediately after WearSettingsListenerService writes
+    // new settings, so the app reacts without waiting for the next 8-second refresh tick.
+    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key !in setOf("ha_url", "ha_token", "todo_entity", "list_display_mode")) return@OnSharedPreferenceChangeListener
+        val latest = settingsStore.getSettings() ?: return@OnSharedPreferenceChangeListener
+        if (latest != activeSettings) {
+            initClient(latest.url, latest.token, latest.entity)
+            val newMode = settingsStore.getDisplayMode()
+            if (_listDisplayMode.value != newMode) _listDisplayMode.value = newMode
+            refresh()
+            requestTileUpdate()
+        }
+    }
 
     private val dataListener = com.google.android.gms.wearable.DataClient.OnDataChangedListener { events ->
         events.forEach { event ->
@@ -54,16 +75,19 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     init {
+        prefs.registerOnSharedPreferenceChangeListener(prefsListener)
         Wearable.getDataClient(app).addListener(dataListener)
         val settings = settingsStore.getSettings()
         if (settings != null) {
             initClient(settings.url, settings.token, settings.entity)
         }
-        requestSettingsFromPhone()
+        loadSettingsFromDataLayer()
     }
 
     private fun initClient(url: String, token: String, entity: String) {
+        val settings = WearSettingsStore.WearSettings(url, token, entity)
         haClient = HaWearClient(url, token, entity)
+        activeSettings = settings
         _hasSettings.value = true
     }
 
@@ -113,6 +137,31 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private fun loadSettingsFromDataLayer() {
+        Wearable.getDataClient(getApplication<Application>())
+            .getDataItems(Uri.parse("wear://*/ha_settings"))
+            .addOnSuccessListener { dataItems ->
+                var found = false
+                dataItems.forEach { dataItem ->
+                    val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                    val url = dataMap.getString("ha_url")?.takeIf { it.isNotBlank() } ?: return@forEach
+                    val token = dataMap.getString("ha_token")?.takeIf { it.isNotBlank() } ?: return@forEach
+                    val entity = dataMap.getString("todo_entity") ?: return@forEach
+                    settingsStore.saveSettings(url, token, entity)
+                    dataMap.getString("list_display_mode")?.let {
+                        settingsStore.saveDisplayMode(it)
+                        _listDisplayMode.value = it
+                    }
+                    initClient(url, token, entity)
+                    refresh()
+                    found = true
+                }
+                dataItems.release()
+                if (!found) requestSettingsFromPhone()
+            }
+            .addOnFailureListener { requestSettingsFromPhone() }
+    }
+
     private fun requestSettingsFromPhone() {
         Wearable.getNodeClient(getApplication<Application>())
             .connectedNodes
@@ -126,6 +175,7 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
 
     override fun onCleared() {
         super.onCleared()
+        prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
         Wearable.getDataClient(getApplication<Application>()).removeListener(dataListener)
     }
 }

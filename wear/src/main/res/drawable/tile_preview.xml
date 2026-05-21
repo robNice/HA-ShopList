@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="300dp"
+    android:viewportWidth="300"
+    android:viewportHeight="300">
+
+    <!-- Black circular watch background -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M150,0 C67.2,0 0,67.2 0,150 C0,232.8 67.2,300 150,300 C232.8,300 300,232.8 300,150 C300,67.2 232.8,0 150,0 Z" />
+
+    <!-- Row 1: checkbox square + text bar (unchecked, primary color) -->
+    <path android:fillColor="#4FC3F7" android:pathData="M48,82 h18 v18 h-18 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M74,87 h130 v8 h-130 Z" />
+
+    <!-- Row 2 -->
+    <path android:fillColor="#4FC3F7" android:pathData="M48,108 h18 v18 h-18 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M74,113 h105 v8 h-105 Z" />
+
+    <!-- Row 3 -->
+    <path android:fillColor="#4FC3F7" android:pathData="M48,134 h18 v18 h-18 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M74,139 h148 v8 h-148 Z" />
+
+    <!-- Row 4 -->
+    <path android:fillColor="#4FC3F7" android:pathData="M48,160 h18 v18 h-18 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M74,165 h90 v8 h-90 Z" />
+
+    <!-- Row 5: checked item (gray) -->
+    <path android:fillColor="#666666" android:pathData="M48,186 h18 v18 h-18 Z" />
+    <path android:fillColor="#666666" android:pathData="M74,191 h120 v8 h-120 Z" />
+
+    <!-- Row 6: checked item (gray) -->
+    <path android:fillColor="#666666" android:pathData="M48,212 h18 v18 h-18 Z" />
+    <path android:fillColor="#666666" android:pathData="M74,217 h95 v8 h-95 Z" />
+
+</vector>
