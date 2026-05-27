@@ -29,7 +29,7 @@ fun ListDropdown(
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded)
             },
-            modifier = Modifier.menuAnchor()
+            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
         )
 
         ExposedDropdownMenu(

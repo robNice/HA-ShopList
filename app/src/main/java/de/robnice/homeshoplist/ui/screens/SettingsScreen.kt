@@ -525,7 +525,7 @@ fun SettingsScreen(
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = todoExpanded)
                                 },
                                 modifier = Modifier
-                                    .menuAnchor()
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                                     .fillMaxWidth(),
                                 colors = settingsTextFieldColors()
                             )
