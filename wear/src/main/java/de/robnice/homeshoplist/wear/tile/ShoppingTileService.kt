@@ -12,6 +12,7 @@ import androidx.wear.protolayout.TimelineBuilders
 import androidx.wear.protolayout.expression.AppDataKey
 import androidx.wear.protolayout.expression.DynamicBuilders
 import androidx.wear.protolayout.expression.DynamicDataBuilders
+import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
 import androidx.wear.tiles.TileService
@@ -74,6 +75,12 @@ class ShoppingTileService : TileService() {
         val future = ResolvableFuture.create<ResourceBuilders.Resources>()
         future.set(ResourceBuilders.Resources.Builder().setVersion("1").build())
         return future
+    }
+
+    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
+        runCatching {
+            getUpdater(this).requestUpdate(ShoppingTileService::class.java)
+        }
     }
 
     override fun onDestroy() {
