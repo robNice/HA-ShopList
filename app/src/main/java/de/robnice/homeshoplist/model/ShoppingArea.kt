@@ -116,14 +116,6 @@ fun ShoppingArea.label(): String {
         ShoppingArea.COLD_CUTS -> R.string.area_cold_cuts
         ShoppingArea.REFRIGERATED_CASES -> R.string.area_refrigerated_cases
         ShoppingArea.BUTCHER_COUNTER -> R.string.area_butcher_counter
-        ShoppingArea.AREA_1 -> R.string.area_1
-        ShoppingArea.AREA_2 -> R.string.area_2
-        ShoppingArea.AREA_3 -> R.string.area_3
-        ShoppingArea.AREA_4 -> R.string.area_4
-        ShoppingArea.AREA_5 -> R.string.area_5
-        ShoppingArea.AREA_6 -> R.string.area_6
-        ShoppingArea.AREA_7 -> R.string.area_7
-        ShoppingArea.AREA_8 -> R.string.area_8
         ShoppingArea.IMPULSE_BUY -> R.string.area_impulse_buy
         ShoppingArea.FROZEN -> R.string.area_frozen
         ShoppingArea.DRY_GOODS -> R.string.area_dry_goods
@@ -143,6 +135,14 @@ fun ShoppingArea.label(): String {
         ShoppingArea.HEALTH -> R.string.area_health
         ShoppingArea.NON_FOOD -> R.string.area_non_food
         ShoppingArea.OTHER -> R.string.area_other
+        ShoppingArea.AREA_1 -> R.string.area_1
+        ShoppingArea.AREA_2 -> R.string.area_2
+        ShoppingArea.AREA_3 -> R.string.area_3
+        ShoppingArea.AREA_4 -> R.string.area_4
+        ShoppingArea.AREA_5 -> R.string.area_5
+        ShoppingArea.AREA_6 -> R.string.area_6
+        ShoppingArea.AREA_7 -> R.string.area_7
+        ShoppingArea.AREA_8 -> R.string.area_8
     }
     return stringResource(resId)
 }
