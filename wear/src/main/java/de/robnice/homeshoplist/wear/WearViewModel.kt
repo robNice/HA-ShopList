@@ -104,8 +104,11 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                _items.value = client.fetchItems()
+                val newItems = client.fetchItems()
+                val changed = newItems != _items.value
+                _items.value = newItems
                 _error.value = null
+                if (changed) requestTileUpdate()
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {

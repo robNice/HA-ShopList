@@ -255,7 +255,7 @@ class ShoppingTileService : TileService() {
 
     companion object {
         private const val MAX_VISIBLE_ITEMS = 7
-        private const val FRESHNESS_INTERVAL_MS = 10L * 60 * 1000
+        private const val FRESHNESS_INTERVAL_MS = 5L * 60 * 1000
         private val COLOR_WHITE = 0xFFFFFFFF.toInt()
         private val COLOR_CHECKED = 0xFF888888.toInt()
         private val COLOR_HINT = 0xFFAAAAAA.toInt()
