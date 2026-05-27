@@ -60,7 +60,7 @@ class ShoppingTileService : TileService() {
                     }
                 }
 
-                future.set(buildTile(items, store.getDisplayMode()))
+                future.set(buildTile(items, store.getDisplayMode(), store.getAreaOrder()))
             } catch (e: Exception) {
                 future.set(buildSimpleTile(getString(R.string.tile_error), COLOR_ERROR))
             }
@@ -81,7 +81,7 @@ class ShoppingTileService : TileService() {
         scope.cancel()
     }
 
-    private fun buildTile(items: List<WearShoppingItem>, displayMode: String): TileBuilders.Tile {
+    private fun buildTile(items: List<WearShoppingItem>, displayMode: String, areaOrder: String): TileBuilders.Tile {
         val categorized = displayMode == "categorized"
         val unchecked = items.filter { !it.complete }
         val checked = items.filter { it.complete }
@@ -97,8 +97,15 @@ class ShoppingTileService : TileService() {
         } else {
             // Unchecked items — categorized with emoji headers or flat
             if (categorized) {
-                val orderedAreaKeys = mutableListOf<String?>()
-                unchecked.forEach { if (it.areaKey !in orderedAreaKeys) orderedAreaKeys += it.areaKey }
+                val syncedOrder = areaOrder.split(',').map { it.trim() }.filter { it.isNotBlank() }
+                val itemAreaKeys = unchecked.map { it.areaKey }.distinct()
+                val orderedAreaKeys: List<String?> = if (syncedOrder.isEmpty()) {
+                    itemAreaKeys
+                } else {
+                    val inOrder = syncedOrder.filter { key -> itemAreaKeys.any { it == key } }
+                    val remaining = itemAreaKeys.filter { it == null || it !in syncedOrder }
+                    inOrder + remaining
+                }
 
                 for (areaKey in orderedAreaKeys) {
                     if (itemsShown >= MAX_VISIBLE_ITEMS) break
