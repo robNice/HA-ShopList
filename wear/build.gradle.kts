@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.wear.tiles)
     implementation(libs.wear.protolayout)
     implementation(libs.concurrent.futures)
+    implementation(libs.work.runtime.ktx)
     implementation(libs.okhttp)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.wear.compose.material.MaterialTheme
+import de.robnice.homeshoplist.wear.tile.TileRefreshWorker
 import de.robnice.homeshoplist.wear.ui.WearApp
 
 class WearMainActivity : ComponentActivity() {
@@ -13,6 +14,7 @@ class WearMainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        TileRefreshWorker.schedule(this)
         setContent {
             MaterialTheme {
                 WearApp(viewModel = viewModel)
