@@ -25,12 +25,14 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
     private val _hasSettings = MutableStateFlow(false)
     private val _error = MutableStateFlow<String?>(null)
     private val _listDisplayMode = MutableStateFlow(settingsStore.getDisplayMode())
+    private val _areaOrder = MutableStateFlow(settingsStore.getAreaOrder())
 
     val items = _items.asStateFlow()
     val isLoading = _isLoading.asStateFlow()
     val hasSettings = _hasSettings.asStateFlow()
     val error = _error.asStateFlow()
     val listDisplayMode = _listDisplayMode.asStateFlow()
+    val areaOrder = _areaOrder.asStateFlow()
 
     private var haClient: HaWearClient? = null
     private var activeSettings: WearSettingsStore.WearSettings? = null
@@ -42,7 +44,7 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
     // Fires on the main thread immediately after WearSettingsListenerService writes
     // new settings, so the app reacts without waiting for the next 8-second refresh tick.
     private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key !in setOf("ha_url", "ha_token", "todo_entity", "list_display_mode")) return@OnSharedPreferenceChangeListener
+        if (key !in setOf("ha_url", "ha_token", "todo_entity", "list_display_mode", "area_order")) return@OnSharedPreferenceChangeListener
         val latest = settingsStore.getSettings() ?: return@OnSharedPreferenceChangeListener
         if (latest != activeSettings) {
             initClient(latest.url, latest.token, latest.entity)
@@ -51,6 +53,8 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
             refresh()
             requestTileUpdate()
         }
+        val newOrder = settingsStore.getAreaOrder()
+        if (_areaOrder.value != newOrder) _areaOrder.value = newOrder
     }
 
     private val dataListener = com.google.android.gms.wearable.DataClient.OnDataChangedListener { events ->
@@ -67,6 +71,10 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
                 dataMap.getString("list_display_mode")?.let {
                     settingsStore.saveDisplayMode(it)
                     _listDisplayMode.value = it
+                }
+                dataMap.getString("area_order")?.let {
+                    settingsStore.saveAreaOrder(it)
+                    _areaOrder.value = it
                 }
                 initClient(url, token, entity)
                 refresh()
@@ -96,8 +104,11 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                _items.value = client.fetchItems()
+                val newItems = client.fetchItems()
+                val changed = newItems != _items.value
+                _items.value = newItems
                 _error.value = null
+                if (changed) requestTileUpdate()
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -151,6 +162,10 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
                     dataMap.getString("list_display_mode")?.let {
                         settingsStore.saveDisplayMode(it)
                         _listDisplayMode.value = it
+                    }
+                    dataMap.getString("area_order")?.let {
+                        settingsStore.saveAreaOrder(it)
+                        _areaOrder.value = it
                     }
                     initClient(url, token, entity)
                     refresh()

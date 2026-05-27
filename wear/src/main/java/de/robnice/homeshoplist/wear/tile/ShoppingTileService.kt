@@ -12,6 +12,7 @@ import androidx.wear.protolayout.TimelineBuilders
 import androidx.wear.protolayout.expression.AppDataKey
 import androidx.wear.protolayout.expression.DynamicBuilders
 import androidx.wear.protolayout.expression.DynamicDataBuilders
+import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
 import androidx.wear.tiles.TileService
@@ -60,7 +61,7 @@ class ShoppingTileService : TileService() {
                     }
                 }
 
-                future.set(buildTile(items, store.getDisplayMode()))
+                future.set(buildTile(items, store.getDisplayMode(), store.getAreaOrder()))
             } catch (e: Exception) {
                 future.set(buildSimpleTile(getString(R.string.tile_error), COLOR_ERROR))
             }
@@ -76,12 +77,18 @@ class ShoppingTileService : TileService() {
         return future
     }
 
+    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
+        runCatching {
+            getUpdater(this).requestUpdate(ShoppingTileService::class.java)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
     }
 
-    private fun buildTile(items: List<WearShoppingItem>, displayMode: String): TileBuilders.Tile {
+    private fun buildTile(items: List<WearShoppingItem>, displayMode: String, areaOrder: String): TileBuilders.Tile {
         val categorized = displayMode == "categorized"
         val unchecked = items.filter { !it.complete }
         val checked = items.filter { it.complete }
@@ -97,8 +104,15 @@ class ShoppingTileService : TileService() {
         } else {
             // Unchecked items — categorized with emoji headers or flat
             if (categorized) {
-                val orderedAreaKeys = mutableListOf<String?>()
-                unchecked.forEach { if (it.areaKey !in orderedAreaKeys) orderedAreaKeys += it.areaKey }
+                val syncedOrder = areaOrder.split(',').map { it.trim() }.filter { it.isNotBlank() }
+                val itemAreaKeys = unchecked.map { it.areaKey }.distinct()
+                val orderedAreaKeys: List<String?> = if (syncedOrder.isEmpty()) {
+                    itemAreaKeys
+                } else {
+                    val inOrder = syncedOrder.filter { key -> itemAreaKeys.any { it == key } }
+                    val remaining = itemAreaKeys.filter { it == null || it !in syncedOrder }
+                    inOrder + remaining
+                }
 
                 for (areaKey in orderedAreaKeys) {
                     if (itemsShown >= MAX_VISIBLE_ITEMS) break
@@ -133,6 +147,8 @@ class ShoppingTileService : TileService() {
             if (overflow > 0) {
                 column.addContent(simpleText(getString(R.string.tile_overflow, overflow), COLOR_HINT, 11f))
             }
+
+            column.addContent(refreshButton())
         }
 
         val root = LayoutElementBuilders.Box.Builder()
@@ -222,6 +238,42 @@ class ShoppingTileService : TileService() {
             .build()
     }
 
+    private fun refreshButton(): LayoutElementBuilders.LayoutElement {
+        val clickable = ModifiersBuilders.Clickable.Builder()
+            .setOnClick(
+                ActionBuilders.LoadAction.Builder()
+                    .setRequestState(StateBuilders.State.Builder().build())
+                    .build()
+            )
+            .build()
+
+        return LayoutElementBuilders.Box.Builder()
+            .setWidth(DimensionBuilders.expand())
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setClickable(clickable)
+                    .setPadding(
+                        ModifiersBuilders.Padding.Builder()
+                            .setTop(DimensionBuilders.dp(6f))
+                            .setBottom(DimensionBuilders.dp(2f))
+                            .build()
+                    )
+                    .build()
+            )
+            .addContent(
+                LayoutElementBuilders.Text.Builder()
+                    .setText("↻ ${getString(R.string.tile_refresh)}")
+                    .setFontStyle(
+                        LayoutElementBuilders.FontStyle.Builder()
+                            .setSize(DimensionBuilders.sp(11f))
+                            .setColor(ColorBuilders.ColorProp.Builder(COLOR_HINT).build())
+                            .build()
+                    )
+                    .build()
+            )
+            .build()
+    }
+
     private fun simpleText(text: String, color: Int, sizeSp: Float): LayoutElementBuilders.LayoutElement =
         LayoutElementBuilders.Text.Builder()
             .setText(text)
@@ -247,8 +299,8 @@ class ShoppingTileService : TileService() {
     }
 
     companion object {
-        private const val MAX_VISIBLE_ITEMS = 7
-        private const val FRESHNESS_INTERVAL_MS = 10L * 60 * 1000
+        private const val MAX_VISIBLE_ITEMS = 6
+        private const val FRESHNESS_INTERVAL_MS = 5L * 60 * 1000
         private val COLOR_WHITE = 0xFFFFFFFF.toInt()
         private val COLOR_CHECKED = 0xFF888888.toInt()
         private val COLOR_HINT = 0xFFAAAAAA.toInt()

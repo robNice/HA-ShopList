@@ -25,6 +25,7 @@ class WearSettingsSyncService : WearableListenerService() {
             val token = store.haToken.first()
             val entity = store.todoEntity.first()
             val displayMode = store.listDisplayMode.first()
+            val areaOrder = store.areaOrder.first()
 
             if (url.isBlank() || token.isBlank()) return@launch
 
@@ -33,6 +34,7 @@ class WearSettingsSyncService : WearableListenerService() {
                 dataMap.putString("ha_token", token)
                 dataMap.putString("todo_entity", entity)
                 dataMap.putString("list_display_mode", displayMode)
+                dataMap.putString("area_order", areaOrder)
                 dataMap.putLong("timestamp", System.currentTimeMillis())
             }.asPutDataRequest().setUrgent()
 

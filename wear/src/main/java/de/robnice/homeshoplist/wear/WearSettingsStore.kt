@@ -29,4 +29,12 @@ class WearSettingsStore(context: Context) {
     fun saveDisplayMode(mode: String) {
         prefs.edit().putString("list_display_mode", mode).apply()
     }
+
+    fun getAreaOrder(): String =
+        prefs.getString("area_order", "") ?: ""
+
+    fun saveAreaOrder(order: String) {
+        prefs.edit().putString("area_order", order).apply()
+    }
+
 }

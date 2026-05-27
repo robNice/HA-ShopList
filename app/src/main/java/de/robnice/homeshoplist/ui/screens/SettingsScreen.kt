@@ -525,7 +525,7 @@ fun SettingsScreen(
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = todoExpanded)
                                 },
                                 modifier = Modifier
-                                    .menuAnchor()
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                                     .fillMaxWidth(),
                                 colors = settingsTextFieldColors()
                             )
@@ -888,6 +888,7 @@ fun SettingsScreen(
                                         dataMap.putString("ha_token", cleanedToken)
                                         dataMap.putString("todo_entity", todoEntity)
                                         dataMap.putString("list_display_mode", listDisplayMode.storageValue)
+                                        dataMap.putString("area_order", ShoppingArea.serializeOrder(areaOrderDraft))
                                         dataMap.putLong("timestamp", System.currentTimeMillis())
                                     }.asPutDataRequest().setUrgent()
                                     Wearable.getDataClient(context).putDataItem(putRequest)

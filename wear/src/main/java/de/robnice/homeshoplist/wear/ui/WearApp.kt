@@ -38,7 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.robnice.homeshoplist.R
 import kotlinx.coroutines.launch
-import androidx.wear.compose.material.AutoCenteringParams
+import androidx.wear.compose.foundation.lazy.AutoCenteringParams
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.ScalingLazyListState
+import androidx.wear.compose.foundation.lazy.items
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
@@ -49,16 +53,12 @@ import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.ScalingLazyColumn
-import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
 import androidx.wear.compose.material.dialog.Alert
 import androidx.wear.compose.material.dialog.Dialog
-import androidx.wear.compose.material.items
-import androidx.wear.compose.material.rememberScalingLazyListState
 import de.robnice.homeshoplist.wear.WearViewModel
 import de.robnice.homeshoplist.wear.model.AREA_EMOJIS
 import de.robnice.homeshoplist.wear.model.WearShoppingItem
@@ -71,6 +71,7 @@ fun WearApp(viewModel: WearViewModel) {
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val listDisplayMode by viewModel.listDisplayMode.collectAsState()
+    val areaOrder by viewModel.areaOrder.collectAsState()
 
     LaunchedEffect(hasSettings) {
         if (hasSettings) {
@@ -96,6 +97,7 @@ fun WearApp(viewModel: WearViewModel) {
                 isLoading = isLoading,
                 error = error,
                 listDisplayMode = listDisplayMode,
+                areaOrder = areaOrder,
                 onToggle = viewModel::toggleItem,
                 onClearCompleted = viewModel::clearCompleted,
                 listState = listState
@@ -110,6 +112,7 @@ private fun ShoppingListScreen(
     isLoading: Boolean,
     error: String?,
     listDisplayMode: String,
+    areaOrder: String,
     onToggle: (WearShoppingItem) -> Unit,
     onClearCompleted: () -> Unit,
     listState: ScalingLazyListState
@@ -140,9 +143,19 @@ private fun ShoppingListScreen(
         }
 
         if (categorized) {
-            // Preserve the order areas first appear in the list
-            val orderedAreaKeys = mutableListOf<String?>()
-            unchecked.forEach { if (it.areaKey !in orderedAreaKeys) orderedAreaKeys += it.areaKey }
+            // Sort area keys by the phone's configured order; unknown areas append at end
+            val syncedOrder = areaOrder
+                .split(',')
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+            val itemAreaKeys = unchecked.map { it.areaKey }.distinct()
+            val orderedAreaKeys: List<String?> = if (syncedOrder.isEmpty()) {
+                itemAreaKeys
+            } else {
+                val inOrder = syncedOrder.filter { key -> itemAreaKeys.any { it == key } }
+                val remaining = itemAreaKeys.filter { it == null || it !in syncedOrder }
+                inOrder + remaining
+            }
 
             orderedAreaKeys.forEach { areaKey ->
                 val groupItems = unchecked.filter { it.areaKey == areaKey }

@@ -2108,7 +2108,6 @@ private fun ActiveDropIndicator(
 }
 
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ShoppingRow(
     item: ShoppingItem,

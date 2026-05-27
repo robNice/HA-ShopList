@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Einkaufsliste</string>
     <string name="status_open">%d offen</string>
@@ -11,4 +11,5 @@
     <string name="tile_error">Fehler beim Laden</string>
     <string name="tile_empty">Alles erledigt!</string>
     <string name="tile_overflow">+%d weitere</string>
+    <string name="tile_refresh">Aktualisieren</string>
 </resources>

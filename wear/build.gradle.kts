@@ -11,8 +11,8 @@ android {
         applicationId = "de.robnice.homeshoplist"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1000001
-        versionName = "1.0.1"
+        versionCode = 101011000
+        versionName = "1.11.0-wear"
     }
 
     compileOptions {
@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.wear.tiles)
     implementation(libs.wear.protolayout)
     implementation(libs.concurrent.futures)
+    implementation(libs.work.runtime.ktx)
     implementation(libs.okhttp)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
