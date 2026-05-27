@@ -61,7 +61,7 @@ class ShoppingTileService : TileService() {
                     }
                 }
 
-                future.set(buildTile(items, store.getDisplayMode(), store.getAreaOrder(), store.isAppForeground()))
+                future.set(buildTile(items, store.getDisplayMode(), store.getAreaOrder()))
             } catch (e: Exception) {
                 future.set(buildSimpleTile(getString(R.string.tile_error), COLOR_ERROR))
             }
@@ -88,7 +88,7 @@ class ShoppingTileService : TileService() {
         scope.cancel()
     }
 
-    private fun buildTile(items: List<WearShoppingItem>, displayMode: String, areaOrder: String, appForeground: Boolean): TileBuilders.Tile {
+    private fun buildTile(items: List<WearShoppingItem>, displayMode: String, areaOrder: String): TileBuilders.Tile {
         val categorized = displayMode == "categorized"
         val unchecked = items.filter { !it.complete }
         val checked = items.filter { it.complete }
@@ -148,9 +148,7 @@ class ShoppingTileService : TileService() {
                 column.addContent(simpleText(getString(R.string.tile_overflow, overflow), COLOR_HINT, 11f))
             }
 
-            if (!appForeground) {
-                column.addContent(refreshButton())
-            }
+            column.addContent(refreshButton())
         }
 
         val root = LayoutElementBuilders.Box.Builder()
@@ -301,7 +299,7 @@ class ShoppingTileService : TileService() {
     }
 
     companion object {
-        private const val MAX_VISIBLE_ITEMS = 7
+        private const val MAX_VISIBLE_ITEMS = 6
         private const val FRESHNESS_INTERVAL_MS = 5L * 60 * 1000
         private val COLOR_WHITE = 0xFFFFFFFF.toInt()
         private val COLOR_CHECKED = 0xFF888888.toInt()

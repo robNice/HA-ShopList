@@ -11,7 +11,6 @@ import de.robnice.homeshoplist.wear.ui.WearApp
 class WearMainActivity : ComponentActivity() {
 
     private val viewModel: WearViewModel by viewModels()
-    private val settingsStore by lazy { WearSettingsStore(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,15 +20,5 @@ class WearMainActivity : ComponentActivity() {
                 WearApp(viewModel = viewModel)
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        settingsStore.setAppForeground(true)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        settingsStore.setAppForeground(false)
     }
 }
