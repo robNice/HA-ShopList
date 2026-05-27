@@ -71,6 +71,7 @@ fun WearApp(viewModel: WearViewModel) {
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val listDisplayMode by viewModel.listDisplayMode.collectAsState()
+    val areaOrder by viewModel.areaOrder.collectAsState()
 
     LaunchedEffect(hasSettings) {
         if (hasSettings) {
@@ -96,6 +97,7 @@ fun WearApp(viewModel: WearViewModel) {
                 isLoading = isLoading,
                 error = error,
                 listDisplayMode = listDisplayMode,
+                areaOrder = areaOrder,
                 onToggle = viewModel::toggleItem,
                 onClearCompleted = viewModel::clearCompleted,
                 listState = listState
@@ -110,6 +112,7 @@ private fun ShoppingListScreen(
     isLoading: Boolean,
     error: String?,
     listDisplayMode: String,
+    areaOrder: String,
     onToggle: (WearShoppingItem) -> Unit,
     onClearCompleted: () -> Unit,
     listState: ScalingLazyListState
@@ -140,9 +143,19 @@ private fun ShoppingListScreen(
         }
 
         if (categorized) {
-            // Preserve the order areas first appear in the list
-            val orderedAreaKeys = mutableListOf<String?>()
-            unchecked.forEach { if (it.areaKey !in orderedAreaKeys) orderedAreaKeys += it.areaKey }
+            // Sort area keys by the phone's configured order; unknown areas append at end
+            val syncedOrder = areaOrder
+                .split(',')
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+            val itemAreaKeys = unchecked.map { it.areaKey }.distinct()
+            val orderedAreaKeys: List<String?> = if (syncedOrder.isEmpty()) {
+                itemAreaKeys
+            } else {
+                val inOrder = syncedOrder.filter { key -> itemAreaKeys.any { it == key } }
+                val remaining = itemAreaKeys.filter { it == null || it !in syncedOrder }
+                inOrder + remaining
+            }
 
             orderedAreaKeys.forEach { areaKey ->
                 val groupItems = unchecked.filter { it.areaKey == areaKey }

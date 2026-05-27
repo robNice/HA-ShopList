@@ -19,6 +19,7 @@ class WearSettingsListenerService : WearableListenerService() {
             val store = WearSettingsStore(applicationContext)
             store.saveSettings(url, token, entity)
             dataMap.getString("list_display_mode")?.let { store.saveDisplayMode(it) }
+            dataMap.getString("area_order")?.let { store.saveAreaOrder(it) }
             runCatching {
                 TileService.getUpdater(applicationContext)
                     .requestUpdate(ShoppingTileService::class.java)
