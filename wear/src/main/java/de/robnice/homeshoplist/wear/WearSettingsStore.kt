@@ -36,4 +36,11 @@ class WearSettingsStore(context: Context) {
     fun saveAreaOrder(order: String) {
         prefs.edit().putString("area_order", order).apply()
     }
+
+    fun setAppForeground(foreground: Boolean) {
+        prefs.edit().putBoolean("app_foreground", foreground).apply()
+    }
+
+    fun isAppForeground(): Boolean =
+        prefs.getBoolean("app_foreground", false)
 }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Список покупок</string>
     <string name="status_open">%d открыто</string>
@@ -11,4 +11,5 @@
     <string name="tile_error">Ошибка загрузки</string>
     <string name="tile_empty">Всё готово!</string>
     <string name="tile_overflow">+%d ещё</string>
+    <string name="tile_refresh">Обновить</string>
 </resources>

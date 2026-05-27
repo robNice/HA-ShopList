@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lista de compras</string>
     <string name="status_open">%d abertos</string>
@@ -11,4 +11,5 @@
     <string name="tile_error">Erro ao carregar</string>
     <string name="tile_empty">Tudo pronto!</string>
     <string name="tile_overflow">+%d mais</string>
+    <string name="tile_refresh">Atualizar</string>
 </resources>

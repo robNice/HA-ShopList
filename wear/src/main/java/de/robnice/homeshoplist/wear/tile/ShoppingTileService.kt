@@ -61,7 +61,7 @@ class ShoppingTileService : TileService() {
                     }
                 }
 
-                future.set(buildTile(items, store.getDisplayMode(), store.getAreaOrder()))
+                future.set(buildTile(items, store.getDisplayMode(), store.getAreaOrder(), store.isAppForeground()))
             } catch (e: Exception) {
                 future.set(buildSimpleTile(getString(R.string.tile_error), COLOR_ERROR))
             }
@@ -88,7 +88,7 @@ class ShoppingTileService : TileService() {
         scope.cancel()
     }
 
-    private fun buildTile(items: List<WearShoppingItem>, displayMode: String, areaOrder: String): TileBuilders.Tile {
+    private fun buildTile(items: List<WearShoppingItem>, displayMode: String, areaOrder: String, appForeground: Boolean): TileBuilders.Tile {
         val categorized = displayMode == "categorized"
         val unchecked = items.filter { !it.complete }
         val checked = items.filter { it.complete }
@@ -146,6 +146,10 @@ class ShoppingTileService : TileService() {
             val overflow = items.size - itemsShown
             if (overflow > 0) {
                 column.addContent(simpleText(getString(R.string.tile_overflow, overflow), COLOR_HINT, 11f))
+            }
+
+            if (!appForeground) {
+                column.addContent(refreshButton())
             }
         }
 
@@ -229,6 +233,42 @@ class ShoppingTileService : TileService() {
                         LayoutElementBuilders.FontStyle.Builder()
                             .setSize(DimensionBuilders.sp(13f))
                             .setColor(ColorBuilders.ColorProp.Builder(color).build())
+                            .build()
+                    )
+                    .build()
+            )
+            .build()
+    }
+
+    private fun refreshButton(): LayoutElementBuilders.LayoutElement {
+        val clickable = ModifiersBuilders.Clickable.Builder()
+            .setOnClick(
+                ActionBuilders.LoadAction.Builder()
+                    .setRequestState(StateBuilders.State.Builder().build())
+                    .build()
+            )
+            .build()
+
+        return LayoutElementBuilders.Box.Builder()
+            .setWidth(DimensionBuilders.expand())
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setClickable(clickable)
+                    .setPadding(
+                        ModifiersBuilders.Padding.Builder()
+                            .setTop(DimensionBuilders.dp(6f))
+                            .setBottom(DimensionBuilders.dp(2f))
+                            .build()
+                    )
+                    .build()
+            )
+            .addContent(
+                LayoutElementBuilders.Text.Builder()
+                    .setText("↻ ${getString(R.string.tile_refresh)}")
+                    .setFontStyle(
+                        LayoutElementBuilders.FontStyle.Builder()
+                            .setSize(DimensionBuilders.sp(11f))
+                            .setColor(ColorBuilders.ColorProp.Builder(COLOR_HINT).build())
                             .build()
                     )
                     .build()
