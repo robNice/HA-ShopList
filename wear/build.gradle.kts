@@ -11,8 +11,8 @@ android {
         applicationId = "de.robnice.homeshoplist"
         minSdk = 26
         targetSdk = 35
-        versionCode = 101011000
-        versionName = "1.11.0-wear"
+        versionCode = 101011001
+        versionName = "1.11.1-wear"
     }
 
     compileOptions {

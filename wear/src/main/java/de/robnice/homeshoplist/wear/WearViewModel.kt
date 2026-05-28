@@ -84,12 +84,12 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
-        Wearable.getDataClient(app).addListener(dataListener)
+        runCatching { Wearable.getDataClient(app).addListener(dataListener) }
         val settings = settingsStore.getSettings()
         if (settings != null) {
             initClient(settings.url, settings.token, settings.entity)
         }
-        loadSettingsFromDataLayer()
+        runCatching { loadSettingsFromDataLayer() }
     }
 
     private fun initClient(url: String, token: String, entity: String) {
@@ -191,6 +191,6 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         super.onCleared()
         prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
-        Wearable.getDataClient(getApplication<Application>()).removeListener(dataListener)
+        runCatching { Wearable.getDataClient(getApplication<Application>()).removeListener(dataListener) }
     }
 }
