@@ -6,7 +6,7 @@
     <string name="cancel">İptal</string>
     <string name="delete">Sil</string>
     <string name="cd_delete_completed">Tamamlananları temizle</string>
-    <string name="setup_hint">Telefon uygulamasını açın – ayarlar otomatik olarak aktarılacaktır.</string>
+    <string name="setup_hint">&quot;Alışveriş listesi&quot; uygulamasını telefonunuzda açın – ayarlar otomatik olarak aktarılacaktır.</string>
     <string name="tile_setup">Telefon uygulamasını aç</string>
     <string name="tile_error">Yükleme hatası</string>
     <string name="tile_empty">Her şey tamam!</string>

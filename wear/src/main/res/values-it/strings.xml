@@ -6,7 +6,7 @@
     <string name="cancel">Annulla</string>
     <string name="delete">Elimina</string>
     <string name="cd_delete_completed">Elimina completati</string>
-    <string name="setup_hint">Apri l\'app del telefono – le impostazioni verranno trasferite automaticamente.</string>
+    <string name="setup_hint">Apri &quot;Lista della spesa&quot; sul telefono – le impostazioni verranno trasferite automaticamente.</string>
     <string name="tile_setup">Apri l\'app del telefono</string>
     <string name="tile_error">Errore di caricamento</string>
     <string name="tile_empty">Tutto fatto!</string>

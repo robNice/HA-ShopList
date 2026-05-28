@@ -6,7 +6,7 @@
     <string name="cancel">キャンセル</string>
     <string name="delete">削除</string>
     <string name="cd_delete_completed">完了した項目を削除</string>
-    <string name="setup_hint">スマホのアプリを開く – 設定が自動的に転送されます。</string>
+    <string name="setup_hint">スマホで「ショッピングリスト」を開く – 設定が自動的に転送されます。</string>
     <string name="tile_setup">スマホアプリを開く</string>
     <string name="tile_error">読み込みエラー</string>
     <string name="tile_empty">全て完了！</string>

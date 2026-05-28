@@ -6,7 +6,7 @@
     <string name="cancel">Annuler</string>
     <string name="delete">Supprimer</string>
     <string name="cd_delete_completed">Supprimer les éléments terminés</string>
-    <string name="setup_hint">Ouvrez l\'app téléphone – les paramètres seront transférés automatiquement.</string>
+    <string name="setup_hint">Ouvrez &quot;Liste de courses&quot; sur votre téléphone – les paramètres seront transférés automatiquement.</string>
     <string name="tile_setup">Ouvrir l\'app téléphone</string>
     <string name="tile_error">Erreur de chargement</string>
     <string name="tile_empty">Tout est fait !</string>

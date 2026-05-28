@@ -6,7 +6,7 @@
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
     <string name="cd_delete_completed">Delete completed</string>
-    <string name="setup_hint">Open the phone app – settings will be transferred automatically.</string>
+    <string name="setup_hint">Open „Shopping List" on your phone – settings will be transferred automatically.</string>
     <string name="tile_setup">Open phone app</string>
     <string name="tile_error">Error loading</string>
     <string name="tile_empty">Nothing to do!</string>

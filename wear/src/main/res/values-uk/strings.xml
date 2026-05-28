@@ -6,7 +6,7 @@
     <string name="cancel">Скасувати</string>
     <string name="delete">Видалити</string>
     <string name="cd_delete_completed">Очистити виконані</string>
-    <string name="setup_hint">Відкрийте додаток на телефоні – налаштування передадуться автоматично.</string>
+    <string name="setup_hint">Відкрийте «Список покупок» на телефоні – налаштування передадуться автоматично.</string>
     <string name="tile_setup">Відкрити додаток</string>
     <string name="tile_error">Помилка завантаження</string>
     <string name="tile_empty">Все готово!</string>
