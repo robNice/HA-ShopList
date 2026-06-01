@@ -14,7 +14,7 @@ class WearMainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        TileRefreshWorker.schedule(this)
+        runCatching { TileRefreshWorker.schedule(this) }
         setContent {
             MaterialTheme {
                 WearApp(viewModel = viewModel)

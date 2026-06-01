@@ -11,8 +11,8 @@ android {
         applicationId = "de.robnice.homeshoplist"
         minSdk = 26
         targetSdk = 35
-        versionCode = 101011001
-        versionName = "1.11.1-wear"
+        versionCode = 101011002
+        versionName = "1.11.2-wear"
     }
 
     compileOptions {
@@ -48,6 +48,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
             if (ksPath != null) {
                 signingConfig = signingConfigs.getByName("release")
             }

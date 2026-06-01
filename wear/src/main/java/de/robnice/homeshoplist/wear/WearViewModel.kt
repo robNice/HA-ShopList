@@ -172,20 +172,24 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
                     found = true
                 }
                 dataItems.release()
-                if (!found) requestSettingsFromPhone()
+                if (!found) runCatching { requestSettingsFromPhone() }
             }
-            .addOnFailureListener { requestSettingsFromPhone() }
+            .addOnFailureListener { runCatching { requestSettingsFromPhone() } }
     }
 
     private fun requestSettingsFromPhone() {
-        Wearable.getNodeClient(getApplication<Application>())
-            .connectedNodes
-            .addOnSuccessListener { nodes ->
-                nodes.forEach { node ->
-                    Wearable.getMessageClient(getApplication())
-                        .sendMessage(node.id, "/request_settings", null)
+        runCatching {
+            Wearable.getNodeClient(getApplication<Application>())
+                .connectedNodes
+                .addOnSuccessListener { nodes ->
+                    nodes.forEach { node ->
+                        runCatching {
+                            Wearable.getMessageClient(getApplication())
+                                .sendMessage(node.id, "/request_settings", null)
+                        }
+                    }
                 }
-            }
+        }
     }
 
     override fun onCleared() {

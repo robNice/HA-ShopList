@@ -16,8 +16,8 @@ android {
         applicationId = "de.robnice.homeshoplist"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1011001
-        versionName = "1.11.1-mobile"
+        versionCode = 1011002
+        versionName = "1.11.2-mobile"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -70,7 +70,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
             if (ksPath != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
