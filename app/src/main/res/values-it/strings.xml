@@ -88,8 +88,6 @@
     <string name="area_order_title">Ordine dei reparti</string>
     <string name="area_order_description">Adatta l’ordine dei reparti del negozio al tuo percorso abituale. Questo ordine viene salvato solo su questo dispositivo.</string>
     <string name="area_order_reset">Ripristina ordine reparti</string>
-    <string name="area_order_move_up">Sposta reparto in alto</string>
-    <string name="area_order_move_down">Sposta reparto in basso</string>
     <string name="area_produce">Frutta e verdura</string>
     <string name="area_bakery">Pane e panetteria</string>
     <string name="area_meat">Carne e salumi</string>
@@ -129,4 +127,27 @@
     <string name="area_7">Area 7</string>
     <string name="area_8">Area 8</string>
     <string name="area_impulse_buy">Acquisti d’impulso</string>
+    <string name="next">Avanti</string>
+    <string name="settings_backup_title">Backup e ripristino</string>
+    <string name="settings_backup_description">Esporta i dati di connessione, le impostazioni delle categorie e la cronologia dei prodotti in un file crittografato oppure ripristinali da un backup.</string>
+    <string name="settings_backup_export">Esporta impostazioni</string>
+    <string name="settings_backup_import">Importa impostazioni</string>
+    <string name="settings_backup_export_selection_title">Che cosa deve essere esportato?</string>
+    <string name="settings_backup_import_selection_title">Che cosa deve essere importato?</string>
+    <string name="settings_backup_export_password_title">Proteggi esportazione</string>
+    <string name="settings_backup_import_password_title">Sblocca backup</string>
+    <string name="settings_backup_password">Password</string>
+    <string name="settings_backup_password_confirm">Conferma password</string>
+    <string name="settings_backup_password_hint">La password non viene memorizzata e non può essere recuperata.</string>
+    <string name="settings_backup_section_connection">Dati di connessione (URL e token)</string>
+    <string name="settings_backup_section_categories">Impostazioni categorie (attive e ordine)</string>
+    <string name="settings_backup_section_history">Cronologia prodotti e assegnazioni categorie</string>
+    <string name="settings_backup_export_success">Backup esportato correttamente.</string>
+    <string name="settings_backup_export_error">Esportazione non riuscita: %1$s</string>
+    <string name="settings_backup_import_success">Dati selezionati importati correttamente.</string>
+    <string name="settings_backup_import_error">Importazione non riuscita: %1$s</string>
+    <string name="area_order_expand">Espandi elenco categorie</string>
+    <string name="area_order_collapse">Comprimi elenco categorie</string>
+    <string name="settings_backup_unlock_error">Impossibile sbloccare il backup. Controlla il file selezionato e la password.</string>
+    <string name="area_order_drag_handle">Trascina per riordinare la categoria</string>
 </resources>

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -19,6 +20,9 @@ interface ProductHistoryDao {
         """
     )
     fun observeAll(): Flow<List<ProductHistoryEntity>>
+
+    @Query("SELECT * FROM product_history")
+    suspend fun getAll(): List<ProductHistoryEntity>
 
     @Query("SELECT * FROM product_history WHERE normalizedName = :normalizedName LIMIT 1")
     suspend fun getByNormalizedName(normalizedName: String): ProductHistoryEntity?
@@ -51,4 +55,21 @@ interface ProductHistoryDao {
 
     @Query("DELETE FROM product_history")
     suspend fun deleteAll()
+
+    @Transaction
+    suspend fun mergeImported(items: List<ProductHistoryEntity>) {
+        items.forEach { candidate ->
+            val existing = getByNormalizedName(candidate.normalizedName)
+            val importedIsNewer = existing == null || candidate.lastUsedAt >= existing.lastUsedAt
+            upsert(
+                ProductHistoryEntity(
+                    normalizedName = candidate.normalizedName,
+                    displayName = if (importedIsNewer) candidate.displayName else existing.displayName,
+                    areaKey = if (importedIsNewer) candidate.areaKey else existing.areaKey,
+                    useCount = maxOf(candidate.useCount, existing?.useCount ?: 0),
+                    lastUsedAt = maxOf(candidate.lastUsedAt, existing?.lastUsedAt ?: 0L)
+                )
+            )
+        }
+    }
 }

@@ -88,8 +88,6 @@
     <string name="area_order_title">Reihenfolge der Bereiche</string>
     <string name="area_order_description">Passe die Reihenfolge der Supermarktbereiche an deinen üblichen Weg durch den Laden an. Diese Reihenfolge wird nur auf diesem Gerät gespeichert.</string>
     <string name="area_order_reset">Reihenfolge der Bereiche zurücksetzen</string>
-    <string name="area_order_move_up">Bereich nach oben verschieben</string>
-    <string name="area_order_move_down">Bereich nach unten verschieben</string>
     <string name="area_produce">Obst &amp; Gemüse</string>
     <string name="area_bakery">Brot &amp; Backwaren</string>
     <string name="area_meat">Fleisch &amp; Wurst</string>
@@ -129,4 +127,27 @@
     <string name="area_health">Gesundheit</string>
     <string name="area_non_food">Nicht-Lebensmittel</string>
     <string name="area_other">Sonstiges</string>
+    <string name="next">Weiter</string>
+    <string name="settings_backup_title">Sichern und wiederherstellen</string>
+    <string name="settings_backup_description">Verbindungsdaten, Kategorie-Einstellungen und Produkthistorie verschlüsselt exportieren oder aus einer Sicherung wiederherstellen.</string>
+    <string name="settings_backup_export">Einstellungen exportieren</string>
+    <string name="settings_backup_import">Einstellungen importieren</string>
+    <string name="settings_backup_export_selection_title">Was soll exportiert werden?</string>
+    <string name="settings_backup_import_selection_title">Was soll importiert werden?</string>
+    <string name="settings_backup_export_password_title">Export schützen</string>
+    <string name="settings_backup_import_password_title">Sicherung entsperren</string>
+    <string name="settings_backup_password">Passwort</string>
+    <string name="settings_backup_password_confirm">Passwort bestätigen</string>
+    <string name="settings_backup_password_hint">Das Passwort wird nicht gespeichert und kann nicht wiederhergestellt werden.</string>
+    <string name="settings_backup_section_connection">Verbindungsdaten (URL und Token)</string>
+    <string name="settings_backup_section_categories">Kategorie-Einstellungen (aktiv und Reihenfolge)</string>
+    <string name="settings_backup_section_history">Produkthistorie und Kategoriezuordnungen</string>
+    <string name="settings_backup_export_success">Sicherung erfolgreich exportiert.</string>
+    <string name="settings_backup_export_error">Export fehlgeschlagen: %1$s</string>
+    <string name="settings_backup_import_success">Ausgewählte Daten erfolgreich importiert.</string>
+    <string name="settings_backup_import_error">Import fehlgeschlagen: %1$s</string>
+    <string name="area_order_expand">Kategorienliste ausklappen</string>
+    <string name="area_order_collapse">Kategorienliste einklappen</string>
+    <string name="settings_backup_unlock_error">Die Sicherung konnte nicht entsperrt werden. Prüfe die ausgewählte Datei und das Passwort.</string>
+    <string name="area_order_drag_handle">Ziehen, um die Kategorie zu sortieren</string>
 </resources>

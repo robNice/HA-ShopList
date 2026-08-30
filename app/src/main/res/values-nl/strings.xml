@@ -88,8 +88,6 @@
     <string name="area_order_title">Volgorde van afdelingen</string>
     <string name="area_order_description">Pas de volgorde van winkelafdelingen aan op je gebruikelijke route door de winkel. Deze volgorde wordt alleen op dit apparaat opgeslagen.</string>
     <string name="area_order_reset">Volgorde van afdelingen resetten</string>
-    <string name="area_order_move_up">Afdeling omhoog verplaatsen</string>
-    <string name="area_order_move_down">Afdeling omlaag verplaatsen</string>
     <string name="area_produce">Groente en fruit</string>
     <string name="area_bakery">Brood en bakkerij</string>
     <string name="area_meat">Vlees en worst</string>
@@ -129,4 +127,27 @@
     <string name="area_7">Gebied 7</string>
     <string name="area_8">Gebied 8</string>
     <string name="area_impulse_buy">Impulsaankopen</string>
+    <string name="next">Volgende</string>
+    <string name="settings_backup_title">Back-up maken en herstellen</string>
+    <string name="settings_backup_description">Exporteer verbindingsgegevens, categorie-instellingen en productgeschiedenis naar een versleuteld bestand of herstel ze vanuit een back-up.</string>
+    <string name="settings_backup_export">Instellingen exporteren</string>
+    <string name="settings_backup_import">Instellingen importeren</string>
+    <string name="settings_backup_export_selection_title">Wat moet worden geëxporteerd?</string>
+    <string name="settings_backup_import_selection_title">Wat moet worden geïmporteerd?</string>
+    <string name="settings_backup_export_password_title">Export beveiligen</string>
+    <string name="settings_backup_import_password_title">Back-up ontgrendelen</string>
+    <string name="settings_backup_password">Wachtwoord</string>
+    <string name="settings_backup_password_confirm">Wachtwoord bevestigen</string>
+    <string name="settings_backup_password_hint">Het wachtwoord wordt niet opgeslagen en kan niet worden hersteld.</string>
+    <string name="settings_backup_section_connection">Verbindingsgegevens (URL en token)</string>
+    <string name="settings_backup_section_categories">Categorie-instellingen (actief en volgorde)</string>
+    <string name="settings_backup_section_history">Productgeschiedenis en categorietoewijzingen</string>
+    <string name="settings_backup_export_success">Back-up is geëxporteerd.</string>
+    <string name="settings_backup_export_error">Exporteren mislukt: %1$s</string>
+    <string name="settings_backup_import_success">Geselecteerde gegevens zijn geïmporteerd.</string>
+    <string name="settings_backup_import_error">Importeren mislukt: %1$s</string>
+    <string name="area_order_expand">Categorielijst uitklappen</string>
+    <string name="area_order_collapse">Categorielijst inklappen</string>
+    <string name="settings_backup_unlock_error">De back-up kon niet worden ontgrendeld. Controleer het geselecteerde bestand en wachtwoord.</string>
+    <string name="area_order_drag_handle">Sleep om de categorie te verplaatsen</string>
 </resources>

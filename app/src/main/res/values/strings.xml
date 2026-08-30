@@ -88,8 +88,6 @@
     <string name="area_order_title">Store section order</string>
     <string name="area_order_description">Adjust the order of store sections to match your usual route through the store. This order is saved only on this device.</string>
     <string name="area_order_reset">Reset section order</string>
-    <string name="area_order_move_up">Move section up</string>
-    <string name="area_order_move_down">Move section down</string>
     <string name="area_produce">Fruit &amp; Vegetables</string>
     <string name="area_bakery">Bread &amp; Bakery</string>
     <string name="area_meat">Meat &amp; Sausages</string>
@@ -129,4 +127,27 @@
     <string name="area_health">Health</string>
     <string name="area_non_food">Non-Food</string>
     <string name="area_other">Other</string>
+    <string name="next">Next</string>
+    <string name="settings_backup_title">Backup and restore</string>
+    <string name="settings_backup_description">Export connection data, category settings, and product history to an encrypted file or restore them from a backup.</string>
+    <string name="settings_backup_export">Export settings</string>
+    <string name="settings_backup_import">Import settings</string>
+    <string name="settings_backup_export_selection_title">What should be exported?</string>
+    <string name="settings_backup_import_selection_title">What should be imported?</string>
+    <string name="settings_backup_export_password_title">Protect export</string>
+    <string name="settings_backup_import_password_title">Unlock backup</string>
+    <string name="settings_backup_password">Password</string>
+    <string name="settings_backup_password_confirm">Confirm password</string>
+    <string name="settings_backup_password_hint">The password is not stored and cannot be recovered.</string>
+    <string name="settings_backup_section_connection">Connection data (URL and token)</string>
+    <string name="settings_backup_section_categories">Category settings (enabled and order)</string>
+    <string name="settings_backup_section_history">Product history and category assignments</string>
+    <string name="settings_backup_export_success">Backup exported successfully.</string>
+    <string name="settings_backup_export_error">Export failed: %1$s</string>
+    <string name="settings_backup_import_success">Selected data imported successfully.</string>
+    <string name="settings_backup_import_error">Import failed: %1$s</string>
+    <string name="area_order_expand">Expand category list</string>
+    <string name="area_order_collapse">Collapse category list</string>
+    <string name="settings_backup_unlock_error">The backup could not be unlocked. Check the selected file and password.</string>
+    <string name="area_order_drag_handle">Drag to reorder category</string>
 </resources>

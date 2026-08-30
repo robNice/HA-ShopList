@@ -88,8 +88,6 @@
     <string name="area_order_title">Bölüm sırası</string>
     <string name="area_order_description">Mağazadaki alışılmış rotanıza göre bölümlerin sırasını ayarlayın. Bu sıra yalnızca bu cihazda saklanır.</string>
     <string name="area_order_reset">Bölüm sırasını sıfırla</string>
-    <string name="area_order_move_up">Bölümü yukarı taşı</string>
-    <string name="area_order_move_down">Bölümü aşağı taşı</string>
     <string name="area_produce">Meyve ve sebze</string>
     <string name="area_bakery">Ekmek ve fırın ürünleri</string>
     <string name="area_meat">Et ve şarküteri</string>
@@ -129,4 +127,27 @@
     <string name="area_7">Bölüm 7</string>
     <string name="area_8">Bölüm 8</string>
     <string name="area_impulse_buy">Dürtüsel alışveriş</string>
+    <string name="next">İleri</string>
+    <string name="settings_backup_title">Yedekleme ve geri yükleme</string>
+    <string name="settings_backup_description">Bağlantı verilerini, kategori ayarlarını ve ürün geçmişini şifrelenmiş bir dosyaya aktarın veya bir yedekten geri yükleyin.</string>
+    <string name="settings_backup_export">Ayarları dışa aktar</string>
+    <string name="settings_backup_import">Ayarları içe aktar</string>
+    <string name="settings_backup_export_selection_title">Neler dışa aktarılsın?</string>
+    <string name="settings_backup_import_selection_title">Neler içe aktarılsın?</string>
+    <string name="settings_backup_export_password_title">Dışa aktarmayı koru</string>
+    <string name="settings_backup_import_password_title">Yedeğin kilidini aç</string>
+    <string name="settings_backup_password">Parola</string>
+    <string name="settings_backup_password_confirm">Parolayı doğrula</string>
+    <string name="settings_backup_password_hint">Parola kaydedilmez ve kurtarılamaz.</string>
+    <string name="settings_backup_section_connection">Bağlantı verileri (URL ve belirteç)</string>
+    <string name="settings_backup_section_categories">Kategori ayarları (etkinlik ve sıralama)</string>
+    <string name="settings_backup_section_history">Ürün geçmişi ve kategori atamaları</string>
+    <string name="settings_backup_export_success">Yedek başarıyla dışa aktarıldı.</string>
+    <string name="settings_backup_export_error">Dışa aktarma başarısız: %1$s</string>
+    <string name="settings_backup_import_success">Seçilen veriler başarıyla içe aktarıldı.</string>
+    <string name="settings_backup_import_error">İçe aktarma başarısız: %1$s</string>
+    <string name="area_order_expand">Kategori listesini genişlet</string>
+    <string name="area_order_collapse">Kategori listesini daralt</string>
+    <string name="settings_backup_unlock_error">Yedeğin kilidi açılamadı. Seçilen dosyayı ve parolayı kontrol edin.</string>
+    <string name="area_order_drag_handle">Kategoriyi yeniden sıralamak için sürükleyin</string>
 </resources>
