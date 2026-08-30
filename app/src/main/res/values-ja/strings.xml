@@ -88,8 +88,6 @@
     <string name="area_order_title">売り場の順序</string>
     <string name="area_order_description">いつもの買い物の動線に合わせて、売り場の順序を調整します。この順序はこの端末にのみ保存されます。</string>
     <string name="area_order_reset">売り場の順序をリセット</string>
-    <string name="area_order_move_up">売り場を上に移動</string>
-    <string name="area_order_move_down">売り場を下に移動</string>
     <string name="area_produce">果物と野菜</string>
     <string name="area_bakery">パンとベーカリー</string>
     <string name="area_meat">肉とソーセージ</string>
@@ -150,4 +148,6 @@ each    <string name="area_drinks">飲み物</string>
     <string name="settings_backup_import_error">インポートに失敗しました: %1$s</string>
     <string name="area_order_expand">カテゴリ一覧を展開</string>
     <string name="area_order_collapse">カテゴリ一覧を折りたたむ</string>
+    <string name="settings_backup_unlock_error">バックアップのロックを解除できませんでした。選択したファイルとパスワードを確認してください。</string>
+    <string name="area_order_drag_handle">ドラッグしてカテゴリを並べ替え</string>
 </resources>

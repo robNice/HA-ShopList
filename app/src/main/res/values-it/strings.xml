@@ -88,8 +88,6 @@
     <string name="area_order_title">Ordine dei reparti</string>
     <string name="area_order_description">Adatta l’ordine dei reparti del negozio al tuo percorso abituale. Questo ordine viene salvato solo su questo dispositivo.</string>
     <string name="area_order_reset">Ripristina ordine reparti</string>
-    <string name="area_order_move_up">Sposta reparto in alto</string>
-    <string name="area_order_move_down">Sposta reparto in basso</string>
     <string name="area_produce">Frutta e verdura</string>
     <string name="area_bakery">Pane e panetteria</string>
     <string name="area_meat">Carne e salumi</string>
@@ -150,4 +148,6 @@
     <string name="settings_backup_import_error">Importazione non riuscita: %1$s</string>
     <string name="area_order_expand">Espandi elenco categorie</string>
     <string name="area_order_collapse">Comprimi elenco categorie</string>
+    <string name="settings_backup_unlock_error">Impossibile sbloccare il backup. Controlla il file selezionato e la password.</string>
+    <string name="area_order_drag_handle">Trascina per riordinare la categoria</string>
 </resources>

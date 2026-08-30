@@ -88,8 +88,6 @@
     <string name="area_order_title">Bölüm sırası</string>
     <string name="area_order_description">Mağazadaki alışılmış rotanıza göre bölümlerin sırasını ayarlayın. Bu sıra yalnızca bu cihazda saklanır.</string>
     <string name="area_order_reset">Bölüm sırasını sıfırla</string>
-    <string name="area_order_move_up">Bölümü yukarı taşı</string>
-    <string name="area_order_move_down">Bölümü aşağı taşı</string>
     <string name="area_produce">Meyve ve sebze</string>
     <string name="area_bakery">Ekmek ve fırın ürünleri</string>
     <string name="area_meat">Et ve şarküteri</string>
@@ -150,4 +148,6 @@
     <string name="settings_backup_import_error">İçe aktarma başarısız: %1$s</string>
     <string name="area_order_expand">Kategori listesini genişlet</string>
     <string name="area_order_collapse">Kategori listesini daralt</string>
+    <string name="settings_backup_unlock_error">Yedeğin kilidi açılamadı. Seçilen dosyayı ve parolayı kontrol edin.</string>
+    <string name="area_order_drag_handle">Kategoriyi yeniden sıralamak için sürükleyin</string>
 </resources>

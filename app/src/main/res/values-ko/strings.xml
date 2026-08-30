@@ -88,8 +88,6 @@
     <string name="area_order_title">구역 순서</string>
     <string name="area_order_description">평소 장보는 동선에 맞춰 매장 구역 순서를 조정하세요. 이 순서는 이 기기에만 저장됩니다.</string>
     <string name="area_order_reset">구역 순서 초기화</string>
-    <string name="area_order_move_up">구역 위로 이동</string>
-    <string name="area_order_move_down">구역 아래로 이동</string>
     <string name="area_produce">과일 및 채소</string>
     <string name="area_bakery">빵과 베이커리</string>
     <string name="area_meat">고기 및 소시지</string>
@@ -150,4 +148,6 @@
     <string name="settings_backup_import_error">가져오기 실패: %1$s</string>
     <string name="area_order_expand">카테고리 목록 펼치기</string>
     <string name="area_order_collapse">카테고리 목록 접기</string>
+    <string name="settings_backup_unlock_error">백업 잠금을 해제할 수 없습니다. 선택한 파일과 비밀번호를 확인하세요.</string>
+    <string name="area_order_drag_handle">드래그하여 카테고리 순서 변경</string>
 </resources>

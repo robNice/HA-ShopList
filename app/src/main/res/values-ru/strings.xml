@@ -88,8 +88,6 @@
     <string name="area_order_title">Порядок отделов</string>
     <string name="area_order_description">Настройте порядок отделов магазина в соответствии с вашим обычным маршрутом. Этот порядок сохраняется только на этом устройстве.</string>
     <string name="area_order_reset">Сбросить порядок отделов</string>
-    <string name="area_order_move_up">Переместить отдел вверх</string>
-    <string name="area_order_move_down">Переместить отдел вниз</string>
     <string name="area_produce">Фрукты и овощи</string>
     <string name="area_bakery">Хлеб и выпечка</string>
     <string name="area_meat">Мясо и колбасы</string>
@@ -150,4 +148,6 @@
     <string name="settings_backup_import_error">Ошибка импорта: %1$s</string>
     <string name="area_order_expand">Развернуть список категорий</string>
     <string name="area_order_collapse">Свернуть список категорий</string>
+    <string name="settings_backup_unlock_error">Не удалось разблокировать резервную копию. Проверьте выбранный файл и пароль.</string>
+    <string name="area_order_drag_handle">Перетащите, чтобы изменить порядок категории</string>
 </resources>
