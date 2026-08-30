@@ -223,6 +223,7 @@ fun SettingsScreen(
     var listDisplayMode by remember { mutableStateOf(ShoppingListDisplayMode.CATEGORIZED) }
     var areaOrderDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
     var enabledAreasDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
+    var areaOrderExpanded by remember { mutableStateOf(false) }
     var todoOptions by remember { mutableStateOf<List<ShoppingList>>(emptyList()) }
     var todoExpanded by remember { mutableStateOf(false) }
     var todoLoading by remember { mutableStateOf(false) }
@@ -622,7 +623,9 @@ fun SettingsScreen(
 
                 SectionHeaderWithHelp(
                     text = t(R.string.area_order_title),
-                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.AreaVisibility }
+                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.AreaVisibility },
+                    expanded = areaOrderExpanded,
+                    onExpandedToggle = { areaOrderExpanded = !areaOrderExpanded }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -633,65 +636,67 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                if (areaOrderExpanded) {
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Card(
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp)
+                    Card(
+                        shape = MaterialTheme.shapes.large,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+                        )
                     ) {
-                        areaOrderDraft.forEachIndexed { index, area ->
-                            AreaOrderRow(
-                                area = area,
-                                enabled = area in enabledAreasDraft,
-                                canDisable = enabledAreasDraft.size > 1,
-                                canMoveUp = index > 0,
-                                canMoveDown = index < areaOrderDraft.lastIndex,
-                                onEnabledChanged = { isEnabled ->
-                                    enabledAreasDraft = if (isEnabled) {
-                                        areaOrderDraft.filter { it in enabledAreasDraft || it == area }
-                                    } else {
-                                        enabledAreasDraft.filterNot { it == area }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp)
+                        ) {
+                            areaOrderDraft.forEachIndexed { index, area ->
+                                AreaOrderRow(
+                                    area = area,
+                                    enabled = area in enabledAreasDraft,
+                                    canDisable = enabledAreasDraft.size > 1,
+                                    canMoveUp = index > 0,
+                                    canMoveDown = index < areaOrderDraft.lastIndex,
+                                    onEnabledChanged = { isEnabled ->
+                                        enabledAreasDraft = if (isEnabled) {
+                                            areaOrderDraft.filter { it in enabledAreasDraft || it == area }
+                                        } else {
+                                            enabledAreasDraft.filterNot { it == area }
+                                        }
+                                    },
+                                    onMoveUp = {
+                                        areaOrderDraft = areaOrderDraft.toMutableList().apply {
+                                            add(index - 1, removeAt(index))
+                                        }
+                                    },
+                                    onMoveDown = {
+                                        areaOrderDraft = areaOrderDraft.toMutableList().apply {
+                                            add(index + 1, removeAt(index))
+                                        }
                                     }
-                                },
-                                onMoveUp = {
-                                    areaOrderDraft = areaOrderDraft.toMutableList().apply {
-                                        add(index - 1, removeAt(index))
-                                    }
-                                },
-                                onMoveDown = {
-                                    areaOrderDraft = areaOrderDraft.toMutableList().apply {
-                                        add(index + 1, removeAt(index))
-                                    }
-                                }
-                            )
-
-                            if (index < areaOrderDraft.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    thickness = 1.dp,
-                                    color = MaterialTheme.colorScheme.outlineVariant
                                 )
+
+                                if (index < areaOrderDraft.lastIndex) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(horizontal = 16.dp),
+                                        thickness = 1.dp,
+                                        color = MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedButton(
-                    onClick = {
-                        areaOrderDraft = ShoppingArea.entries.toList()
-                        enabledAreasDraft = ShoppingArea.entries.toList()
+                    OutlinedButton(
+                        onClick = {
+                            areaOrderDraft = ShoppingArea.entries.toList()
+                            enabledAreasDraft = ShoppingArea.entries.toList()
+                        }
+                    ) {
+                        Text(t(R.string.area_order_reset))
                     }
-                ) {
-                    Text(t(R.string.area_order_reset))
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -719,6 +724,10 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                SettingsBackupSection(context)
 
                 if (updateChecksAllowed) {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -1054,7 +1063,9 @@ private fun SettingLabelWithHelp(
 @Composable
 private fun SectionHeaderWithHelp(
     text: String,
-    onHelpClick: () -> Unit
+    onHelpClick: () -> Unit,
+    expanded: Boolean? = null,
+    onExpandedToggle: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1065,6 +1076,24 @@ private fun SectionHeaderWithHelp(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f)
         )
+
+        if (expanded != null && onExpandedToggle != null) {
+            IconButton(
+                onClick = onExpandedToggle,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = if (expanded) {
+                        Icons.Default.KeyboardArrowUp
+                    } else {
+                        Icons.Default.KeyboardArrowDown
+                    },
+                    contentDescription = t(
+                        if (expanded) R.string.area_order_collapse else R.string.area_order_expand
+                    )
+                )
+            }
+        }
 
         IconButton(
             onClick = onHelpClick,

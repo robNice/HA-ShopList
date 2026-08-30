@@ -129,4 +129,25 @@
     <string name="area_health">Здоров\'я</string>
     <string name="area_non_food">Непродовольчі товари</string>
     <string name="area_other">Інше</string>
+    <string name="next">Далі</string>
+    <string name="settings_backup_title">Резервне копіювання та відновлення</string>
+    <string name="settings_backup_description">Експортуйте дані підключення, налаштування категорій та історію продуктів у зашифрований файл або відновіть їх із резервної копії.</string>
+    <string name="settings_backup_export">Експортувати налаштування</string>
+    <string name="settings_backup_import">Імпортувати налаштування</string>
+    <string name="settings_backup_export_selection_title">Що потрібно експортувати?</string>
+    <string name="settings_backup_import_selection_title">Що потрібно імпортувати?</string>
+    <string name="settings_backup_export_password_title">Захистити експорт</string>
+    <string name="settings_backup_import_password_title">Розблокувати резервну копію</string>
+    <string name="settings_backup_password">Пароль</string>
+    <string name="settings_backup_password_confirm">Підтвердити пароль</string>
+    <string name="settings_backup_password_hint">Пароль не зберігається, і його неможливо відновити.</string>
+    <string name="settings_backup_section_connection">Дані підключення (URL і токен)</string>
+    <string name="settings_backup_section_categories">Налаштування категорій (активність і порядок)</string>
+    <string name="settings_backup_section_history">Історія продуктів і призначення категорій</string>
+    <string name="settings_backup_export_success">Резервну копію успішно експортовано.</string>
+    <string name="settings_backup_export_error">Помилка експорту: %1$s</string>
+    <string name="settings_backup_import_success">Вибрані дані успішно імпортовано.</string>
+    <string name="settings_backup_import_error">Помилка імпорту: %1$s</string>
+    <string name="area_order_expand">Розгорнути список категорій</string>
+    <string name="area_order_collapse">Згорнути список категорій</string>
 </resources>

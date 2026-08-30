@@ -129,4 +129,25 @@
     <string name="area_7">Zone 7</string>
     <string name="area_8">Zone 8</string>
     <string name="area_impulse_buy">Achats d’impulsion</string>
+    <string name="next">Suivant</string>
+    <string name="settings_backup_title">Sauvegarde et restauration</string>
+    <string name="settings_backup_description">Exportez les données de connexion, les paramètres des catégories et l’historique des produits dans un fichier chiffré, ou restaurez-les depuis une sauvegarde.</string>
+    <string name="settings_backup_export">Exporter les paramètres</string>
+    <string name="settings_backup_import">Importer les paramètres</string>
+    <string name="settings_backup_export_selection_title">Que faut-il exporter ?</string>
+    <string name="settings_backup_import_selection_title">Que faut-il importer ?</string>
+    <string name="settings_backup_export_password_title">Protéger l’exportation</string>
+    <string name="settings_backup_import_password_title">Déverrouiller la sauvegarde</string>
+    <string name="settings_backup_password">Mot de passe</string>
+    <string name="settings_backup_password_confirm">Confirmer le mot de passe</string>
+    <string name="settings_backup_password_hint">Le mot de passe n’est pas enregistré et ne peut pas être récupéré.</string>
+    <string name="settings_backup_section_connection">Données de connexion (URL et jeton)</string>
+    <string name="settings_backup_section_categories">Paramètres des catégories (actives et ordre)</string>
+    <string name="settings_backup_section_history">Historique des produits et affectations aux catégories</string>
+    <string name="settings_backup_export_success">Sauvegarde exportée avec succès.</string>
+    <string name="settings_backup_export_error">Échec de l’exportation : %1$s</string>
+    <string name="settings_backup_import_success">Données sélectionnées importées avec succès.</string>
+    <string name="settings_backup_import_error">Échec de l’importation : %1$s</string>
+    <string name="area_order_expand">Développer la liste des catégories</string>
+    <string name="area_order_collapse">Réduire la liste des catégories</string>
 </resources>

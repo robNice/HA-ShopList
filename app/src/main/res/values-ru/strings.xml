@@ -129,4 +129,25 @@
     <string name="area_7">Зона 7</string>
     <string name="area_8">Зона 8</string>
     <string name="area_impulse_buy">Импульсные покупки</string>
+    <string name="next">Далее</string>
+    <string name="settings_backup_title">Резервное копирование и восстановление</string>
+    <string name="settings_backup_description">Экспортируйте данные подключения, настройки категорий и историю продуктов в зашифрованный файл или восстановите их из резервной копии.</string>
+    <string name="settings_backup_export">Экспортировать настройки</string>
+    <string name="settings_backup_import">Импортировать настройки</string>
+    <string name="settings_backup_export_selection_title">Что экспортировать?</string>
+    <string name="settings_backup_import_selection_title">Что импортировать?</string>
+    <string name="settings_backup_export_password_title">Защитить экспорт</string>
+    <string name="settings_backup_import_password_title">Разблокировать резервную копию</string>
+    <string name="settings_backup_password">Пароль</string>
+    <string name="settings_backup_password_confirm">Подтвердите пароль</string>
+    <string name="settings_backup_password_hint">Пароль не сохраняется и не может быть восстановлен.</string>
+    <string name="settings_backup_section_connection">Данные подключения (URL и токен)</string>
+    <string name="settings_backup_section_categories">Настройки категорий (активность и порядок)</string>
+    <string name="settings_backup_section_history">История продуктов и назначения категорий</string>
+    <string name="settings_backup_export_success">Резервная копия успешно экспортирована.</string>
+    <string name="settings_backup_export_error">Ошибка экспорта: %1$s</string>
+    <string name="settings_backup_import_success">Выбранные данные успешно импортированы.</string>
+    <string name="settings_backup_import_error">Ошибка импорта: %1$s</string>
+    <string name="area_order_expand">Развернуть список категорий</string>
+    <string name="area_order_collapse">Свернуть список категорий</string>
 </resources>

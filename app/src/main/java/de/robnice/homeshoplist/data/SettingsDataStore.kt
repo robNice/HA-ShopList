@@ -4,11 +4,19 @@ import android.content.Context
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
 class SettingsDataStore(private val context: Context) {
+
+    data class BackupSettings(
+        val haUrl: String,
+        val haToken: String,
+        val areaOrder: String,
+        val enabledAreas: String
+    )
 
     companion object {
         private val HA_URL = stringPreferencesKey("ha_url")
@@ -154,6 +162,32 @@ class SettingsDataStore(private val context: Context) {
             it.remove(UPDATE_APK_URL)
             it.remove(UPDATE_RELEASE_URL)
             it.remove(UPDATE_CHANGELOG)
+        }
+    }
+
+    suspend fun readBackupSettings(): BackupSettings {
+        val preferences = context.dataStore.data.first()
+        return BackupSettings(
+            haUrl = preferences[HA_URL].orEmpty(),
+            haToken = preferences[HA_TOKEN].orEmpty(),
+            areaOrder = preferences[AREA_ORDER].orEmpty(),
+            enabledAreas = preferences[ENABLED_AREAS].orEmpty()
+        )
+    }
+
+    suspend fun importBackupSettings(
+        connection: Pair<String, String>?,
+        categories: Pair<String, String>?
+    ) {
+        context.dataStore.edit { preferences ->
+            connection?.let { (url, token) ->
+                preferences[HA_URL] = url
+                preferences[HA_TOKEN] = token
+            }
+            categories?.let { (order, enabled) ->
+                preferences[AREA_ORDER] = order
+                preferences[ENABLED_AREAS] = enabled
+            }
         }
     }
 }

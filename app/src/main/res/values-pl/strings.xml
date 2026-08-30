@@ -129,4 +129,25 @@
     <string name="area_7">Strefa 7</string>
     <string name="area_8">Strefa 8</string>
     <string name="area_impulse_buy">Zakupy impulsowe</string>
+    <string name="next">Dalej</string>
+    <string name="settings_backup_title">Kopia zapasowa i przywracanie</string>
+    <string name="settings_backup_description">Eksportuj dane połączenia, ustawienia kategorii i historię produktów do zaszyfrowanego pliku albo przywróć je z kopii zapasowej.</string>
+    <string name="settings_backup_export">Eksportuj ustawienia</string>
+    <string name="settings_backup_import">Importuj ustawienia</string>
+    <string name="settings_backup_export_selection_title">Co wyeksportować?</string>
+    <string name="settings_backup_import_selection_title">Co zaimportować?</string>
+    <string name="settings_backup_export_password_title">Zabezpiecz eksport</string>
+    <string name="settings_backup_import_password_title">Odblokuj kopię zapasową</string>
+    <string name="settings_backup_password">Hasło</string>
+    <string name="settings_backup_password_confirm">Potwierdź hasło</string>
+    <string name="settings_backup_password_hint">Hasło nie jest zapisywane i nie można go odzyskać.</string>
+    <string name="settings_backup_section_connection">Dane połączenia (URL i token)</string>
+    <string name="settings_backup_section_categories">Ustawienia kategorii (aktywne i kolejność)</string>
+    <string name="settings_backup_section_history">Historia produktów i przypisania kategorii</string>
+    <string name="settings_backup_export_success">Pomyślnie wyeksportowano kopię zapasową.</string>
+    <string name="settings_backup_export_error">Eksport nie powiódł się: %1$s</string>
+    <string name="settings_backup_import_success">Pomyślnie zaimportowano wybrane dane.</string>
+    <string name="settings_backup_import_error">Import nie powiódł się: %1$s</string>
+    <string name="area_order_expand">Rozwiń listę kategorii</string>
+    <string name="area_order_collapse">Zwiń listę kategorii</string>
 </resources>

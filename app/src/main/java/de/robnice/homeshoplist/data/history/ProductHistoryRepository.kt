@@ -24,6 +24,20 @@ class ProductHistoryRepository private constructor(
 
     fun observeHistory(): Flow<List<ProductHistoryEntity>> = dao.observeAll()
 
+    suspend fun getHistorySnapshot(): List<ProductHistoryEntity> = dao.getAll()
+
+    suspend fun mergeHistory(imported: List<ProductHistoryEntity>) {
+        val sanitized = imported.mapNotNull { candidate ->
+            val normalized = normalizeName(candidate.normalizedName.ifBlank { candidate.displayName })
+            if (normalized.isBlank()) return@mapNotNull null
+            candidate.copy(
+                normalizedName = normalized,
+                displayName = candidate.displayName.trim()
+            )
+        }
+        dao.mergeImported(sanitized)
+    }
+
     suspend fun recordProductUse(name: String, area: ShoppingArea? = null) {
         val trimmed = name.trim()
         val normalized = normalizeName(trimmed)
