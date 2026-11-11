@@ -150,4 +150,8 @@ each    <string name="area_drinks">飲み物</string>
     <string name="area_order_collapse">カテゴリ一覧を折りたたむ</string>
     <string name="settings_backup_unlock_error">バックアップのロックを解除できませんでした。選択したファイルとパスワードを確認してください。</string>
     <string name="area_order_drag_handle">ドラッグしてカテゴリを並べ替え</string>
+    <string name="insecure_url_title">暗号化されていない接続</string>
+    <string name="insecure_url_message">このアドレスは http:// を使用しています。接続と Home Assistant のトークンは暗号化されずに送信され、ネットワーク上の他者に読み取られる可能性があります。\n\n信頼できる自宅のネットワーク内でのみ使用してください。本当に http:// を使用しますか？</string>
+    <string name="insecure_url_keep_http">http:// を使用</string>
+    <string name="insecure_url_use_https">https:// に切り替え</string>
 </resources>

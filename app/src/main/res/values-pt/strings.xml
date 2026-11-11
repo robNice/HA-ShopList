@@ -150,4 +150,8 @@
     <string name="area_order_collapse">Recolher lista de categorias</string>
     <string name="settings_backup_unlock_error">Não foi possível desbloquear a cópia de segurança. Verifique o ficheiro selecionado e a palavra-passe.</string>
     <string name="area_order_drag_handle">Arraste para reordenar a categoria</string>
+    <string name="insecure_url_title">Conexão não criptografada</string>
+    <string name="insecure_url_message">Este endereço usa http://. A conexão e o seu token do Home Assistant serão transmitidos sem criptografia e podem ser lidos por outras pessoas na rede.\n\nUse isso apenas na sua própria rede doméstica confiável. Deseja realmente usar http://?</string>
+    <string name="insecure_url_keep_http">Usar http://</string>
+    <string name="insecure_url_use_https">Mudar para https://</string>
 </resources>

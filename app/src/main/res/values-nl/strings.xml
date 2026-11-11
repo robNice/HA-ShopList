@@ -150,4 +150,8 @@
     <string name="area_order_collapse">Categorielijst inklappen</string>
     <string name="settings_backup_unlock_error">De back-up kon niet worden ontgrendeld. Controleer het geselecteerde bestand en wachtwoord.</string>
     <string name="area_order_drag_handle">Sleep om de categorie te verplaatsen</string>
+    <string name="insecure_url_title">Onversleutelde verbinding</string>
+    <string name="insecure_url_message">Dit adres gebruikt http://. De verbinding en je Home Assistant-token worden onversleuteld verzonden en kunnen door anderen op het netwerk worden meegelezen.\n\nGebruik dit alleen in je eigen vertrouwde thuisnetwerk. Wil je echt http:// gebruiken?</string>
+    <string name="insecure_url_keep_http">http:// gebruiken</string>
+    <string name="insecure_url_use_https">Overschakelen naar https://</string>
 </resources>

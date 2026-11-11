@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -235,6 +236,20 @@ fun SettingsScreen(
     var updateChecking by remember { mutableStateOf(false) }
     var updateDownloading by remember { mutableStateOf(false) }
     var updateStatusText by remember { mutableStateOf<String?>(null) }
+    // HTTP warning: only for URLs the user typed in, not for loaded or imported values
+    var urlEditedByUser by remember { mutableStateOf(false) }
+    var urlFieldFocused by remember { mutableStateOf(false) }
+    var confirmedHttpUrl by remember { mutableStateOf("") }
+    var showInsecureUrlDialog by remember { mutableStateOf(false) }
+    var saveAfterHttpDialog by remember { mutableStateOf(false) }
+
+    fun isUnconfirmedHttpUrl(): Boolean {
+        val cleanedUrl = normalizeHaUrl(url)
+        return urlEditedByUser &&
+            cleanedUrl.startsWith("http://") &&
+            cleanedUrl != normalizeHaUrl(storedUrl) &&
+            cleanedUrl != confirmedHttpUrl
+    }
 
     LaunchedEffect(
         storedUrl,
@@ -246,6 +261,7 @@ fun SettingsScreen(
         storedListDisplayMode
     ) {
         url = storedUrl
+        urlEditedByUser = false
         token = storedToken
         todoEntity = storedTodoEntity
         todoListName = storedTodoListName
@@ -322,13 +338,14 @@ fun SettingsScreen(
         }
     }
 
-    LaunchedEffect(url, token, todoReloadKey) {
+    LaunchedEffect(url, token, todoReloadKey, confirmedHttpUrl) {
         todoLoadError = null
 
         val cleanedUrl = normalizeHaUrl(url)
         val cleanedToken = token.trim()
 
-        if (cleanedUrl.isBlank() || cleanedToken.isBlank()) {
+        // Do not send the token over plain HTTP before the user has confirmed it
+        if (cleanedUrl.isBlank() || cleanedToken.isBlank() || isUnconfirmedHttpUrl()) {
             return@LaunchedEffect
         }
 
@@ -393,6 +410,48 @@ fun SettingsScreen(
         }
     }
 
+    fun saveSettings() {
+        val cleanedUrl = normalizeHaUrl(url)
+        val cleanedToken = token.trim()
+
+        coroutineScope.launch {
+            dataStore.saveHaUrl(cleanedUrl)
+            dataStore.saveHaToken(cleanedToken)
+            dataStore.saveTodoEntity(todoEntity)
+            dataStore.saveTodoListName(
+                todoListName.ifBlank {
+                    todoOptions.firstOrNull { it.id == todoEntity }?.name.orEmpty()
+                }
+            )
+            dataStore.saveAreaOrder(
+                ShoppingArea.serializeOrder(areaOrderDraft)
+            )
+            dataStore.saveEnabledAreas(
+                ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
+            )
+            dataStore.saveListDisplayMode(listDisplayMode.storageValue)
+            if (cleanedUrl.isNotBlank() && cleanedToken.isNotBlank()) {
+                runCatching {
+                    val putRequest = PutDataMapRequest.create("/ha_settings").apply {
+                        dataMap.putString("ha_url", cleanedUrl)
+                        dataMap.putString("ha_token", cleanedToken)
+                        dataMap.putString("todo_entity", todoEntity)
+                        dataMap.putString("list_display_mode", listDisplayMode.storageValue)
+                        dataMap.putString("area_order", ShoppingArea.serializeOrder(areaOrderDraft))
+                        dataMap.putLong("timestamp", System.currentTimeMillis())
+                    }.asPutDataRequest().setUrgent()
+                    Wearable.getDataClient(context).putDataItem(putRequest)
+                }
+            }
+            navController.navigate(Screen.Shopping.route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -446,8 +505,19 @@ fun SettingsScreen(
 
                 OutlinedTextField(
                     value = url,
-                    onValueChange = { url = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        url = it
+                        urlEditedByUser = true
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            val lostFocus = urlFieldFocused && !focusState.isFocused
+                            urlFieldFocused = focusState.isFocused
+                            if (lostFocus && isUnconfirmedHttpUrl()) {
+                                showInsecureUrlDialog = true
+                            }
+                        },
                     colors = settingsTextFieldColors()
                 )
 
@@ -731,6 +801,7 @@ fun SettingsScreen(
                         if (BackupSection.CONNECTION in importedSections) {
                             payload.connection?.let { importedConnection ->
                                 url = importedConnection.url
+                                urlEditedByUser = false
                                 token = importedConnection.token
                                 todoReloadKey++
                             }
@@ -893,44 +964,11 @@ fun SettingsScreen(
 
                 Button(
                     onClick = {
-                        val cleanedUrl = normalizeHaUrl(url)
-                        val cleanedToken = token.trim()
-
-                        coroutineScope.launch {
-                            dataStore.saveHaUrl(cleanedUrl)
-                            dataStore.saveHaToken(cleanedToken)
-                            dataStore.saveTodoEntity(todoEntity)
-                            dataStore.saveTodoListName(
-                                todoListName.ifBlank {
-                                    todoOptions.firstOrNull { it.id == todoEntity }?.name.orEmpty()
-                                }
-                            )
-                            dataStore.saveAreaOrder(
-                                ShoppingArea.serializeOrder(areaOrderDraft)
-                            )
-                            dataStore.saveEnabledAreas(
-                                ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
-                            )
-                            dataStore.saveListDisplayMode(listDisplayMode.storageValue)
-                            if (cleanedUrl.isNotBlank() && cleanedToken.isNotBlank()) {
-                                runCatching {
-                                    val putRequest = PutDataMapRequest.create("/ha_settings").apply {
-                                        dataMap.putString("ha_url", cleanedUrl)
-                                        dataMap.putString("ha_token", cleanedToken)
-                                        dataMap.putString("todo_entity", todoEntity)
-                                        dataMap.putString("list_display_mode", listDisplayMode.storageValue)
-                                        dataMap.putString("area_order", ShoppingArea.serializeOrder(areaOrderDraft))
-                                        dataMap.putLong("timestamp", System.currentTimeMillis())
-                                    }.asPutDataRequest().setUrgent()
-                                    Wearable.getDataClient(context).putDataItem(putRequest)
-                                }
-                            }
-                            navController.navigate(Screen.Shopping.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
+                        if (isUnconfirmedHttpUrl()) {
+                            saveAfterHttpDialog = true
+                            showInsecureUrlDialog = true
+                        } else {
+                            saveSettings()
                         }
                     }
                 ) {
@@ -985,6 +1023,43 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { showHistoryClearDialog = false }) {
                     Text(t(R.string.clear_completed_confirm_btn_cancel))
+                }
+            }
+        )
+    }
+
+    if (showInsecureUrlDialog) {
+        AlertDialog(
+            // Only the buttons close this dialog, so the user has to decide
+            onDismissRequest = {},
+            title = { Text(t(R.string.insecure_url_title)) },
+            text = { Text(t(R.string.insecure_url_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmedHttpUrl = normalizeHaUrl(url)
+                        showInsecureUrlDialog = false
+                        if (saveAfterHttpDialog) {
+                            saveAfterHttpDialog = false
+                            saveSettings()
+                        }
+                    }
+                ) {
+                    Text(t(R.string.insecure_url_keep_http))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        url = "https://" + url.trim().removePrefix("http://")
+                        showInsecureUrlDialog = false
+                        if (saveAfterHttpDialog) {
+                            saveAfterHttpDialog = false
+                            saveSettings()
+                        }
+                    }
+                ) {
+                    Text(t(R.string.insecure_url_use_https))
                 }
             }
         )
@@ -1251,6 +1326,7 @@ private fun parseMarkdownBlocks(markdown: String): List<MarkdownBlock> {
             line.isBlank() -> MarkdownBlock.Spacer
             line.startsWith("# ") -> MarkdownBlock.H1(line.removePrefix("# "))
             line.startsWith("## ") -> MarkdownBlock.H2(line.removePrefix("## "))
+            line.startsWith("### ") -> MarkdownBlock.H2(line.removePrefix("### "))
             line.startsWith("- ") -> MarkdownBlock.Bullet(line.removePrefix("- "))
             else -> MarkdownBlock.Paragraph(line)
         }

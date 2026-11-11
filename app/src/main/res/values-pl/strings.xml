@@ -150,4 +150,8 @@
     <string name="area_order_collapse">Zwiń listę kategorii</string>
     <string name="settings_backup_unlock_error">Nie udało się odblokować kopii zapasowej. Sprawdź wybrany plik i hasło.</string>
     <string name="area_order_drag_handle">Przeciągnij, aby zmienić kolejność kategorii</string>
+    <string name="insecure_url_title">Nieszyfrowane połączenie</string>
+    <string name="insecure_url_message">Ten adres używa http://. Połączenie i Twój token Home Assistant będą przesyłane bez szyfrowania i mogą zostać odczytane przez inne osoby w sieci.\n\nUżywaj tego tylko we własnej, zaufanej sieci domowej. Czy na pewno chcesz użyć http://?</string>
+    <string name="insecure_url_keep_http">Użyj http://</string>
+    <string name="insecure_url_use_https">Przełącz na https://</string>
 </resources>

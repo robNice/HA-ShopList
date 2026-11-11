@@ -150,4 +150,8 @@
     <string name="area_order_collapse">Kategorienliste einklappen</string>
     <string name="settings_backup_unlock_error">Die Sicherung konnte nicht entsperrt werden. Prüfe die ausgewählte Datei und das Passwort.</string>
     <string name="area_order_drag_handle">Ziehen, um die Kategorie zu sortieren</string>
+    <string name="insecure_url_title">Unverschlüsselte Verbindung</string>
+    <string name="insecure_url_message">Diese Adresse verwendet http://. Die Verbindung und dein Home-Assistant-Token werden unverschlüsselt übertragen und könnten von anderen im Netzwerk mitgelesen werden.\n\nVerwende das nur in deinem eigenen, vertrauenswürdigen Heimnetz. Möchtest du wirklich http:// verwenden?</string>
+    <string name="insecure_url_keep_http">http:// verwenden</string>
+    <string name="insecure_url_use_https">Zu https:// wechseln</string>
 </resources>
