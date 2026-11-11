@@ -10,6 +10,10 @@
     <string name="tile_setup">Apri l\'app del telefono</string>
     <string name="tile_error">Errore di caricamento</string>
     <string name="tile_empty">Tutto fatto!</string>
-    <string name="tile_overflow">+%d altri</string>
-    <string name="tile_refresh">Aggiorna</string>
+    <string name="tile_show_list">Mostra lista</string>
+    <string name="tile_open_items">da comprare</string>
+    <string name="open_on_phone">Apri sul telefono</string>
+    <string name="continue_on_phone">Continua sul telefono</string>
+    <string name="cd_item_open">Da fare</string>
+    <string name="cd_item_done">Fatto</string>
 </resources>

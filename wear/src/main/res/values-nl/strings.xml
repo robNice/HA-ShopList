@@ -10,6 +10,10 @@
     <string name="tile_setup">Telefoon-app openen</string>
     <string name="tile_error">Laadfout</string>
     <string name="tile_empty">Alles klaar!</string>
-    <string name="tile_overflow">+%d meer</string>
-    <string name="tile_refresh">Vernieuwen</string>
+    <string name="tile_show_list">Lijst tonen</string>
+    <string name="tile_open_items">open artikelen</string>
+    <string name="open_on_phone">Openen op telefoon</string>
+    <string name="continue_on_phone">Ga verder op je telefoon</string>
+    <string name="cd_item_open">Open</string>
+    <string name="cd_item_done">Klaar</string>
 </resources>

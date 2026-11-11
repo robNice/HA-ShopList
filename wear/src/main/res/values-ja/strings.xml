@@ -10,6 +10,10 @@
     <string name="tile_setup">スマホアプリを開く</string>
     <string name="tile_error">読み込みエラー</string>
     <string name="tile_empty">全て完了！</string>
-    <string name="tile_overflow">他%d件</string>
-    <string name="tile_refresh">更新</string>
+    <string name="tile_show_list">リストを表示</string>
+    <string name="tile_open_items">未完了</string>
+    <string name="open_on_phone">スマホで開く</string>
+    <string name="continue_on_phone">スマホで続行</string>
+    <string name="cd_item_open">未完了</string>
+    <string name="cd_item_done">完了</string>
 </resources>

@@ -58,7 +58,15 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private val dataListener = com.google.android.gms.wearable.DataClient.OnDataChangedListener { events ->
+        if (settingsStore.isScreenshotMode()) return@OnDataChangedListener
         events.forEach { event ->
+            // The phone reports a changed list: reload now instead of waiting for the next tick
+            if (event.type == DataEvent.TYPE_CHANGED &&
+                event.dataItem.uri.path == WearSettingsListenerService.LIST_STATE_PATH
+            ) {
+                refresh()
+                return@forEach
+            }
             if (event.type == DataEvent.TYPE_CHANGED &&
                 event.dataItem.uri.path?.startsWith("/ha_settings") == true
             ) {
@@ -89,7 +97,7 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
         if (settings != null) {
             initClient(settings.url, settings.token, settings.entity)
         }
-        runCatching { loadSettingsFromDataLayer() }
+        if (!settingsStore.isScreenshotMode()) runCatching { loadSettingsFromDataLayer() }
     }
 
     private fun initClient(url: String, token: String, entity: String) {
@@ -105,10 +113,9 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
             _isLoading.value = true
             try {
                 val newItems = client.fetchItems()
-                val changed = newItems != _items.value
                 _items.value = newItems
                 _error.value = null
-                if (changed) requestTileUpdate()
+                publishOpenCount()
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -127,7 +134,7 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
                         if (it.id == item.id) it.copy(complete = item.complete) else it
                     }
                 }
-            requestTileUpdate()
+            publishOpenCount()
         }
     }
 
@@ -137,8 +144,14 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
         _items.value = _items.value.filterNot { it.complete }
         viewModelScope.launch {
             completed.forEach { item -> runCatching { haClient?.removeItem(item.id) } }
-            requestTileUpdate()
+            publishOpenCount()
         }
+    }
+
+    /** Shares the open item count with the tile; refreshes the tile only when it changed. */
+    private fun publishOpenCount() {
+        val items = _items.value
+        if (settingsStore.saveOpenCount(items.count { !it.complete }, items.size)) requestTileUpdate()
     }
 
     private fun requestTileUpdate() {

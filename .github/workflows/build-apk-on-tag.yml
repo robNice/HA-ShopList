@@ -1,4 +1,4 @@
-name: Build APK and app bundle on v* tag
+name: Build and publish on v* tag
 
 on:
   push:
@@ -8,18 +8,118 @@ on:
 permissions:
   contents: write
 
+env:
+  PACKAGE_NAME: de.robnice.homeshoplist
+  # Tag suffix = Play track: v1.2.3-gt -> closed testing, v1.2.3-p -> production
+  # No suffix (v1.2.3) -> build APK/AAB and GitHub release only, no Play upload
+  PLAY_TRACKS: |
+    gt=alpha
+    p=production
+  # The watch app goes to the Wear OS track of the same suffix. Closed testing tracks for Wear OS are created by hand
+  # in the Play Console; the name after "wear:" has to match the one there.
+  WEAR_TRACKS: |
+    gt=wear:alpha
+    p=wear:production
+  PLAY_RELEASE_STATUS: completed
+  # Store texts, icon, feature graphic and screenshots (fastlane layout, also used by F-Droid)
+  STORE_DIR: fastlane/metadata/android
+  # Upload the store listing from STORE_DIR on every release. Keep "false" until STORE_DIR holds the current
+  # Play listing (run the "Pull Play store listing" workflow once and copy its result into STORE_DIR).
+  SYNC_STORE_LISTING: "false"
+  # Release notes per version: <language> blocks, max. 500 characters each
+  RELEASE_NOTES_DIR: store
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout master branch
+      - name: Checkout tagged commit
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
+      - name: Resolve version and track from tag
+        id: tag
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)(-([a-z]+))?$ ]]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' must look like v1.2.3 or v1.2.3-<track>, e.g. v1.2.3-gt"
+            exit 1
+          fi
+          version="${BASH_REMATCH[1]}"
+          suffix="${BASH_REMATCH[3]}"
+          track=""
+          wear_track=""
+          if [ -n "$suffix" ]; then
+            track="$(echo "$PLAY_TRACKS" | awk -F= -v s="$suffix" '$1==s {print $2}')"
+            wear_track="$(echo "$WEAR_TRACKS" | awk -F= -v s="$suffix" '$1==s {print $2}')"
+            if [ -z "$track" ]; then
+              echo "::error::Unknown track suffix '$suffix'. Known: $(echo "$PLAY_TRACKS" | cut -d= -f1 | xargs)"
+              exit 1
+            fi
+          fi
+          # Phone: versionName "<version>-mobile"; watch: "<version>-wear", versionCode = phone code + 100000000
+          app_name="$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)"
+          app_code="$(grep -oP 'versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts)"
+          wear_name="$(grep -oP 'versionName\s*=\s*"\K[^"]+' wear/build.gradle.kts)"
+          wear_code="$(grep -oP 'versionCode\s*=\s*\K[0-9]+' wear/build.gradle.kts)"
+          if [ "$app_name" != "$version-mobile" ]; then
+            echo "::error::Tag version $version does not match versionName $app_name in app/build.gradle.kts (expected $version-mobile)"
+            exit 1
+          fi
+          if [ "$wear_name" != "$version-wear" ] || [ "$wear_code" != "$((app_code + 100000000))" ]; then
+            echo "::error::wear/build.gradle.kts has $wear_name ($wear_code), expected $version-wear ($((app_code + 100000000)))"
+            exit 1
+          fi
+          notes="$RELEASE_NOTES_DIR/release_notes_$version.txt"
+          if [ -n "$track" ] && [ ! -f "$notes" ]; then
+            echo "::error::Release notes missing: $notes"
+            exit 1
+          fi
+          {
+            echo "version=$version"
+            echo "version_code=$app_code"
+            echo "wear_version_code=$wear_code"
+            echo "track=$track"
+            echo "wear_track=$wear_track"
+            echo "release_notes=$notes"
+          } >> "$GITHUB_OUTPUT"
+          echo "Version $version ($app_code, watch $wear_code) -> track ${track:-none (build only)}"
+
+      - name: Set up Python
+        if: steps.tag.outputs.track != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Play API client
+        if: steps.tag.outputs.track != ''
+        run: pip install google-api-python-client google-auth
+
+      - name: Validate release notes and store listing
+        if: steps.tag.outputs.track != ''
+        run: |
+          store_arg=()
+          if [ "$SYNC_STORE_LISTING" = "true" ]; then
+            store_arg=(--store-dir "$STORE_DIR")
+          fi
+          python .github/scripts/play_publish.py validate \
+            --release-notes "${{ steps.tag.outputs.release_notes }}" "${store_arg[@]}"
+
+      - name: Check whether version is already on Play
+        id: play
+        if: steps.tag.outputs.track != ''
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          python .github/scripts/play_publish.py check \
+            --package "$PACKAGE_NAME" \
+            --version-code "${{ steps.tag.outputs.version_code }}" \
+            --wear-version-code "${{ steps.tag.outputs.wear_version_code }}"
+
       - name: Set up JDK 17
+        if: steps.play.outputs.bundle_exists != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -27,31 +127,30 @@ jobs:
           cache: gradle
 
       - name: Make Gradle executable
+        if: steps.play.outputs.bundle_exists != 'true'
         run: chmod +x ./gradlew
 
       - name: Decode keystore
+        if: steps.play.outputs.bundle_exists != 'true'
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
 
-      - name: Build GitHub release artifacts
+      - name: Build release artifacts
+        if: steps.play.outputs.bundle_exists != 'true'
         env:
           ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"
-        run: ./gradlew --no-daemon :app:assembleGithubRelease :app:bundleGithubRelease :wear:assembleRelease :wear:bundleRelease
-
-      - name: Build Play Store release artifacts
-        env:
-          ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"
-        run: ./gradlew --no-daemon :app:assemblePlayRelease :app:bundlePlayRelease
+        run: >
+          ./gradlew --no-daemon
+          :app:assembleGithubRelease :app:bundleGithubRelease
+          :app:assemblePlayRelease :app:bundlePlayRelease
+          :wear:assembleRelease :wear:bundleRelease
 
       - name: Rename artifacts to include tag
+        if: steps.play.outputs.bundle_exists != 'true'
         run: |
           mv "app/build/outputs/apk/github/release/app-github-release.apk" "homeShopList-${{ github.ref_name }}.apk"
           mv "app/build/outputs/bundle/githubRelease/app-github-release.aab" "homeShopList-${{ github.ref_name }}.aab"
@@ -61,6 +160,7 @@ jobs:
           mv "wear/build/outputs/bundle/release/wear-release.aab" "homeShopList-wear-${{ github.ref_name }}.aab"
 
       - name: Upload release artifacts
+        if: steps.play.outputs.bundle_exists != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ github.ref_name }}
@@ -74,6 +174,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish release artifacts to GitHub Release
+        if: steps.play.outputs.bundle_exists != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -86,3 +187,29 @@ jobs:
             homeShopList-playstore-${{ github.ref_name }}.aab
             homeShopList-wear-${{ github.ref_name }}.apk
             homeShopList-wear-${{ github.ref_name }}.aab
+
+      - name: Publish to Google Play
+        if: steps.tag.outputs.track != ''
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          extra=()
+          if [ "${{ steps.play.outputs.bundle_exists }}" != "true" ]; then
+            extra+=(--aab "homeShopList-playstore-${{ github.ref_name }}.aab")
+          fi
+          if [ "${{ steps.play.outputs.bundle_exists }}" != "true" ] && [ "${{ steps.play.outputs.wear_bundle_exists }}" != "true" ]; then
+            extra+=(--wear-aab "homeShopList-wear-${{ github.ref_name }}.aab")
+          fi
+          if [ "$SYNC_STORE_LISTING" = "true" ]; then
+            extra+=(--store-dir "$STORE_DIR")
+          fi
+          python .github/scripts/play_publish.py publish \
+            --package "$PACKAGE_NAME" \
+            --version-code "${{ steps.tag.outputs.version_code }}" \
+            --version-name "${{ steps.tag.outputs.version }}" \
+            --track "${{ steps.tag.outputs.track }}" \
+            --wear-version-code "${{ steps.tag.outputs.wear_version_code }}" \
+            --wear-track "${{ steps.tag.outputs.wear_track }}" \
+            --status "$PLAY_RELEASE_STATUS" \
+            --release-notes "${{ steps.tag.outputs.release_notes }}" \
+            "${extra[@]}"
