@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -110,7 +113,7 @@ fun SettingsBackupSection(
                 dialog = BackupDialog.EXPORT_SELECTION
             },
             enabled = !busy
-        ) { Text(t(R.string.settings_backup_export)) }
+        ) { ButtonIconLabel(Icons.Default.Upload, t(R.string.settings_backup_export_button)) }
         Spacer(Modifier.width(8.dp))
         OutlinedButton(
             onClick = {
@@ -119,7 +122,7 @@ fun SettingsBackupSection(
                 openDocument.launch(arrayOf(SettingsBackupService.MIME_TYPE, "application/*", "*/*"))
             },
             enabled = !busy
-        ) { Text(t(R.string.settings_backup_import)) }
+        ) { ButtonIconLabel(Icons.Default.Download, t(R.string.settings_backup_import_button)) }
     }
     status?.let {
         Spacer(Modifier.height(8.dp))

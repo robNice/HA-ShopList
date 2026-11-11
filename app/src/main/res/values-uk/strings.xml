@@ -146,8 +146,15 @@
     <string name="settings_backup_export_error">Помилка експорту: %1$s</string>
     <string name="settings_backup_import_success">Вибрані дані успішно імпортовано.</string>
     <string name="settings_backup_import_error">Помилка імпорту: %1$s</string>
-    <string name="area_order_expand">Розгорнути список категорій</string>
-    <string name="area_order_collapse">Згорнути список категорій</string>
     <string name="settings_backup_unlock_error">Не вдалося розблокувати резервну копію. Перевірте вибраний файл і пароль.</string>
     <string name="area_order_drag_handle">Перетягніть, щоб змінити порядок категорії</string>
+    <string name="insecure_url_title">Незашифроване з\'єднання</string>
+    <string name="insecure_url_message">Ця адреса використовує http://. З\'єднання та ваш токен Home Assistant передаватимуться без шифрування і можуть бути прочитані іншими користувачами мережі.\n\nВикористовуйте це лише у власній довіреній домашній мережі. Ви справді хочете використовувати http://?</string>
+    <string name="insecure_url_keep_http">Використовувати http://</string>
+    <string name="insecure_url_use_https">Перейти на https://</string>
+    <string name="settings_tab_connection">Підключення</string>
+    <string name="settings_tab_view">Вигляд</string>
+    <string name="settings_tab_data">Дані</string>
+    <string name="settings_backup_export_button">Експорт</string>
+    <string name="settings_backup_import_button">Імпорт</string>
 </resources>

@@ -21,9 +21,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -33,12 +35,16 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -80,6 +86,12 @@ private sealed interface MarkdownBlock {
     data class Bullet(val text: String) : MarkdownBlock
     data class Paragraph(val text: String) : MarkdownBlock
     data object Spacer : MarkdownBlock
+}
+
+private enum class SettingsTab(val titleRes: Int) {
+    Connection(R.string.settings_tab_connection),
+    View(R.string.settings_tab_view),
+    Data(R.string.settings_tab_data)
 }
 
 private enum class SettingsHelpTopic(
@@ -213,6 +225,7 @@ fun SettingsScreen(
         }
     }
 
+    var selectedTab by rememberSaveable { mutableStateOf(SettingsTab.Connection) }
     var tokenVisible by remember { mutableStateOf(false) }
     var url by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
@@ -221,7 +234,6 @@ fun SettingsScreen(
     var listDisplayMode by remember { mutableStateOf(ShoppingListDisplayMode.CATEGORIZED) }
     var areaOrderDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
     var enabledAreasDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
-    var areaOrderExpanded by remember { mutableStateOf(false) }
     var todoOptions by remember { mutableStateOf<List<ShoppingList>>(emptyList()) }
     var todoExpanded by remember { mutableStateOf(false) }
     var todoLoading by remember { mutableStateOf(false) }
@@ -235,6 +247,20 @@ fun SettingsScreen(
     var updateChecking by remember { mutableStateOf(false) }
     var updateDownloading by remember { mutableStateOf(false) }
     var updateStatusText by remember { mutableStateOf<String?>(null) }
+    // HTTP warning: only for URLs the user typed in, not for loaded or imported values
+    var urlEditedByUser by remember { mutableStateOf(false) }
+    var urlFieldFocused by remember { mutableStateOf(false) }
+    var confirmedHttpUrl by remember { mutableStateOf("") }
+    var showInsecureUrlDialog by remember { mutableStateOf(false) }
+    var saveAfterHttpDialog by remember { mutableStateOf(false) }
+
+    fun isUnconfirmedHttpUrl(): Boolean {
+        val cleanedUrl = normalizeHaUrl(url)
+        return urlEditedByUser &&
+            cleanedUrl.startsWith("http://") &&
+            cleanedUrl != normalizeHaUrl(storedUrl) &&
+            cleanedUrl != confirmedHttpUrl
+    }
 
     LaunchedEffect(
         storedUrl,
@@ -246,6 +272,7 @@ fun SettingsScreen(
         storedListDisplayMode
     ) {
         url = storedUrl
+        urlEditedByUser = false
         token = storedToken
         todoEntity = storedTodoEntity
         todoListName = storedTodoListName
@@ -322,13 +349,14 @@ fun SettingsScreen(
         }
     }
 
-    LaunchedEffect(url, token, todoReloadKey) {
+    LaunchedEffect(url, token, todoReloadKey, confirmedHttpUrl) {
         todoLoadError = null
 
         val cleanedUrl = normalizeHaUrl(url)
         val cleanedToken = token.trim()
 
-        if (cleanedUrl.isBlank() || cleanedToken.isBlank()) {
+        // Do not send the token over plain HTTP before the user has confirmed it
+        if (cleanedUrl.isBlank() || cleanedToken.isBlank() || isUnconfirmedHttpUrl()) {
             return@LaunchedEffect
         }
 
@@ -393,6 +421,48 @@ fun SettingsScreen(
         }
     }
 
+    fun saveSettings() {
+        val cleanedUrl = normalizeHaUrl(url)
+        val cleanedToken = token.trim()
+
+        coroutineScope.launch {
+            dataStore.saveHaUrl(cleanedUrl)
+            dataStore.saveHaToken(cleanedToken)
+            dataStore.saveTodoEntity(todoEntity)
+            dataStore.saveTodoListName(
+                todoListName.ifBlank {
+                    todoOptions.firstOrNull { it.id == todoEntity }?.name.orEmpty()
+                }
+            )
+            dataStore.saveAreaOrder(
+                ShoppingArea.serializeOrder(areaOrderDraft)
+            )
+            dataStore.saveEnabledAreas(
+                ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
+            )
+            dataStore.saveListDisplayMode(listDisplayMode.storageValue)
+            if (cleanedUrl.isNotBlank() && cleanedToken.isNotBlank()) {
+                runCatching {
+                    val putRequest = PutDataMapRequest.create("/ha_settings").apply {
+                        dataMap.putString("ha_url", cleanedUrl)
+                        dataMap.putString("ha_token", cleanedToken)
+                        dataMap.putString("todo_entity", todoEntity)
+                        dataMap.putString("list_display_mode", listDisplayMode.storageValue)
+                        dataMap.putString("area_order", ShoppingArea.serializeOrder(areaOrderDraft))
+                        dataMap.putLong("timestamp", System.currentTimeMillis())
+                    }.asPutDataRequest().setUrgent()
+                    Wearable.getDataClient(context).putDataItem(putRequest)
+                }
+            }
+            navController.navigate(Screen.Shopping.route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -404,456 +474,487 @@ fun SettingsScreen(
                 .safeDrawingPadding()
                 .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 0.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
+            Text(
+                text = t(R.string.settings_title),
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TabRow(
+                selectedTabIndex = selectedTab.ordinal,
+                containerColor = MaterialTheme.colorScheme.background
             ) {
-                Text(
-                    text = t(R.string.settings_title),
-                    style = MaterialTheme.typography.headlineMedium
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    SettingLabelWithHelp(
-                        text = t(R.string.notifications_enabled),
-                        onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Notifications },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Switch(
-                        checked = notificationsEnabled,
-                        onCheckedChange = {
-                            coroutineScope.launch {
-                                dataStore.setNotificationsEnabled(it)
-                            }
-                        }
+                SettingsTab.entries.forEach { tab ->
+                    Tab(
+                        selected = selectedTab == tab,
+                        onClick = { selectedTab = tab },
+                        text = { Text(t(tab.titleRes)) }
                     )
                 }
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
+            // Own scroll position per tab
+            key(selectedTab) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                SettingFieldHeader(
-                    text = t(R.string.ha_url),
-                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.HaUrl }
-                )
+                    if (selectedTab == SettingsTab.Connection) {
+                        SettingFieldHeader(
+                            text = t(R.string.ha_url),
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.HaUrl }
+                        )
 
-                OutlinedTextField(
-                    value = url,
-                    onValueChange = { url = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = settingsTextFieldColors()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                SettingFieldHeader(
-                    text = t(R.string.ha_token),
-                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Token }
-                )
-
-                OutlinedTextField(
-                    value = token,
-                    onValueChange = { token = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = if (tokenVisible) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                    trailingIcon = {
-                        val image = if (tokenVisible) {
-                            Icons.Default.Visibility
-                        } else {
-                            Icons.Default.VisibilityOff
-                        }
-
-                        IconButton(onClick = { tokenVisible = !tokenVisible }) {
-                            Icon(
-                                imageVector = image,
-                                contentDescription = null
-                            )
-                        }
-                    },
-                    colors = settingsTextFieldColors()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                SettingFieldHeader(
-                    text = t(R.string.settings_list),
-                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListSelection }
-                )
-
-                when {
-                    todoLoading -> {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(t(R.string.loading_lists))
-                        }
-                    }
-
-                    todoOptions.isNotEmpty() -> {
-                        ExposedDropdownMenuBox(
-                            expanded = todoExpanded,
-                            onExpandedChange = { todoExpanded = !todoExpanded }
-                        ) {
-                            val selectedName = todoOptions
-                                .firstOrNull { it.id == todoEntity }
-                                ?.name
-                                ?: todoEntity
-
-                            OutlinedTextField(
-                                value = selectedName,
-                                onValueChange = {},
-                                readOnly = true,
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = todoExpanded)
-                                },
-                                modifier = Modifier
-                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                                    .fillMaxWidth(),
-                                colors = settingsTextFieldColors()
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = todoExpanded,
-                                onDismissRequest = { todoExpanded = false },
-                                containerColor = MaterialTheme.colorScheme.surface
-                            ) {
-                                todoOptions.forEach { option ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                text = option.name,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        },
-                                        onClick = {
-                                            todoEntity = option.id
-                                            todoListName = option.name
-                                            todoExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    else -> {
                         OutlinedTextField(
-                            value = todoEntity,
+                            value = url,
                             onValueChange = {
-                                todoEntity = it
-                                if (todoListName.isBlank()) {
-                                    todoListName = it
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            colors = settingsTextFieldColors()
-                        )
-                    }
-                }
-
-                if (todoLoadError != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = t(R.string.error_list_not_loaded),
-                        color = MaterialTheme.colorScheme.error
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = todoLoadError.orEmpty(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedButton(onClick = { todoReloadKey++ }) {
-                        Text(t(R.string.retry))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingFieldHeader(
-                    text = t(R.string.list_display_mode_label),
-                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListSelection }
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = listDisplayMode == ShoppingListDisplayMode.SIMPLE,
-                        onClick = { listDisplayMode = ShoppingListDisplayMode.SIMPLE },
-                        label = { Text(t(R.string.list_display_mode_simple)) }
-                    )
-                    FilterChip(
-                        selected = listDisplayMode == ShoppingListDisplayMode.CATEGORIZED,
-                        onClick = { listDisplayMode = ShoppingListDisplayMode.CATEGORIZED },
-                        label = { Text(t(R.string.list_display_mode_categorized)) }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SectionHeaderWithHelp(
-                    text = t(R.string.area_order_title),
-                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.AreaVisibility },
-                    expanded = areaOrderExpanded,
-                    onExpandedToggle = { areaOrderExpanded = !areaOrderExpanded }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = t(R.string.area_order_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                if (areaOrderExpanded) {
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Card(
-                        shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-                        )
-                    ) {
-                        ReorderableColumn(
-                            list = areaOrderDraft,
-                            onSettle = { fromIndex, toIndex ->
-                                areaOrderDraft = areaOrderDraft.toMutableList().apply {
-                                    add(toIndex, removeAt(fromIndex))
-                                }
+                                url = it
+                                urlEditedByUser = true
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 6.dp)
-                        ) { index, area, isDragging ->
-                            ReorderableItem(modifier = Modifier.fillMaxWidth()) {
-                                Column {
-                                    AreaOrderRow(
-                                        area = area,
-                                        enabled = area in enabledAreasDraft,
-                                        canDisable = enabledAreasDraft.size > 1,
-                                        onEnabledChanged = { isEnabled ->
-                                            enabledAreasDraft = if (isEnabled) {
-                                                areaOrderDraft.filter {
-                                                    it in enabledAreasDraft || it == area
-                                                }
-                                            } else {
-                                                enabledAreasDraft.filterNot { it == area }
-                                            }
-                                        },
-                                        dragHandleModifier = Modifier.draggableHandle(),
-                                        isDragging = isDragging
-                                    )
-
-                                    if (index < areaOrderDraft.lastIndex) {
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(horizontal = 16.dp),
-                                            thickness = 1.dp,
-                                            color = MaterialTheme.colorScheme.outlineVariant
-                                        )
+                                .onFocusChanged { focusState ->
+                                    val lostFocus = urlFieldFocused && !focusState.isFocused
+                                    urlFieldFocused = focusState.isFocused
+                                    if (lostFocus && isUnconfirmedHttpUrl()) {
+                                        showInsecureUrlDialog = true
                                     }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedButton(
-                        onClick = {
-                            areaOrderDraft = ShoppingArea.entries.toList()
-                            enabledAreasDraft = ShoppingArea.entries.toList()
-                        }
-                    ) {
-                        Text(t(R.string.area_order_reset))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SectionHeaderWithHelp(
-                    text = t(R.string.product_history_title),
-                    onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ProductHistory }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = t(R.string.product_history_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedButton(onClick = { showHistoryClearDialog = true }) {
-                    Text(t(R.string.product_history_clear))
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider()
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsBackupSection(
-                    context = context,
-                    onImported = { payload, importedSections ->
-                        if (BackupSection.CONNECTION in importedSections) {
-                            payload.connection?.let { importedConnection ->
-                                url = importedConnection.url
-                                token = importedConnection.token
-                                todoReloadKey++
-                            }
-                        }
-
-                        if (BackupSection.CATEGORIES in importedSections) {
-                            payload.categories?.let { importedCategories ->
-                                val importedOrder = ShoppingArea.orderedFromStorage(
-                                    importedCategories.order.joinToString(",")
-                                )
-                                areaOrderDraft = importedOrder
-                                enabledAreasDraft = ShoppingArea.enabledFromStorage(
-                                    importedCategories.enabled.joinToString(","),
-                                    importedOrder
-                                )
-                            }
-                        }
-                    }
-                )
-
-                if (updateChecksAllowed) {
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = t(R.string.update_section_title),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    availableUpdate?.let { update ->
-                        Text(
-                            text = context.getString(
-                                R.string.update_available_status,
-                                update.versionName
-                            ),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
+                                },
+                            colors = settingsTextFieldColors()
                         )
-
-                        if (update.changelog.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            TextButton(
-                                onClick = { showUpdateChangelogDialog = true },
-                                contentPadding = PaddingValues(0.dp)
-                            ) {
-                                Text(t(R.string.update_show_changelog))
-                            }
-                        }
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Button(
-                            onClick = {
-                                val activity = context as? Activity
-                                if (activity == null) {
-                                    updateStatusText = context.getString(R.string.update_install_failed_no_activity)
-                                    return@Button
+                        SettingFieldHeader(
+                            text = t(R.string.ha_token),
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Token }
+                        )
+
+                        OutlinedTextField(
+                            value = token,
+                            onValueChange = { token = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = if (tokenVisible) {
+                                VisualTransformation.None
+                            } else {
+                                PasswordVisualTransformation()
+                            },
+                            trailingIcon = {
+                                val image = if (tokenVisible) {
+                                    Icons.Default.Visibility
+                                } else {
+                                    Icons.Default.VisibilityOff
                                 }
 
-                                coroutineScope.launch {
-                                    updateDownloading = true
-                                    updateStatusText = context.getString(R.string.update_downloading)
-
-                                    try {
-                                        val apkFile = updateRepository.downloadApk(update)
-                                        val result = updateRepository.startInstall(activity, apkFile)
-                                        updateStatusText = when (result) {
-                                            InstallStartResult.Started ->
-                                                context.getString(R.string.update_installer_started)
-                                            InstallStartResult.NeedsInstallPermission ->
-                                                context.getString(R.string.update_install_permission_required)
-                                        }
-                                    } catch (e: Exception) {
-                                        updateStatusText = context.getString(
-                                            R.string.update_download_failed,
-                                            e.message ?: context.getString(R.string.loading_failed)
-                                        )
-                                    } finally {
-                                        updateDownloading = false
-                                    }
+                                IconButton(onClick = { tokenVisible = !tokenVisible }) {
+                                    Icon(
+                                        imageVector = image,
+                                        contentDescription = null
+                                    )
                                 }
                             },
-                            enabled = !updateChecking && !updateDownloading
-                        ) {
+                            colors = settingsTextFieldColors()
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        SettingFieldHeader(
+                            text = t(R.string.settings_list),
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListSelection }
+                        )
+
+                        when {
+                            todoLoading -> {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(t(R.string.loading_lists))
+                                }
+                            }
+
+                            todoOptions.isNotEmpty() -> {
+                                ExposedDropdownMenuBox(
+                                    expanded = todoExpanded,
+                                    onExpandedChange = { todoExpanded = !todoExpanded }
+                                ) {
+                                    val selectedName = todoOptions
+                                        .firstOrNull { it.id == todoEntity }
+                                        ?.name
+                                        ?: todoEntity
+
+                                    OutlinedTextField(
+                                        value = selectedName,
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = todoExpanded)
+                                        },
+                                        modifier = Modifier
+                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                                            .fillMaxWidth(),
+                                        colors = settingsTextFieldColors()
+                                    )
+
+                                    ExposedDropdownMenu(
+                                        expanded = todoExpanded,
+                                        onDismissRequest = { todoExpanded = false },
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    ) {
+                                        todoOptions.forEach { option ->
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        text = option.name,
+                                                        color = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                },
+                                                onClick = {
+                                                    todoEntity = option.id
+                                                    todoListName = option.name
+                                                    todoExpanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            else -> {
+                                OutlinedTextField(
+                                    value = todoEntity,
+                                    onValueChange = {
+                                        todoEntity = it
+                                        if (todoListName.isBlank()) {
+                                            todoListName = it
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    colors = settingsTextFieldColors()
+                                )
+                            }
+                        }
+
+                        if (todoLoadError != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+
                             Text(
-                                if (updateDownloading) {
-                                    t(R.string.update_downloading)
-                                } else {
-                                    t(R.string.update_install_button)
+                                text = t(R.string.error_list_not_loaded),
+                                color = MaterialTheme.colorScheme.error
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = todoLoadError.orEmpty(),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            OutlinedButton(onClick = { todoReloadKey++ }) {
+                                Text(t(R.string.retry))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    if (selectedTab == SettingsTab.View) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            SettingLabelWithHelp(
+                                text = t(R.string.notifications_enabled),
+                                onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Notifications },
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Switch(
+                                checked = notificationsEnabled,
+                                onCheckedChange = {
+                                    coroutineScope.launch {
+                                        dataStore.setNotificationsEnabled(it)
+                                    }
                                 }
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    OutlinedButton(
-                        onClick = { checkForUpdates(manual = true) },
-                        enabled = !updateChecking && !updateDownloading
-                    ) {
-                        Text(
-                            if (updateChecking) {
-                                t(R.string.update_checking)
-                            } else {
-                                t(R.string.update_check_button)
-                            }
+                        SettingFieldHeader(
+                            text = t(R.string.list_display_mode_label),
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListSelection }
                         )
-                    }
 
-                    updateStatusText?.let { status ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilterChip(
+                                selected = listDisplayMode == ShoppingListDisplayMode.SIMPLE,
+                                onClick = { listDisplayMode = ShoppingListDisplayMode.SIMPLE },
+                                label = { Text(t(R.string.list_display_mode_simple)) }
+                            )
+                            FilterChip(
+                                selected = listDisplayMode == ShoppingListDisplayMode.CATEGORIZED,
+                                onClick = { listDisplayMode = ShoppingListDisplayMode.CATEGORIZED },
+                                label = { Text(t(R.string.list_display_mode_categorized)) }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SectionHeaderWithHelp(
+                            text = t(R.string.area_order_title),
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.AreaVisibility }
+                        )
+
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = status,
-                            style = MaterialTheme.typography.bodySmall,
+                            text = t(R.string.area_order_description),
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Card(
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+                            )
+                        ) {
+                            ReorderableColumn(
+                                list = areaOrderDraft,
+                                onSettle = { fromIndex, toIndex ->
+                                    areaOrderDraft = areaOrderDraft.toMutableList().apply {
+                                        add(toIndex, removeAt(fromIndex))
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp)
+                            ) { index, area, isDragging ->
+                                ReorderableItem(modifier = Modifier.fillMaxWidth()) {
+                                    Column {
+                                        AreaOrderRow(
+                                            area = area,
+                                            enabled = area in enabledAreasDraft,
+                                            canDisable = enabledAreasDraft.size > 1,
+                                            onEnabledChanged = { isEnabled ->
+                                                enabledAreasDraft = if (isEnabled) {
+                                                    areaOrderDraft.filter {
+                                                        it in enabledAreasDraft || it == area
+                                                    }
+                                                } else {
+                                                    enabledAreasDraft.filterNot { it == area }
+                                                }
+                                            },
+                                            dragHandleModifier = Modifier.draggableHandle(),
+                                            isDragging = isDragging
+                                        )
+
+                                        if (index < areaOrderDraft.lastIndex) {
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 16.dp),
+                                                thickness = 1.dp,
+                                                color = MaterialTheme.colorScheme.outlineVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedButton(
+                            onClick = {
+                                areaOrderDraft = ShoppingArea.entries.toList()
+                                enabledAreasDraft = ShoppingArea.entries.toList()
+                            }
+                        ) {
+                            Text(t(R.string.area_order_reset))
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider()
+                    if (selectedTab == SettingsTab.Data) {
+                        SectionHeaderWithHelp(
+                            text = t(R.string.product_history_title),
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ProductHistory }
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = t(R.string.product_history_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedButton(onClick = { showHistoryClearDialog = true }) {
+                            ButtonIconLabel(Icons.Default.DeleteOutline, t(R.string.product_history_clear))
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider()
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SettingsBackupSection(
+                            context = context,
+                            onImported = { payload, importedSections ->
+                                if (BackupSection.CONNECTION in importedSections) {
+                                    payload.connection?.let { importedConnection ->
+                                        url = importedConnection.url
+                                        urlEditedByUser = false
+                                        token = importedConnection.token
+                                        todoReloadKey++
+                                    }
+                                }
+
+                                if (BackupSection.CATEGORIES in importedSections) {
+                                    payload.categories?.let { importedCategories ->
+                                        val importedOrder = ShoppingArea.orderedFromStorage(
+                                            importedCategories.order.joinToString(",")
+                                        )
+                                        areaOrderDraft = importedOrder
+                                        enabledAreasDraft = ShoppingArea.enabledFromStorage(
+                                            importedCategories.enabled.joinToString(","),
+                                            importedOrder
+                                        )
+                                    }
+                                }
+                            }
+                        )
+
+                        if (updateChecksAllowed) {
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = t(R.string.update_section_title),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            availableUpdate?.let { update ->
+                                Text(
+                                    text = context.getString(
+                                        R.string.update_available_status,
+                                        update.versionName
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                if (update.changelog.isNotBlank()) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    TextButton(
+                                        onClick = { showUpdateChangelogDialog = true },
+                                        contentPadding = PaddingValues(0.dp)
+                                    ) {
+                                        Text(t(R.string.update_show_changelog))
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Button(
+                                    onClick = {
+                                        val activity = context as? Activity
+                                        if (activity == null) {
+                                            updateStatusText = context.getString(R.string.update_install_failed_no_activity)
+                                            return@Button
+                                        }
+
+                                        coroutineScope.launch {
+                                            updateDownloading = true
+                                            updateStatusText = context.getString(R.string.update_downloading)
+
+                                            try {
+                                                val apkFile = updateRepository.downloadApk(update)
+                                                val result = updateRepository.startInstall(activity, apkFile)
+                                                updateStatusText = when (result) {
+                                                    InstallStartResult.Started ->
+                                                        context.getString(R.string.update_installer_started)
+                                                    InstallStartResult.NeedsInstallPermission ->
+                                                        context.getString(R.string.update_install_permission_required)
+                                                }
+                                            } catch (e: Exception) {
+                                                updateStatusText = context.getString(
+                                                    R.string.update_download_failed,
+                                                    e.message ?: context.getString(R.string.loading_failed)
+                                                )
+                                            } finally {
+                                                updateDownloading = false
+                                            }
+                                        }
+                                    },
+                                    enabled = !updateChecking && !updateDownloading
+                                ) {
+                                    Text(
+                                        if (updateDownloading) {
+                                            t(R.string.update_downloading)
+                                        } else {
+                                            t(R.string.update_install_button)
+                                        }
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+
+                            OutlinedButton(
+                                onClick = { checkForUpdates(manual = true) },
+                                enabled = !updateChecking && !updateDownloading
+                            ) {
+                                ButtonIconLabel(
+                                    Icons.Default.Refresh,
+                                    if (updateChecking) {
+                                        t(R.string.update_checking)
+                                    } else {
+                                        t(R.string.update_check_button)
+                                    }
+                                )
+                            }
+
+                            updateStatusText?.let { status ->
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Text(
+                                    text = status,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                            HorizontalDivider()
+                        }
+                    }
                 }
             }
 
@@ -886,55 +987,22 @@ fun SettingsScreen(
                         }
                     }
                 ) {
-                    Text(t(R.string.clear_completed_confirm_btn_cancel))
+                    ButtonIconLabel(Icons.Default.Close, t(R.string.clear_completed_confirm_btn_cancel))
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Button(
                     onClick = {
-                        val cleanedUrl = normalizeHaUrl(url)
-                        val cleanedToken = token.trim()
-
-                        coroutineScope.launch {
-                            dataStore.saveHaUrl(cleanedUrl)
-                            dataStore.saveHaToken(cleanedToken)
-                            dataStore.saveTodoEntity(todoEntity)
-                            dataStore.saveTodoListName(
-                                todoListName.ifBlank {
-                                    todoOptions.firstOrNull { it.id == todoEntity }?.name.orEmpty()
-                                }
-                            )
-                            dataStore.saveAreaOrder(
-                                ShoppingArea.serializeOrder(areaOrderDraft)
-                            )
-                            dataStore.saveEnabledAreas(
-                                ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
-                            )
-                            dataStore.saveListDisplayMode(listDisplayMode.storageValue)
-                            if (cleanedUrl.isNotBlank() && cleanedToken.isNotBlank()) {
-                                runCatching {
-                                    val putRequest = PutDataMapRequest.create("/ha_settings").apply {
-                                        dataMap.putString("ha_url", cleanedUrl)
-                                        dataMap.putString("ha_token", cleanedToken)
-                                        dataMap.putString("todo_entity", todoEntity)
-                                        dataMap.putString("list_display_mode", listDisplayMode.storageValue)
-                                        dataMap.putString("area_order", ShoppingArea.serializeOrder(areaOrderDraft))
-                                        dataMap.putLong("timestamp", System.currentTimeMillis())
-                                    }.asPutDataRequest().setUrgent()
-                                    Wearable.getDataClient(context).putDataItem(putRequest)
-                                }
-                            }
-                            navController.navigate(Screen.Shopping.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
+                        if (isUnconfirmedHttpUrl()) {
+                            saveAfterHttpDialog = true
+                            showInsecureUrlDialog = true
+                        } else {
+                            saveSettings()
                         }
                     }
                 ) {
-                    Text(t(R.string.save))
+                    ButtonIconLabel(Icons.Default.Check, t(R.string.save))
                 }
             }
 
@@ -985,6 +1053,43 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { showHistoryClearDialog = false }) {
                     Text(t(R.string.clear_completed_confirm_btn_cancel))
+                }
+            }
+        )
+    }
+
+    if (showInsecureUrlDialog) {
+        AlertDialog(
+            // Only the buttons close this dialog, so the user has to decide
+            onDismissRequest = {},
+            title = { Text(t(R.string.insecure_url_title)) },
+            text = { Text(t(R.string.insecure_url_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmedHttpUrl = normalizeHaUrl(url)
+                        showInsecureUrlDialog = false
+                        if (saveAfterHttpDialog) {
+                            saveAfterHttpDialog = false
+                            saveSettings()
+                        }
+                    }
+                ) {
+                    Text(t(R.string.insecure_url_keep_http))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        url = "https://" + url.trim().removePrefix("http://")
+                        showInsecureUrlDialog = false
+                        if (saveAfterHttpDialog) {
+                            saveAfterHttpDialog = false
+                            saveSettings()
+                        }
+                    }
+                ) {
+                    Text(t(R.string.insecure_url_use_https))
                 }
             }
         )
@@ -1082,12 +1187,22 @@ private fun SettingLabelWithHelp(
     }
 }
 
+/** Button content with a leading icon, following the Material button spec. */
+@Composable
+internal fun ButtonIconLabel(icon: ImageVector, text: String) {
+    Icon(
+        imageVector = icon,
+        contentDescription = null,
+        modifier = Modifier.size(ButtonDefaults.IconSize)
+    )
+    Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
+    Text(text)
+}
+
 @Composable
 private fun SectionHeaderWithHelp(
     text: String,
-    onHelpClick: () -> Unit,
-    expanded: Boolean? = null,
-    onExpandedToggle: (() -> Unit)? = null
+    onHelpClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1098,24 +1213,6 @@ private fun SectionHeaderWithHelp(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f)
         )
-
-        if (expanded != null && onExpandedToggle != null) {
-            IconButton(
-                onClick = onExpandedToggle,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = if (expanded) {
-                        Icons.Default.KeyboardArrowUp
-                    } else {
-                        Icons.Default.KeyboardArrowDown
-                    },
-                    contentDescription = t(
-                        if (expanded) R.string.area_order_collapse else R.string.area_order_expand
-                    )
-                )
-            }
-        }
 
         IconButton(
             onClick = onHelpClick,
@@ -1251,6 +1348,7 @@ private fun parseMarkdownBlocks(markdown: String): List<MarkdownBlock> {
             line.isBlank() -> MarkdownBlock.Spacer
             line.startsWith("# ") -> MarkdownBlock.H1(line.removePrefix("# "))
             line.startsWith("## ") -> MarkdownBlock.H2(line.removePrefix("## "))
+            line.startsWith("### ") -> MarkdownBlock.H2(line.removePrefix("### "))
             line.startsWith("- ") -> MarkdownBlock.Bullet(line.removePrefix("- "))
             else -> MarkdownBlock.Paragraph(line)
         }

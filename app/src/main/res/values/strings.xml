@@ -146,8 +146,15 @@
     <string name="settings_backup_export_error">Export failed: %1$s</string>
     <string name="settings_backup_import_success">Selected data imported successfully.</string>
     <string name="settings_backup_import_error">Import failed: %1$s</string>
-    <string name="area_order_expand">Expand category list</string>
-    <string name="area_order_collapse">Collapse category list</string>
     <string name="settings_backup_unlock_error">The backup could not be unlocked. Check the selected file and password.</string>
     <string name="area_order_drag_handle">Drag to reorder category</string>
+    <string name="insecure_url_title">Unencrypted connection</string>
+    <string name="insecure_url_message">This address uses http://. The connection and your Home Assistant token will be transmitted unencrypted and could be read by others on the network.\n\nOnly use this in your own trusted home network. Do you really want to use http://?</string>
+    <string name="insecure_url_keep_http">Use http://</string>
+    <string name="insecure_url_use_https">Switch to https://</string>
+    <string name="settings_tab_connection">Connection</string>
+    <string name="settings_tab_view">View</string>
+    <string name="settings_tab_data">Data</string>
+    <string name="settings_backup_export_button">Export</string>
+    <string name="settings_backup_import_button">Import</string>
 </resources>

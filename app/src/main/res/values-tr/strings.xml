@@ -146,8 +146,15 @@
     <string name="settings_backup_export_error">Dışa aktarma başarısız: %1$s</string>
     <string name="settings_backup_import_success">Seçilen veriler başarıyla içe aktarıldı.</string>
     <string name="settings_backup_import_error">İçe aktarma başarısız: %1$s</string>
-    <string name="area_order_expand">Kategori listesini genişlet</string>
-    <string name="area_order_collapse">Kategori listesini daralt</string>
     <string name="settings_backup_unlock_error">Yedeğin kilidi açılamadı. Seçilen dosyayı ve parolayı kontrol edin.</string>
     <string name="area_order_drag_handle">Kategoriyi yeniden sıralamak için sürükleyin</string>
+    <string name="insecure_url_title">Şifrelenmemiş bağlantı</string>
+    <string name="insecure_url_message">Bu adres http:// kullanıyor. Bağlantı ve Home Assistant belirteciniz şifrelenmeden iletilecek ve ağdaki başkaları tarafından okunabilir.\n\nBunu yalnızca kendi güvenilir ev ağınızda kullanın. Gerçekten http:// kullanmak istiyor musunuz?</string>
+    <string name="insecure_url_keep_http">http:// kullan</string>
+    <string name="insecure_url_use_https">https:// adresine geç</string>
+    <string name="settings_tab_connection">Bağlantı</string>
+    <string name="settings_tab_view">Görünüm</string>
+    <string name="settings_tab_data">Veriler</string>
+    <string name="settings_backup_export_button">Dışa aktar</string>
+    <string name="settings_backup_import_button">İçe aktar</string>
 </resources>

@@ -146,8 +146,15 @@
     <string name="settings_backup_export_error">Ошибка экспорта: %1$s</string>
     <string name="settings_backup_import_success">Выбранные данные успешно импортированы.</string>
     <string name="settings_backup_import_error">Ошибка импорта: %1$s</string>
-    <string name="area_order_expand">Развернуть список категорий</string>
-    <string name="area_order_collapse">Свернуть список категорий</string>
     <string name="settings_backup_unlock_error">Не удалось разблокировать резервную копию. Проверьте выбранный файл и пароль.</string>
     <string name="area_order_drag_handle">Перетащите, чтобы изменить порядок категории</string>
+    <string name="insecure_url_title">Незашифрованное соединение</string>
+    <string name="insecure_url_message">Этот адрес использует http://. Соединение и ваш токен Home Assistant будут передаваться без шифрования и могут быть прочитаны другими пользователями сети.\n\nИспользуйте это только в своей доверенной домашней сети. Вы действительно хотите использовать http://?</string>
+    <string name="insecure_url_keep_http">Использовать http://</string>
+    <string name="insecure_url_use_https">Перейти на https://</string>
+    <string name="settings_tab_connection">Подключение</string>
+    <string name="settings_tab_view">Вид</string>
+    <string name="settings_tab_data">Данные</string>
+    <string name="settings_backup_export_button">Экспорт</string>
+    <string name="settings_backup_import_button">Импорт</string>
 </resources>

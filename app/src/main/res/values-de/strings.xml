@@ -146,8 +146,15 @@
     <string name="settings_backup_export_error">Export fehlgeschlagen: %1$s</string>
     <string name="settings_backup_import_success">Ausgewählte Daten erfolgreich importiert.</string>
     <string name="settings_backup_import_error">Import fehlgeschlagen: %1$s</string>
-    <string name="area_order_expand">Kategorienliste ausklappen</string>
-    <string name="area_order_collapse">Kategorienliste einklappen</string>
     <string name="settings_backup_unlock_error">Die Sicherung konnte nicht entsperrt werden. Prüfe die ausgewählte Datei und das Passwort.</string>
     <string name="area_order_drag_handle">Ziehen, um die Kategorie zu sortieren</string>
+    <string name="insecure_url_title">Unverschlüsselte Verbindung</string>
+    <string name="insecure_url_message">Diese Adresse verwendet http://. Die Verbindung und dein Home-Assistant-Token werden unverschlüsselt übertragen und könnten von anderen im Netzwerk mitgelesen werden.\n\nVerwende das nur in deinem eigenen, vertrauenswürdigen Heimnetz. Möchtest du wirklich http:// verwenden?</string>
+    <string name="insecure_url_keep_http">http:// verwenden</string>
+    <string name="insecure_url_use_https">Zu https:// wechseln</string>
+    <string name="settings_tab_connection">Verbindung</string>
+    <string name="settings_tab_view">Ansicht</string>
+    <string name="settings_tab_data">Daten</string>
+    <string name="settings_backup_export_button">Exportieren</string>
+    <string name="settings_backup_import_button">Importieren</string>
 </resources>

@@ -146,8 +146,15 @@
     <string name="settings_backup_export_error">Exporteren mislukt: %1$s</string>
     <string name="settings_backup_import_success">Geselecteerde gegevens zijn geïmporteerd.</string>
     <string name="settings_backup_import_error">Importeren mislukt: %1$s</string>
-    <string name="area_order_expand">Categorielijst uitklappen</string>
-    <string name="area_order_collapse">Categorielijst inklappen</string>
     <string name="settings_backup_unlock_error">De back-up kon niet worden ontgrendeld. Controleer het geselecteerde bestand en wachtwoord.</string>
     <string name="area_order_drag_handle">Sleep om de categorie te verplaatsen</string>
+    <string name="insecure_url_title">Onversleutelde verbinding</string>
+    <string name="insecure_url_message">Dit adres gebruikt http://. De verbinding en je Home Assistant-token worden onversleuteld verzonden en kunnen door anderen op het netwerk worden meegelezen.\n\nGebruik dit alleen in je eigen vertrouwde thuisnetwerk. Wil je echt http:// gebruiken?</string>
+    <string name="insecure_url_keep_http">http:// gebruiken</string>
+    <string name="insecure_url_use_https">Overschakelen naar https://</string>
+    <string name="settings_tab_connection">Verbinding</string>
+    <string name="settings_tab_view">Weergave</string>
+    <string name="settings_tab_data">Gegevens</string>
+    <string name="settings_backup_export_button">Exporteren</string>
+    <string name="settings_backup_import_button">Importeren</string>
 </resources>

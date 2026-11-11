@@ -9,7 +9,14 @@ Die App kommuniziert ausschließlich mit dem vom Nutzer eingestellten Home-Assis
 Dabei werden lediglich technische Informationen übertragen, die für das Organisieren der Einkaufsliste erforderlich sind.
 
 Diese Kommunikation erfolgt direkt zwischen der App und dem Home-Assistant-Server.
-Es werden keine Daten an externe Server übertragen.
+Abgesehen von der unten beschriebenen Update-Prüfung werden keine Daten an externe Server übertragen.
+
+Ob die Verbindung verschlüsselt ist, hängt von der eingegebenen Adresse ab. Bei einer Adresse mit https:// werden alle Daten einschließlich des Authentifizierungs-Tokens verschlüsselt übertragen. Bei einer Adresse mit http:// erfolgt die Übertragung unverschlüsselt. Die App weist vor der Verwendung einer solchen Adresse ausdrücklich darauf hin. Für Verbindungen außerhalb des eigenen Heimnetzes wird HTTPS empfohlen.
+
+### Update-Prüfung (nur GitHub-Version)
+Die direkt über GitHub verteilte Version der App prüft regelmäßig, ob eine neue Version verfügbar ist. Dazu ruft sie die öffentliche Schnittstelle von GitHub (api.github.com) auf und lädt bei Bedarf die neue Version von GitHub herunter. Dabei erhält GitHub technisch bedingt die IP-Adresse des Geräts sowie übliche Verbindungsdaten. Es werden keine Home-Assistant-Daten, Tokens oder Einkaufslisten übertragen. Anbieter ist GitHub, Inc. (USA). Es gilt die Datenschutzerklärung von GitHub.
+
+Die über Google Play installierte Version führt diese Prüfung nicht durch.
 
 ## 3. Datenspeicherung
 Die App speichert keine personenbezogenen Daten.
@@ -29,7 +36,7 @@ Die App benötigt möglicherweise Netzwerk- und/oder Internetzugriff, je nachdem
 Es werden keine weiteren sensiblen Berechtigungen verwendet.
 
 ## 5. Drittanbieter
-Diese App verwendet keine Drittanbieter-Dienste, keine Analyse-Tools und keine Werbung.
+Diese App verwendet keine Drittanbieter-Dienste, keine Analyse-Tools und keine Werbung, mit Ausnahme der oben beschriebenen Update-Prüfung über GitHub in der GitHub-Version.
 
 ## 6. Änderungen dieser Datenschutzerklärung
 Diese Datenschutzerklärung kann bei Bedarf aktualisiert werden, um Änderungen der App oder rechtliche Anforderungen abzubilden.
