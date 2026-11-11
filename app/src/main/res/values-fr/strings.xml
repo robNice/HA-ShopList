@@ -146,12 +146,15 @@
     <string name="settings_backup_export_error">Échec de l’exportation : %1$s</string>
     <string name="settings_backup_import_success">Données sélectionnées importées avec succès.</string>
     <string name="settings_backup_import_error">Échec de l’importation : %1$s</string>
-    <string name="area_order_expand">Développer la liste des catégories</string>
-    <string name="area_order_collapse">Réduire la liste des catégories</string>
     <string name="settings_backup_unlock_error">Impossible de déverrouiller la sauvegarde. Vérifiez le fichier sélectionné et le mot de passe.</string>
     <string name="area_order_drag_handle">Faire glisser pour réorganiser la catégorie</string>
     <string name="insecure_url_title">Connexion non chiffrée</string>
     <string name="insecure_url_message">Cette adresse utilise http://. La connexion et votre jeton Home Assistant seront transmis sans chiffrement et pourraient être lus par d\'autres personnes sur le réseau.\n\nN\'utilisez cela que sur votre propre réseau domestique de confiance. Voulez-vous vraiment utiliser http:// ?</string>
     <string name="insecure_url_keep_http">Utiliser http://</string>
     <string name="insecure_url_use_https">Passer à https://</string>
+    <string name="settings_tab_connection">Connexion</string>
+    <string name="settings_tab_view">Affichage</string>
+    <string name="settings_tab_data">Données</string>
+    <string name="settings_backup_export_button">Exporter</string>
+    <string name="settings_backup_import_button">Importer</string>
 </resources>

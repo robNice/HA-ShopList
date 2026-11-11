@@ -146,12 +146,15 @@
     <string name="settings_backup_export_error">Falha na exportação: %1$s</string>
     <string name="settings_backup_import_success">Dados selecionados importados com sucesso.</string>
     <string name="settings_backup_import_error">Falha na importação: %1$s</string>
-    <string name="area_order_expand">Expandir lista de categorias</string>
-    <string name="area_order_collapse">Recolher lista de categorias</string>
     <string name="settings_backup_unlock_error">Não foi possível desbloquear a cópia de segurança. Verifique o ficheiro selecionado e a palavra-passe.</string>
     <string name="area_order_drag_handle">Arraste para reordenar a categoria</string>
     <string name="insecure_url_title">Conexão não criptografada</string>
     <string name="insecure_url_message">Este endereço usa http://. A conexão e o seu token do Home Assistant serão transmitidos sem criptografia e podem ser lidos por outras pessoas na rede.\n\nUse isso apenas na sua própria rede doméstica confiável. Deseja realmente usar http://?</string>
     <string name="insecure_url_keep_http">Usar http://</string>
     <string name="insecure_url_use_https">Mudar para https://</string>
+    <string name="settings_tab_connection">Conexão</string>
+    <string name="settings_tab_view">Visualização</string>
+    <string name="settings_tab_data">Dados</string>
+    <string name="settings_backup_export_button">Exportar</string>
+    <string name="settings_backup_import_button">Importar</string>
 </resources>
