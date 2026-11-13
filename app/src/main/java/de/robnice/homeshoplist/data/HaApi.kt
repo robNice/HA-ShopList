@@ -1,7 +1,6 @@
 package de.robnice.homeshoplist.data
 
 import de.robnice.homeshoplist.data.dto.UpdateItemRequest
-import de.robnice.homeshoplist.data.dto.TemplateRequest
 import de.robnice.homeshoplist.data.dto.TodoGetItemsRequest
 import de.robnice.homeshoplist.model.ShoppingItem
 import de.robnice.homeshoplist.data.dto.AddItemRequest
@@ -43,11 +42,9 @@ interface HaApi {
         @Body body: TodoGetItemsRequest
     ): ResponseBody
 
-    @POST("api/template")
-    suspend fun renderTemplate(
+    @GET("api/states")
+    suspend fun getStatesRaw(
         @Header("Authorization") token: String
-        ,
-        @Body body: TemplateRequest
     ): ResponseBody
 
 }
