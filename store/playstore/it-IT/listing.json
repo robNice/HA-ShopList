@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Lista spesa",
+  "short_description": "La spesa di Home Assistant su telefono e orologio, in tempo reale e per reparto",
+  "full_description": "HomeShopList porta le liste della spesa e delle cose da fare del tuo Home Assistant sul telefono e sull'orologio Wear OS. Le modifiche compaiono in tempo reale: ciò che viene aggiunto a casa lo vedi al negozio un attimo dopo, senza aggiornare.\n\nLISTA DELLA SPESA\n• Funziona con qualsiasi lista di cose da fare di Home Assistant – scegli tu quale\n• Aggiungi, spunta, rinomina ed elimina articoli in pochi secondi\n• Suggerimenti dai tuoi acquisti precedenti mentre scrivi, con il loro reparto\n• Elimina in un colpo tutti gli articoli completati\n\nORDINATA COME IL TUO NEGOZIO\n• Assegna a ogni articolo un reparto del negozio – frutta e verdura, panetteria, latticini, surgelati e altro, ognuno con la sua icona\n• Lista semplice o raggruppata per reparto\n• Riordina gli articoli e spostali tra i reparti con il trascinamento\n• Scegli quali reparti mostrare e ordinali secondo il tuo percorso nel negozio\n\nOROLOGIO (WEAR OS)\n• La tua lista al polso: spunta gli articoli anche con le mani occupate\n• Elimina gli articoli completati direttamente sull'orologio\n• Riquadro con il numero di articoli da prendere e un anello di avanzamento\n• Nessuna configurazione sull'orologio: prende la connessione dal telefono\n\nIMPOSTAZIONI E BACKUP\n• Impostazioni in schede chiare: Connessione, Visualizzazione, Dati\n• Salva connessione, reparti e suggerimenti in un file cifrato con password e ripristinali\n• Segue il tema chiaro o scuro del sistema\n• Disponibile in 13 lingue\n\nPRIVACY\nHomeShopList comunica solo con il tuo Home Assistant. Niente pubblicità, nessun account, nessun dato inviato a server esterni. Indirizzo, token e suggerimenti restano sul tuo dispositivo. Con un orologio, il telefono gli passa la connessione tramite i servizi Google Play. Per gli indirizzi locali http://, l'app ti avvisa prima di inviare il token non cifrato. HomeShopList è open source (licenza MIT).\n\nRequisiti: Android 7.0 o successivo, Home Assistant 2023.11 o successivo con una lista di cose da fare (ad es. l'integrazione Lista della spesa) e un token di accesso a lunga durata.\nPer l'orologio: un orologio Wear OS associato a un telefono Android con HomeShopList.\n\nHomeShopList è un progetto indipendente e non è affiliato a Home Assistant né a Nabu Casa. Home Assistant è un marchio del rispettivo titolare.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "La tua lista della spesa di Home Assistant, live",
+  "captions": [
+    "La lista della spesa di Home Assistant – live sul telefono",
+    "Ordinata per reparto, come il tuo giro nel negozio",
+    "Trascina per riordinare e cambiare reparto",
+    "Aggiungi articoli in fretta dai tuoi acquisti precedenti",
+    "Scegli e ordina i tuoi reparti",
+    "Chiaro o scuro, come il tuo sistema"
+  ]
+}

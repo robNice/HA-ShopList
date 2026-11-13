@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Ostoslistat",
+  "short_description": "Home Assistantin ostoslista puhelimessa ja kellossa – reaaliajassa, osastoittain",
+  "full_description": "HomeShopList tuo Home Assistantin ostos- ja tehtävälistat puhelimeesi ja Wear OS -kelloosi. Muutokset näkyvät heti – mitä kotona lisätään, näet kaupassa hetken päästä ilman päivittämistä.\n\nOSTOSLISTA\n• Toimii minkä tahansa Home Assistantin tehtävälistan kanssa – sinä valitset\n• Lisää, rastita, nimeä uudelleen ja poista tuotteita sekunneissa\n• Ehdotuksia aiemmista ostoksistasi kirjoittaessasi, kaupan osaston kera\n• Poista kaikki rastitetut tuotteet kerralla\n\nJÄRJESTETTY KUIN KAUPPASI\n• Anna jokaiselle tuotteelle kaupan osasto – hedelmät ja vihannekset, leipomo, maitotuotteet, pakasteet ja muut, kullakin oma kuvake\n• Yksinkertainen lista tai osastoittain ryhmitelty\n• Järjestä tuotteita ja siirrä niitä osastojen välillä vetämällä\n• Valitse näytettävät osastot ja järjestä ne reittisi mukaan kaupassa\n\nKELLO (WEAR OS)\n• Lista ranteessa: rastita tuotteita, vaikka kädet olisivat täynnä\n• Poista rastitetut tuotteet suoraan kellosta\n• Ruutu, jossa näkyy jäljellä olevien tuotteiden määrä ja edistymisrengas\n• Kelloon ei tarvitse määrittää mitään: se ottaa yhteyden puhelimelta\n\nASETUKSET JA VARMUUSKOPIO\n• Asetukset selkeillä välilehdillä: Yhteys, Näkymä, Tiedot\n• Tallenna yhteys, osastot ja ehdotukset salasanalla salattuun tiedostoon ja palauta ne\n• Seuraa järjestelmän vaaleaa tai tummaa tilaa\n• Saatavilla 13 kielellä\n\nYKSITYISYYS\nHomeShopList on yhteydessä vain omaan Home Assistantiisi. Ei mainoksia, ei tiliä, ei tietoja ulkoisille palvelimille. Osoite, tunnus ja ehdotukset pysyvät laitteellasi. Kellon kanssa puhelin välittää yhteyden sille Google Play -palveluiden kautta. Paikallisten http://-osoitteiden kohdalla sovellus varoittaa ennen kuin tunnuksesi lähetetään salaamattomana. HomeShopList on avointa lähdekoodia (MIT-lisenssi).\n\nVaatimukset: Android 7.0 tai uudempi, Home Assistant 2023.11 tai uudempi tehtävälistalla (esim. Ostoslista-integraatio) ja pitkäikäinen käyttötunnus.\nKelloon: Wear OS -kello, joka on yhdistetty Android-puhelimeen, jossa on HomeShopList.\n\nHomeShopList on itsenäinen projekti, eikä se liity Home Assistantiin tai Nabu Casaan. Home Assistant on omistajansa tavaramerkki.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Home Assistantin ostoslista reaaliajassa",
+  "captions": [
+    "Home Assistantin ostoslista – reaaliajassa puhelimessa",
+    "Osastoittain järjestetty, kuin reittisi kaupassa",
+    "Järjestä ja vaihda osastoa vetämällä",
+    "Lisää tuotteet nopeasti aiempien ostosten ehdotuksista",
+    "Valitse ja järjestä kaupan osastot",
+    "Vaalea tai tumma – kuten järjestelmäsi"
+  ]
+}

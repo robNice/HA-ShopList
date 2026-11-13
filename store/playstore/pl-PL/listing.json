@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Listy zakupów",
+  "short_description": "Lista zakupów z Home Assistant w telefonie i zegarku – na żywo, według działów",
+  "full_description": "HomeShopList przenosi listy zakupów i zadań z Twojego Home Assistant na telefon i zegarek z Wear OS. Zmiany pojawiają się na żywo – to, co dodano w domu, widzisz w sklepie chwilę później, bez odświeżania.\n\nLISTA ZAKUPÓW\n• Działa z każdą listą zadań z Home Assistant – Ty wybierasz którą\n• Dodawaj, odhaczaj, zmieniaj nazwy i usuwaj produkty w kilka sekund\n• Podpowiedzi z poprzednich zakupów podczas pisania, razem z działem sklepu\n• Usuwaj wszystkie odhaczone produkty jednym ruchem\n\nUŁOŻONA JAK TWÓJ SKLEP\n• Przypisz każdemu produktowi dział sklepu – owoce i warzywa, pieczywo, nabiał, mrożonki i więcej, każdy z własną ikoną\n• Prosta lista lub pogrupowana według działów\n• Zmieniaj kolejność i przenoś produkty między działami metodą przeciągnij i upuść\n• Wybierz, które działy są widoczne, i ułóż je według swojej trasy po sklepie\n\nZEGAREK (WEAR OS)\n• Lista na nadgarstku: odhaczaj produkty, nawet gdy masz zajęte ręce\n• Usuwaj odhaczone produkty bezpośrednio na zegarku\n• Kafelek z liczbą pozostałych produktów i pierścieniem postępu\n• Bez konfiguracji na zegarku: przejmuje połączenie z telefonu\n\nUSTAWIENIA I KOPIA ZAPASOWA\n• Ustawienia w przejrzystych kartach: Połączenie, Widok, Dane\n• Zapisz połączenie, działy i podpowiedzi w pliku zaszyfrowanym hasłem i przywróć je\n• Dopasowuje się do jasnego lub ciemnego motywu systemu\n• Dostępna w 13 językach\n\nPRYWATNOŚĆ\nHomeShopList łączy się tylko z Twoim własnym Home Assistant. Bez reklam, bez konta, bez wysyłania danych na zewnętrzne serwery. Adres, token i podpowiedzi zostają na urządzeniu. Z zegarkiem telefon przekazuje mu połączenie przez usługi Google Play. Przy lokalnych adresach http:// aplikacja ostrzega, zanim token zostanie wysłany bez szyfrowania. HomeShopList jest open source (licencja MIT).\n\nWymagania: Android 7.0 lub nowszy, Home Assistant 2023.11 lub nowszy z listą zadań (np. integracja Lista zakupów) oraz długoterminowy token dostępu.\nDla zegarka: zegarek z Wear OS sparowany z telefonem z Androidem i HomeShopList.\n\nHomeShopList to niezależny projekt, niezwiązany z Home Assistant ani Nabu Casa. Home Assistant jest znakiem towarowym jego właściciela.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Twoja lista zakupów z Home Assistant, na żywo",
+  "captions": [
+    "Lista zakupów z Home Assistant – na żywo w telefonie",
+    "Według działów, jak Twoja trasa po sklepie",
+    "Przeciągnij, by zmienić kolejność i dział",
+    "Szybko dodawaj produkty z wcześniejszych zakupów",
+    "Wybierz i ułóż działy sklepu",
+    "Jasny lub ciemny – jak Twój system"
+  ]
+}

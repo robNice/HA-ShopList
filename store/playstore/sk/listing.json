@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Nákupné zoznamy",
+  "short_description": "Nákupný zoznam z Home Assistant v telefóne aj hodinkách – naživo, podľa oddelení",
+  "full_description": "HomeShopList prenesie nákupné a úlohové zoznamy z tvojho Home Assistant do telefónu a do hodiniek s Wear OS. Zmeny sa zobrazujú naživo – čo sa pridá doma, uvidíš v obchode o chvíľu neskôr, bez obnovovania.\n\nNÁKUPNÝ ZOZNAM\n• Funguje s akýmkoľvek zoznamom úloh z Home Assistant – vyberieš si sám\n• Pridávaj, odškrtávaj, premenúvaj a maž položky za pár sekúnd\n• Návrhy z predchádzajúcich nákupov pri písaní, aj s oddelením obchodu\n• Vymaž všetky odškrtnuté položky naraz\n\nZORADENÝ AKO TVOJ OBCHOD\n• Prideľ každej položke oddelenie obchodu – ovocie a zelenina, pečivo, mliečne výrobky, mrazené a ďalšie, každé s vlastnou ikonou\n• Jednoduchý zoznam alebo zoskupený podľa oddelení\n• Meň poradie a presúvaj položky medzi oddeleniami potiahnutím\n• Vyber, ktoré oddelenia sa zobrazia, a zoraď ich podľa svojej cesty obchodom\n\nHODINKY (WEAR OS)\n• Zoznam na zápästí: odškrtávaj, aj keď máš plné ruky\n• Mazanie odškrtnutých položiek priamo na hodinkách\n• Dlaždica s počtom zostávajúcich položiek a krúžkom postupu\n• Na hodinkách nič nenastavuješ: prevezmú pripojenie z telefónu\n\nNASTAVENIA A ZÁLOHA\n• Nastavenia v prehľadných kartách: Pripojenie, Zobrazenie, Dáta\n• Ulož pripojenie, oddelenia a návrhy do súboru šifrovaného heslom a obnov ich\n• Riadi sa svetlým alebo tmavým režimom systému\n• K dispozícii v 13 jazykoch\n\nSÚKROMIE\nHomeShopList komunikuje len s tvojím vlastným Home Assistant. Žiadne reklamy, žiadny účet, žiadne dáta na externé servery. Adresa, token a návrhy zostávajú v zariadení. S hodinkami im telefón odovzdá pripojenie cez služby Google Play. Pri miestnych adresách http:// ťa aplikácia varuje skôr, než sa token odošle nešifrovane. HomeShopList je open source (licencia MIT).\n\nPožiadavky: Android 7.0 alebo novší, Home Assistant 2023.11 alebo novší so zoznamom úloh (napr. integrácia Nákupný zoznam) a dlhodobý prístupový token.\nPre hodinky: hodinky s Wear OS spárované s telefónom Android s HomeShopList.\n\nHomeShopList je nezávislý projekt a nemá žiadne spojenie s Home Assistant ani Nabu Casa. Home Assistant je ochranná známka príslušného vlastníka.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Tvoj nákupný zoznam z Home Assistant, naživo",
+  "captions": [
+    "Nákupný zoznam z Home Assistant – naživo v telefóne",
+    "Podľa oddelení, ako tvoja cesta obchodom",
+    "Potiahnutím meň poradie aj oddelenie",
+    "Rýchlo pridávaj položky z predchádzajúcich nákupov",
+    "Vyber a zoraď oddelenia obchodu",
+    "Svetlý alebo tmavý – podľa tvojho systému"
+  ]
+}

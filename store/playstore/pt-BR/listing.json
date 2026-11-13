@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Lista de compras",
+  "short_description": "Sua lista de compras do Home Assistant no celular e relógio, ao vivo e por seção",
+  "full_description": "O HomeShopList leva as listas de compras e de tarefas do seu Home Assistant para o celular e o relógio Wear OS. As mudanças aparecem ao vivo: o que é adicionado em casa aparece no mercado um instante depois, sem atualizar.\n\nLISTA DE COMPRAS\n• Funciona com qualquer lista de tarefas do Home Assistant – você escolhe qual\n• Adicione, marque, renomeie e exclua itens em segundos\n• Sugestões das suas compras anteriores enquanto digita, com a seção da loja\n• Exclua todos os itens concluídos de uma vez\n\nORGANIZADA COMO SEU MERCADO\n• Atribua a cada item uma seção da loja – frutas e legumes, padaria, laticínios, congelados e mais, cada uma com seu ícone\n• Lista simples ou agrupada por seção\n• Reordene itens e mova-os entre seções arrastando e soltando\n• Escolha quais seções aparecem e ordene-as conforme seu caminho pelo mercado\n\nRELÓGIO (WEAR OS)\n• Sua lista no pulso: marque itens mesmo com as mãos ocupadas\n• Exclua os itens concluídos direto no relógio\n• Bloco com o número de itens pendentes e um anel de progresso\n• Nada para configurar no relógio: ele usa a conexão do celular\n\nCONFIGURAÇÕES E BACKUP\n• Configurações em abas claras: Conexão, Visualização, Dados\n• Salve conexão, seções e sugestões em um arquivo criptografado com senha e restaure-os\n• Segue o modo claro ou escuro do sistema\n• Disponível em 13 idiomas\n\nPRIVACIDADE\nO HomeShopList só se comunica com o seu próprio Home Assistant. Sem anúncios, sem conta, sem dados enviados a servidores externos. Endereço, token e sugestões ficam no seu dispositivo. Com um relógio, o celular repassa a conexão a ele pelos serviços do Google Play. Em endereços locais http://, o app avisa antes de enviar seu token sem criptografia. O HomeShopList é de código aberto (licença MIT).\n\nRequisitos: Android 7.0 ou mais recente, Home Assistant 2023.11 ou mais recente com uma lista de tarefas (por ex. a integração Lista de compras) e um token de acesso de longa duração.\nPara o relógio: um relógio Wear OS pareado com um celular Android com o HomeShopList.\n\nO HomeShopList é um projeto independente e não tem vínculo com o Home Assistant nem com a Nabu Casa. Home Assistant é uma marca de seu respectivo proprietário.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Sua lista de compras do Home Assistant, ao vivo",
+  "captions": [
+    "Sua lista de compras do Home Assistant – ao vivo no celular",
+    "Organizada por seção, como seu caminho pelo mercado",
+    "Arraste e solte para reordenar e mudar de seção",
+    "Adicione itens rápido com sugestões de compras anteriores",
+    "Escolha e ordene suas seções da loja",
+    "Claro ou escuro, como o seu sistema"
+  ]
+}

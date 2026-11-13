@@ -89,3 +89,115 @@
 • Wear OS: виправлено збій під час відкриття застосунку
 • Wear OS: більші зони дотику, кращий вигляд на круглих екранах
 </uk>
+<ar>
+• Wear OS: بطاقة جديدة تعرض عدد العناصر المتبقية وحلقة تقدّم وهوية التطبيق – انقر لفتح القائمة
+• تظهر التغييرات التي تُجرى على الهاتف الآن على الساعة خلال ثوانٍ
+• تطبيق Wear OS: ترويسة جديدة مع الشعار واسم القائمة
+• Wear OS: إصلاح تعطّل عند فتح التطبيق
+• Wear OS: مناطق لمس أكبر، وتخطيط أفضل على الشاشات الدائرية، و«الفتح على الهاتف» أثناء الإعداد
+</ar>
+<cs-CZ>
+• Wear OS: nová dlaždice s počtem zbývajících položek, kroužkem postupu a vzhledem aplikace – klepnutím otevřeš seznam
+• Změny v telefonu se teď na hodinkách objeví během několika sekund
+• Aplikace pro Wear OS: nové záhlaví s logem a názvem seznamu
+• Wear OS: opraven pád při otevření aplikace
+• Wear OS: větší dotykové plochy, lepší rozvržení na kulatých displejích, „Otevřít v telefonu“ při nastavení
+</cs-CZ>
+<da-DK>
+• Wear OS: nyt felt med antal manglende varer, fremskridtsring og appens design – tryk for at åbne listen
+• Ændringer på telefonen vises nu på uret inden for få sekunder
+• Wear OS-app: ny topsektion med logo og listenavn
+• Wear OS: rettet et nedbrud ved åbning af appen
+• Wear OS: større trykflader, bedre layout på runde skærme, "Åbn på telefon" under opsætning
+</da-DK>
+<es-419>
+• Wear OS: nueva tarjeta con el número de artículos pendientes, anillo de progreso y diseño de la app; tócala para abrir la lista
+• Los cambios en el teléfono ahora aparecen en el reloj en segundos
+• App de Wear OS: nuevo encabezado con logotipo y nombre de la lista
+• Wear OS: se corrigió un cierre al abrir la app
+• Wear OS: botones más grandes, mejor diseño en pantallas redondas y "Abrir en el teléfono" durante la configuración
+</es-419>
+<fi-FI>
+• Wear OS: uusi ruutu, jossa jäljellä olevien tuotteiden määrä, edistymisrengas ja sovelluksen ilme – napauta avataksesi listan
+• Puhelimessa tehdyt muutokset näkyvät nyt kellossa sekunneissa
+• Wear OS -sovellus: uusi yläosa, jossa logo ja listan nimi
+• Wear OS: korjattu kaatuminen sovellusta avattaessa
+• Wear OS: suuremmat kosketusalueet, parempi asettelu pyöreillä näytöillä, ”Avaa puhelimessa” käyttöönoton aikana
+</fi-FI>
+<hi-IN>
+• Wear OS: बाकी आइटम की संख्या, प्रगति रिंग और ऐप ब्रांडिंग वाली नई टाइल – लिस्ट खोलने के लिए टैप करें
+• फ़ोन पर किए गए बदलाव अब कुछ ही सेकंड में घड़ी पर दिखते हैं
+• Wear OS ऐप: लोगो और लिस्ट के नाम वाला नया हेडर
+• Wear OS: ऐप खोलते समय होने वाला क्रैश ठीक किया गया
+• Wear OS: बड़े टच एरिया, गोल स्क्रीन पर बेहतर लेआउट, सेटअप के दौरान "फ़ोन पर खोलें"
+</hi-IN>
+<hu-HU>
+• Wear OS: új csempe a hátralévő tételek számával, haladásjelző gyűrűvel és az alkalmazás arculatával – koppintásra megnyílik a lista
+• A telefonon végzett változások már másodpercek alatt megjelennek az órán
+• Wear OS alkalmazás: új fejléc logóval és a lista nevével
+• Wear OS: javítva egy összeomlás az alkalmazás megnyitásakor
+• Wear OS: nagyobb érintési felületek, jobb elrendezés kerek kijelzőn, „Megnyitás telefonon” a beállításkor
+</hu-HU>
+<id>
+• Wear OS: kartu baru dengan jumlah item tersisa, cincin progres, dan tampilan aplikasi – ketuk untuk membuka daftar
+• Perubahan di ponsel kini muncul di jam dalam hitungan detik
+• Aplikasi Wear OS: header baru dengan logo dan nama daftar
+• Wear OS: memperbaiki aplikasi yang tertutup paksa saat dibuka
+• Wear OS: area sentuh lebih besar, tata letak lebih baik di layar bundar, "Buka di ponsel" saat penyiapan
+</id>
+<iw-IL>
+• Wear OS: אריח חדש עם מספר הפריטים שנותרו, טבעת התקדמות ומיתוג האפליקציה – הקשה פותחת את הרשימה
+• שינויים בטלפון מופיעים עכשיו בשעון תוך שניות
+• אפליקציית Wear OS: כותרת חדשה עם לוגו ושם הרשימה
+• Wear OS: תוקנה קריסה בפתיחת האפליקציה
+• Wear OS: אזורי מגע גדולים יותר, פריסה טובה יותר במסכים עגולים, "פתיחה בטלפון" בזמן ההגדרה
+</iw-IL>
+<no-NO>
+• Wear OS: ny brikke med antall gjenstående varer, fremdriftsring og appens design – trykk for å åpne listen
+• Endringer på telefonen vises nå på klokken i løpet av sekunder
+• Wear OS-app: ny topp med logo og listenavn
+• Wear OS: rettet et krasj ved åpning av appen
+• Wear OS: større trykkflater, bedre oppsett på runde skjermer, «Åpne på telefonen» under oppsett
+</no-NO>
+<ro>
+• Wear OS: panou nou cu numărul de produse rămase, inel de progres și aspectul aplicației – atinge pentru a deschide lista
+• Modificările făcute pe telefon apar acum pe ceas în câteva secunde
+• Aplicația Wear OS: antet nou cu sigla și numele listei
+• Wear OS: remediată o închidere neașteptată la deschiderea aplicației
+• Wear OS: zone de atingere mai mari, aspect mai bun pe ecranele rotunde, „Deschide pe telefon” la configurare
+</ro>
+<sk>
+• Wear OS: nová dlaždica s počtom zostávajúcich položiek, krúžkom postupu a vzhľadom aplikácie – ťuknutím otvoríš zoznam
+• Zmeny v telefóne sa teraz na hodinkách zobrazia v priebehu niekoľkých sekúnd
+• Aplikácia pre Wear OS: nová hlavička s logom a názvom zoznamu
+• Wear OS: opravený pád pri otvorení aplikácie
+• Wear OS: väčšie dotykové plochy, lepšie rozloženie na okrúhlych displejoch, „Otvoriť v telefóne“ pri nastavení
+</sk>
+<sv-SE>
+• Wear OS: ny panel med antal kvarvarande varor, förloppsring och appens design – tryck för att öppna listan
+• Ändringar i mobilen syns nu på klockan inom några sekunder
+• Wear OS-app: nytt sidhuvud med logotyp och listnamn
+• Wear OS: åtgärdat en krasch när appen öppnades
+• Wear OS: större tryckytor, bättre layout på runda skärmar, ”Öppna i mobilen” vid konfigurering
+</sv-SE>
+<th>
+• Wear OS: ไทล์ใหม่แสดงจำนวนรายการที่เหลือ วงแหวนความคืบหน้า และแบรนด์ของแอป – แตะเพื่อเปิดรายการ
+• การเปลี่ยนแปลงบนมือถือจะแสดงบนนาฬิกาภายในไม่กี่วินาที
+• แอป Wear OS: ส่วนหัวใหม่พร้อมโลโก้และชื่อรายการ
+• Wear OS: แก้ไขแอปปิดตัวเมื่อเปิดใช้งาน
+• Wear OS: พื้นที่แตะใหญ่ขึ้น เลย์เอาต์ดีขึ้นบนหน้าจอกลม และ "เปิดบนมือถือ" ระหว่างการตั้งค่า
+</th>
+<vi>
+• Wear OS: ô mới hiển thị số món còn lại, vòng tiến độ và nhận diện ứng dụng – chạm để mở danh sách
+• Thay đổi trên điện thoại giờ xuất hiện trên đồng hồ chỉ trong vài giây
+• Ứng dụng Wear OS: phần đầu mới với logo và tên danh sách
+• Wear OS: sửa lỗi ứng dụng bị đóng khi mở
+• Wear OS: vùng chạm lớn hơn, bố cục tốt hơn trên màn hình tròn, "Mở trên điện thoại" khi thiết lập
+</vi>
+<zh-CN>
+• Wear OS：新卡片显示剩余物品数量、进度环和应用标识，点按即可打开清单
+• 手机上的更改现在几秒内就会显示在手表上
+• Wear OS 应用：带有图标和清单名称的新标题栏
+• Wear OS：修复了打开应用时崩溃的问题
+• Wear OS：更大的触控区域，圆形屏幕上的布局更佳，设置时可“在手机上打开”
+</zh-CN>

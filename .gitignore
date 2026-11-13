@@ -63,3 +63,6 @@ out/
 /.claude/
 .claude/
 /internaldata/
+
+# ---- Python ----
+__pycache__/

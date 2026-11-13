@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Daftar Belanja",
+  "short_description": "Daftar belanja Home Assistant di ponsel dan jam – langsung, urut per bagian toko",
+  "full_description": "HomeShopList membawa daftar belanja dan daftar tugas dari Home Assistant ke ponsel dan jam Wear OS Anda. Perubahan muncul secara langsung – yang ditambahkan di rumah terlihat di toko sesaat kemudian, tanpa perlu memuat ulang.\n\nDAFTAR BELANJA\n• Bekerja dengan daftar tugas apa pun di Home Assistant – Anda yang memilih\n• Tambah, centang, ganti nama, dan hapus item dalam hitungan detik\n• Saran dari belanjaan sebelumnya saat mengetik, lengkap dengan bagian tokonya\n• Hapus semua item yang sudah dicentang sekaligus\n\nURUT SEPERTI TOKO ANDA\n• Tetapkan bagian toko untuk setiap item – buah dan sayur, roti, susu, beku, dan lainnya, masing-masing dengan ikonnya\n• Daftar sederhana atau dikelompokkan per bagian\n• Ubah urutan dan pindahkan item antarbagian dengan seret dan lepas\n• Pilih bagian yang ditampilkan dan urutkan sesuai rute Anda di toko\n\nJAM (WEAR OS)\n• Daftar di pergelangan tangan: centang item meski tangan sedang penuh\n• Hapus item yang sudah dicentang langsung di jam\n• Kartu dengan jumlah item tersisa dan cincin progres\n• Tanpa pengaturan di jam: koneksi diambil dari ponsel\n\nSETELAN DAN CADANGAN\n• Setelan dalam tab yang jelas: Koneksi, Tampilan, Data\n• Cadangkan koneksi, bagian toko, dan saran ke file terenkripsi kata sandi lalu pulihkan\n• Mengikuti mode terang atau gelap sistem\n• Tersedia dalam 13 bahasa\n\nPRIVASI\nHomeShopList hanya berkomunikasi dengan Home Assistant milik Anda. Tanpa iklan, tanpa akun, tanpa data yang dikirim ke server eksternal. Alamat, token, dan saran tetap di perangkat Anda. Dengan jam, ponsel meneruskan koneksi melalui layanan Google Play. Untuk alamat lokal http://, aplikasi memperingatkan sebelum token dikirim tanpa enkripsi. HomeShopList adalah sumber terbuka (lisensi MIT).\n\nPersyaratan: Android 7.0 atau lebih baru, Home Assistant 2023.11 atau lebih baru dengan daftar tugas (mis. integrasi Shopping List), dan token akses jangka panjang.\nUntuk jam: jam Wear OS yang tersambung dengan ponsel Android yang memiliki HomeShopList.\n\nHomeShopList adalah proyek independen dan tidak berafiliasi dengan Home Assistant atau Nabu Casa. Home Assistant adalah merek dagang dari pemiliknya.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Daftar belanja Home Assistant Anda, langsung",
+  "captions": [
+    "Daftar belanja Home Assistant – langsung di ponsel",
+    "Urut per bagian, sesuai rute Anda di toko",
+    "Seret dan lepas untuk mengurutkan dan pindah bagian",
+    "Tambah item cepat dari belanjaan sebelumnya",
+    "Pilih dan urutkan bagian toko",
+    "Terang atau gelap – mengikuti sistem Anda"
+  ]
+}

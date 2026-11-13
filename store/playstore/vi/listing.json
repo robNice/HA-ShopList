@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Danh sách mua",
+  "short_description": "Danh sách mua sắm Home Assistant trên điện thoại và đồng hồ – trực tiếp",
+  "full_description": "HomeShopList đưa danh sách mua sắm và việc cần làm từ Home Assistant lên điện thoại và đồng hồ Wear OS của bạn. Thay đổi hiển thị trực tiếp – món vừa thêm ở nhà sẽ xuất hiện ở cửa hàng ngay sau đó, không cần làm mới.\n\nDANH SÁCH MUA SẮM\n• Hoạt động với mọi danh sách việc cần làm trong Home Assistant – bạn tự chọn\n• Thêm, đánh dấu, đổi tên và xóa món chỉ trong vài giây\n• Gợi ý từ những lần mua trước khi nhập, kèm quầy hàng\n• Xóa tất cả món đã đánh dấu cùng lúc\n\nSẮP XẾP NHƯ CỬA HÀNG CỦA BẠN\n• Gán quầy hàng cho từng món – rau củ quả, bánh mì, sữa, đồ đông lạnh và hơn nữa, mỗi quầy có biểu tượng riêng\n• Danh sách đơn giản hoặc nhóm theo quầy\n• Kéo và thả để sắp xếp lại và chuyển món giữa các quầy\n• Chọn quầy nào hiển thị và sắp theo lộ trình của bạn trong cửa hàng\n\nĐỒNG HỒ (WEAR OS)\n• Danh sách trên cổ tay: đánh dấu ngay cả khi tay đang bận\n• Xóa món đã đánh dấu trực tiếp trên đồng hồ\n• Ô hiển thị số món còn lại và vòng tiến độ\n• Không cần thiết lập trên đồng hồ: dùng kết nối từ điện thoại\n\nCÀI ĐẶT VÀ SAO LƯU\n• Cài đặt trong các thẻ rõ ràng: Kết nối, Hiển thị, Dữ liệu\n• Sao lưu kết nối, quầy hàng và gợi ý vào tệp được mã hóa bằng mật khẩu và khôi phục\n• Theo chế độ sáng hoặc tối của hệ thống\n• Có 13 ngôn ngữ\n\nQUYỀN RIÊNG TƯ\nHomeShopList chỉ giao tiếp với Home Assistant của riêng bạn. Không quảng cáo, không tài khoản, không gửi dữ liệu đến máy chủ bên ngoài. Địa chỉ, token và gợi ý ở lại trên thiết bị. Khi có đồng hồ, điện thoại chuyển kết nối qua dịch vụ Google Play. Với địa chỉ http:// cục bộ, ứng dụng cảnh báo trước khi token được gửi không mã hóa. HomeShopList là mã nguồn mở (giấy phép MIT).\n\nYêu cầu: Android 7.0 trở lên, Home Assistant 2023.11 trở lên có danh sách việc cần làm (ví dụ tích hợp Shopping List) và token truy cập dài hạn.\nCho đồng hồ: đồng hồ Wear OS ghép nối với điện thoại Android có HomeShopList.\n\nHomeShopList là dự án độc lập và không liên kết với Home Assistant hay Nabu Casa. Home Assistant là nhãn hiệu của chủ sở hữu tương ứng.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Danh sách mua sắm Home Assistant, trực tiếp",
+  "captions": [
+    "Danh sách mua sắm Home Assistant – trực tiếp trên điện thoại",
+    "Theo quầy hàng, như lộ trình của bạn trong cửa hàng",
+    "Kéo thả để sắp xếp và đổi quầy",
+    "Thêm món nhanh từ những lần mua trước",
+    "Chọn và sắp xếp các quầy hàng",
+    "Sáng hoặc tối – theo hệ thống của bạn"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Bevásárlólisták",
+  "short_description": "Home Assistant bevásárlólista telefonon és órán – élőben, részlegek szerint",
+  "full_description": "A HomeShopList a Home Assistant bevásárló- és teendőlistáit a telefonodra és a Wear OS órádra hozza. A változások élőben jelennek meg – amit otthon hozzáadnak, azt a boltban egy pillanattal később látod, frissítés nélkül.\n\nBEVÁSÁRLÓLISTA\n• Bármelyik Home Assistant teendőlistával működik – te választod ki\n• Tételek hozzáadása, kipipálása, átnevezése és törlése másodpercek alatt\n• Javaslatok a korábbi vásárlásaidból gépelés közben, a bolti részleggel együtt\n• Az összes kipipált tétel törlése egyszerre\n\nA BOLTODHOZ IGAZÍTVA\n• Rendelj minden tételhez bolti részleget – zöldség és gyümölcs, pékáru, tejtermék, fagyasztott és más, mindegyik saját ikonnal\n• Egyszerű lista vagy részlegek szerint csoportosítva\n• Tételek átrendezése és áthelyezése részlegek között húzással\n• Válaszd ki, mely részlegek látszanak, és rendezd őket a boltban bejárt utad szerint\n\nÓRA (WEAR OS)\n• A lista a csuklódon: pipálj akkor is, ha tele a kezed\n• Kipipált tételek törlése közvetlenül az órán\n• Csempe a hátralévő tételek számával és egy haladásjelző gyűrűvel\n• Nincs beállítás az órán: átveszi a kapcsolatot a telefontól\n\nBEÁLLÍTÁSOK ÉS BIZTONSÁGI MENTÉS\n• Beállítások áttekinthető lapokon: Kapcsolat, Nézet, Adatok\n• Kapcsolat, részlegek és javaslatok mentése jelszóval titkosított fájlba és visszaállítása\n• Követi a rendszer világos vagy sötét módját\n• 13 nyelven érhető el\n\nADATVÉDELEM\nA HomeShopList csak a saját Home Assistantoddal kommunikál. Nincs reklám, nincs fiók, nincs adat külső szerverekre. A cím, a token és a javaslatok az eszközödön maradnak. Óra esetén a telefon a Google Play-szolgáltatásokon keresztül adja át neki a kapcsolatot. Helyi http:// címeknél az alkalmazás figyelmeztet, mielőtt a token titkosítatlanul elküldésre kerül. A HomeShopList nyílt forráskódú (MIT-licenc).\n\nKövetelmények: Android 7.0 vagy újabb, Home Assistant 2023.11 vagy újabb egy teendőlistával (pl. a Bevásárlólista integrációval) és egy hosszú élettartamú hozzáférési token.\nAz órához: Android-telefonnal párosított Wear OS óra, amelyen a HomeShopList fut.\n\nA HomeShopList független projekt, nem áll kapcsolatban a Home Assistanttal vagy a Nabu Casával. A Home Assistant a megfelelő tulajdonos védjegye.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "A Home Assistant bevásárlólistád, élőben",
+  "captions": [
+    "A Home Assistant bevásárlólistád – élőben a telefonon",
+    "Részlegek szerint, ahogy a boltban haladsz",
+    "Húzással rendezhetsz és válthatsz részleget",
+    "Gyors hozzáadás a korábbi vásárlásaidból",
+    "Válaszd ki és rendezd a bolti részlegeket",
+    "Világos vagy sötét – ahogy a rendszered"
+  ]
+}

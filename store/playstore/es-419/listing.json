@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Lista de compras",
+  "short_description": "Tu lista de compras de Home Assistant en teléfono y reloj, en vivo y ordenada",
+  "full_description": "HomeShopList lleva las listas de la compra y de tareas de tu Home Assistant a tu teléfono y a tu reloj Wear OS. Los cambios aparecen al instante: lo que se añade en casa lo ves en la tienda un momento después, sin actualizar.\n\nLISTA DE LA COMPRA\n• Funciona con cualquier lista de tareas de Home Assistant: tú eliges cuál\n• Añade, marca, renombra y elimina artículos en segundos\n• Sugerencias de tus compras anteriores mientras escribes, con su sección de tienda\n• Elimina todos los artículos completados de una vez\n\nORDENADA COMO TU TIENDA\n• Asigna a cada artículo una sección de tienda – fruta y verdura, panadería, lácteos, congelados y más, cada una con su icono\n• Lista simple o agrupada por secciones\n• Reordena artículos y muévelos entre secciones arrastrando y soltando\n• Elige qué secciones se muestran y ordénalas según tu recorrido por la tienda\n\nRELOJ (WEAR OS)\n• Tu lista en la muñeca: marca artículos aunque tengas las manos ocupadas\n• Elimina los artículos completados directamente en el reloj\n• Tarjeta con el número de artículos pendientes y un anillo de progreso\n• Sin configurar nada en el reloj: toma la conexión del teléfono\n\nAJUSTES Y COPIA DE SEGURIDAD\n• Ajustes en pestañas claras: Conexión, Vista, Datos\n• Guarda la conexión, las secciones y las sugerencias en un archivo cifrado con contraseña y restáuralas\n• Sigue el modo claro u oscuro de tu sistema\n• Disponible en 13 idiomas\n\nPRIVACIDAD\nHomeShopList solo se comunica con tu propio Home Assistant. Sin anuncios, sin cuenta, sin datos enviados a servidores externos. La dirección, el token y las sugerencias se quedan en tu dispositivo. Con un reloj, el teléfono le pasa la conexión a través de los servicios de Google Play. Con direcciones locales http://, la app te avisa antes de enviar tu token sin cifrar. HomeShopList es de código abierto (licencia MIT).\n\nRequisitos: Android 7.0 o posterior, Home Assistant 2023.11 o posterior con una lista de tareas (p. ej. la integración Lista de la compra) y un token de acceso de larga duración.\nPara el reloj: un reloj Wear OS emparejado con un teléfono Android con HomeShopList.\n\nHomeShopList es un proyecto independiente y no está afiliado a Home Assistant ni a Nabu Casa. Home Assistant es una marca de su respectivo titular.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Tu lista de la compra de Home Assistant, en vivo",
+  "captions": [
+    "Tu lista de la compra de Home Assistant, en vivo en el teléfono",
+    "Ordenada por secciones, como tu recorrido por la tienda",
+    "Arrastra y suelta para ordenar y cambiar de sección",
+    "Añade artículos rápido con sugerencias de compras anteriores",
+    "Elige y ordena tus secciones de tienda",
+    "Claro u oscuro, como tu sistema"
+  ]
+}

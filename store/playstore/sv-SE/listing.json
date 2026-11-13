@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Inköpslistor",
+  "short_description": "Home Assistant-inköpslistan i mobilen och klockan – live, per avdelning",
+  "full_description": "HomeShopList tar inköps- och att göra-listorna från din Home Assistant till mobilen och din Wear OS-klocka. Ändringar syns live – det som läggs till hemma ser du i butiken ett ögonblick senare, utan att uppdatera.\n\nINKÖPSLISTA\n• Fungerar med alla att göra-listor i Home Assistant – du väljer vilken\n• Lägg till, bocka av, byt namn på och ta bort varor på några sekunder\n• Förslag från dina tidigare inköp medan du skriver, med butiksavdelning\n• Ta bort alla avbockade varor på en gång\n\nSORTERAD SOM DIN BUTIK\n• Ge varje vara en butiksavdelning – frukt och grönt, bageri, mejeri, fryst och mer, var och en med egen ikon\n• Enkel lista eller grupperad per avdelning\n• Flytta varor och byt avdelning med dra och släpp\n• Välj vilka avdelningar som visas och ordna dem efter din väg genom butiken\n\nKLOCKA (WEAR OS)\n• Listan på handleden: bocka av även med händerna fulla\n• Ta bort avbockade varor direkt på klockan\n• Panel med antalet kvarvarande varor och en förloppsring\n• Ingen inställning på klockan: den tar över anslutningen från mobilen\n\nINSTÄLLNINGAR OCH SÄKERHETSKOPIA\n• Inställningar i tydliga flikar: Anslutning, Visning, Data\n• Spara anslutning, avdelningar och förslag i en lösenordskrypterad fil och återställ dem\n• Följer systemets ljusa eller mörka läge\n• Finns på 13 språk\n\nINTEGRITET\nHomeShopList pratar bara med din egen Home Assistant. Ingen reklam, inget konto, inga data till externa servrar. Adress, token och förslag stannar på din enhet. Med en klocka skickar mobilen anslutningen vidare via Google Play-tjänster. För lokala http://-adresser varnar appen dig innan din token skickas okrypterad. HomeShopList är öppen källkod (MIT-licens).\n\nKrav: Android 7.0 eller senare, Home Assistant 2023.11 eller senare med en att göra-lista (t.ex. integrationen Inköpslista) och en långlivad åtkomsttoken.\nFör klockan: en Wear OS-klocka parkopplad med en Android-mobil med HomeShopList.\n\nHomeShopList är ett oberoende projekt och har ingen koppling till Home Assistant eller Nabu Casa. Home Assistant är ett varumärke som tillhör respektive ägare.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Din Home Assistant-inköpslista, live",
+  "captions": [
+    "Din Home Assistant-inköpslista – live i mobilen",
+    "Sorterad per avdelning, som din väg genom butiken",
+    "Dra och släpp för att ordna och byta avdelning",
+    "Lägg till varor snabbt – med förslag från tidigare inköp",
+    "Välj och ordna dina butiksavdelningar",
+    "Ljust eller mörkt – precis som ditt system"
+  ]
+}
