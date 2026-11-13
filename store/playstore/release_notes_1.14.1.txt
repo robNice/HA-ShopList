@@ -1,0 +1,145 @@
+<en-US>
+• Wear OS: fixed a possible crash of the tile on watches with Wear OS 5
+• Updated libraries
+• Settings: lists now load even if the Home Assistant user is not an administrator
+</en-US>
+<de-DE>
+• Wear OS: möglichen Absturz der Kachel auf Uhren mit Wear OS 5 behoben
+• Bibliotheken aktualisiert
+• Einstellungen: Listen werden jetzt auch geladen, wenn der Home-Assistant-Benutzer kein Administrator ist
+</de-DE>
+<ar>
+• Wear OS: إصلاح تعطّل محتمل للبطاقة على الساعات التي تعمل بنظام Wear OS 5
+• تحديث المكتبات
+• الإعدادات: يتم الآن تحميل القوائم حتى إن لم يكن مستخدم Home Assistant مسؤولًا
+</ar>
+<cs-CZ>
+• Wear OS: opraven možný pád dlaždice na hodinkách s Wear OS 5
+• Aktualizované knihovny
+• Nastavení: seznamy se teď načtou, i když uživatel Home Assistant není správce
+</cs-CZ>
+<da-DK>
+• Wear OS: rettet et muligt nedbrud i feltet på ure med Wear OS 5
+• Biblioteker opdateret
+• Indstillinger: lister indlæses nu, selv om Home Assistant-brugeren ikke er administrator
+</da-DK>
+<es-419>
+• Wear OS: se corrigió un posible cierre de la tarjeta en relojes con Wear OS 5
+• Bibliotecas actualizadas
+• Configuración: las listas ahora se cargan aunque el usuario de Home Assistant no sea administrador
+</es-419>
+<es-ES>
+• Wear OS: corregido un posible cierre de la tarjeta en relojes con Wear OS 5
+• Bibliotecas actualizadas
+• Ajustes: las listas ahora se cargan aunque el usuario de Home Assistant no sea administrador
+</es-ES>
+<fi-FI>
+• Wear OS: korjattu ruudun mahdollinen kaatuminen Wear OS 5 -kelloissa
+• Kirjastot päivitetty
+• Asetukset: listat latautuvat nyt, vaikka Home Assistant -käyttäjä ei ole järjestelmänvalvoja
+</fi-FI>
+<fr-FR>
+• Wear OS : correction d'un possible plantage de la vignette sur les montres Wear OS 5
+• Bibliothèques mises à jour
+• Paramètres : les listes se chargent désormais même si l'utilisateur Home Assistant n'est pas administrateur
+</fr-FR>
+<hi-IN>
+• Wear OS: Wear OS 5 वाली घड़ियों पर टाइल के संभावित क्रैश को ठीक किया गया
+• लाइब्रेरी अपडेट की गईं
+• सेटिंग्स: अब सूचियाँ तब भी लोड होती हैं जब Home Assistant उपयोगकर्ता एडमिन न हो
+</hi-IN>
+<hu-HU>
+• Wear OS: javítva a csempe lehetséges összeomlása Wear OS 5-ös órákon
+• Frissített könyvtárak
+• Beállítások: a listák most akkor is betöltődnek, ha a Home Assistant-felhasználó nem rendszergazda
+</hu-HU>
+<id>
+• Wear OS: memperbaiki kemungkinan kartu tertutup paksa di jam dengan Wear OS 5
+• Library diperbarui
+• Setelan: daftar kini dimuat meskipun pengguna Home Assistant bukan administrator
+</id>
+<it-IT>
+• Wear OS: corretto un possibile arresto del riquadro sugli orologi con Wear OS 5
+• Librerie aggiornate
+• Impostazioni: le liste ora si caricano anche se l'utente di Home Assistant non è amministratore
+</it-IT>
+<iw-IL>
+• Wear OS: תוקנה קריסה אפשרית של האריח בשעונים עם Wear OS 5
+• עודכנו ספריות
+• הגדרות: הרשימות נטענות עכשיו גם אם משתמש Home Assistant אינו מנהל
+</iw-IL>
+<ja-JP>
+• Wear OS：Wear OS 5 のウォッチでタイルがクラッシュする可能性がある問題を修正
+• ライブラリを更新
+• 設定：Home Assistant のユーザーが管理者でなくてもリストを読み込めるように
+</ja-JP>
+<ko-KR>
+• Wear OS: Wear OS 5 워치에서 타일이 비정상 종료될 수 있는 문제 수정
+• 라이브러리 업데이트
+• 설정: Home Assistant 사용자가 관리자가 아니어도 목록을 불러올 수 있음
+</ko-KR>
+<nl-NL>
+• Wear OS: mogelijke crash van de tegel op horloges met Wear OS 5 opgelost
+• Bibliotheken bijgewerkt
+• Instellingen: lijsten laden nu ook als de Home Assistant-gebruiker geen beheerder is
+</nl-NL>
+<no-NO>
+• Wear OS: rettet et mulig krasj i brikken på klokker med Wear OS 5
+• Biblioteker oppdatert
+• Innstillinger: lister lastes nå selv om Home Assistant-brukeren ikke er administrator
+</no-NO>
+<pl-PL>
+• Wear OS: naprawiono możliwą awarię kafelka na zegarkach z Wear OS 5
+• Zaktualizowano biblioteki
+• Ustawienia: listy wczytują się teraz także, gdy użytkownik Home Assistant nie jest administratorem
+</pl-PL>
+<pt-BR>
+• Wear OS: corrigido um possível travamento do bloco em relógios com Wear OS 5
+• Bibliotecas atualizadas
+• Configurações: as listas agora carregam mesmo que o usuário do Home Assistant não seja administrador
+</pt-BR>
+<ro>
+• Wear OS: remediată o posibilă închidere neașteptată a panoului pe ceasurile cu Wear OS 5
+• Biblioteci actualizate
+• Setări: listele se încarcă acum chiar dacă utilizatorul Home Assistant nu este administrator
+</ro>
+<ru-RU>
+• Wear OS: исправлен возможный сбой карточки на часах с Wear OS 5
+• Обновлены библиотеки
+• Настройки: списки теперь загружаются, даже если пользователь Home Assistant не администратор
+</ru-RU>
+<sk>
+• Wear OS: opravený možný pád dlaždice na hodinkách s Wear OS 5
+• Aktualizované knižnice
+• Nastavenia: zoznamy sa teraz načítajú, aj keď používateľ Home Assistant nie je správca
+</sk>
+<sv-SE>
+• Wear OS: åtgärdat en möjlig krasch i panelen på klockor med Wear OS 5
+• Bibliotek uppdaterade
+• Inställningar: listor läses nu in även om Home Assistant-användaren inte är administratör
+</sv-SE>
+<th>
+• Wear OS: แก้ไขปัญหาไทล์อาจปิดตัวบนนาฬิกาที่ใช้ Wear OS 5
+• อัปเดตไลบรารี
+• การตั้งค่า: โหลดรายการได้แล้วแม้ผู้ใช้ Home Assistant จะไม่ใช่ผู้ดูแลระบบ
+</th>
+<tr-TR>
+• Wear OS: Wear OS 5 saatlerde kutucuğun olası çökmesi düzeltildi
+• Kitaplıklar güncellendi
+• Ayarlar: Home Assistant kullanıcısı yönetici olmasa da listeler artık yükleniyor
+</tr-TR>
+<uk>
+• Wear OS: виправлено можливий збій плитки на годинниках з Wear OS 5
+• Оновлено бібліотеки
+• Налаштування: списки тепер завантажуються, навіть якщо користувач Home Assistant не адміністратор
+</uk>
+<vi>
+• Wear OS: sửa lỗi ô có thể bị dừng đột ngột trên đồng hồ Wear OS 5
+• Cập nhật thư viện
+• Cài đặt: danh sách giờ được tải ngay cả khi người dùng Home Assistant không phải quản trị viên
+</vi>
+<zh-CN>
+• Wear OS：修复了卡片在 Wear OS 5 手表上可能崩溃的问题
+• 更新了依赖库
+• 设置：即使 Home Assistant 用户不是管理员，现在也能加载清单
+</zh-CN>
