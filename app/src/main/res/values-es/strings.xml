@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">Activa solo las secciones de la tienda que deban aparecer en los menús desplegables de sección. Las secciones desactivadas se ocultan en los desplegables para elementos nuevos o editados, pero siguen visibles en la lista de la compra si elementos existentes ya las usan.</string>
     <string name="help_product_history_title">Historial de productos</string>
     <string name="help_product_history_text">La app guarda localmente en este dispositivo los nombres de productos ya usados para ofrecer autocompletado al añadir nuevos elementos. Al borrar el historial solo se eliminan estas sugerencias locales.</string>
+    <string name="help_list_display_mode_title">Modo de lista</string>
+    <string name="help_list_display_mode_text">Simple muestra todos los artículos en una sola lista. Por categorías agrupa los artículos por sección de la tienda en el orden definido abajo.</string>
+    <string name="help_backup_title">Copia de seguridad y restauración</string>
+    <string name="help_backup_text">Exporta los datos seleccionados (conexión, ajustes de categorías, historial de productos) a un archivo cifrado con contraseña. Al restaurar, eliges qué partes de la copia se importan. La contraseña no se guarda: sin ella no se puede abrir la copia.</string>
+    <string name="help_updates_title">Actualizaciones</string>
+    <string name="help_updates_text">Esta versión no se instaló desde una tienda de apps, por eso la app busca periódicamente nuevas versiones en GitHub. Si hay una actualización, puedes descargarla e instalarla aquí. Android te pedirá que confirmes la instalación.</string>
     <string name="offline_chip">Sin conexión</string>
     <string name="connecting_chip">Reconectando</string>
     <string name="offline_dialog_title">Modo sin conexión</string>

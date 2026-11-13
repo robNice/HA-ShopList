@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">Enable only the store sections you want to use in the section dropdowns. Disabled sections are hidden from dropdowns for new or edited items, but still remain visible in the shopping list when existing items already use them.</string>
     <string name="help_product_history_title">Product history</string>
     <string name="help_product_history_text">The app stores previously used product names on this device to offer autocomplete when you add new items. Clearing the history removes these local suggestions.</string>
+    <string name="help_list_display_mode_title">List display</string>
+    <string name="help_list_display_mode_text">Simple shows all items in one list. Categorized groups items by store section in the order set below.</string>
+    <string name="help_backup_title">Backup and restore</string>
+    <string name="help_backup_text">Exports the selected data (connection, category settings, product history) to a password-encrypted file. When restoring, you choose which parts of the backup to import. The password is not stored – without it, the backup cannot be opened.</string>
+    <string name="help_updates_title">Updates</string>
+    <string name="help_updates_text">This version was not installed via an app store, so the app regularly checks GitHub for new releases. If an update is available, you can download and install it here. Android asks you to confirm the installation.</string>
     <string name="offline_chip">Offline</string>
     <string name="connecting_chip">Reconnecting</string>
     <string name="offline_dialog_title">Offline mode</string>

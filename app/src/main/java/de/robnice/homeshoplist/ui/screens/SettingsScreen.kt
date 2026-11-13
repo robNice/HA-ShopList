@@ -103,7 +103,10 @@ private enum class SettingsHelpTopic(
     Token(R.string.help_token_title, R.string.help_token_text),
     ListSelection(R.string.help_list_selection_title, R.string.help_list_selection_text),
     AreaVisibility(R.string.help_area_visibility_title, R.string.help_area_visibility_text),
-    ProductHistory(R.string.help_product_history_title, R.string.help_product_history_text)
+    ProductHistory(R.string.help_product_history_title, R.string.help_product_history_text),
+    ListDisplayMode(R.string.help_list_display_mode_title, R.string.help_list_display_mode_text),
+    Backup(R.string.help_backup_title, R.string.help_backup_text),
+    Updates(R.string.help_updates_title, R.string.help_updates_text)
 }
 
 @Composable
@@ -697,7 +700,7 @@ fun SettingsScreen(
 
                         SettingFieldHeader(
                             text = t(R.string.list_display_mode_label),
-                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListSelection }
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListDisplayMode }
                         )
 
                         Row(
@@ -824,6 +827,7 @@ fun SettingsScreen(
 
                         SettingsBackupSection(
                             context = context,
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Backup },
                             onImported = { payload, importedSections ->
                                 if (BackupSection.CONNECTION in importedSections) {
                                     payload.connection?.let { importedConnection ->
@@ -852,9 +856,9 @@ fun SettingsScreen(
                         if (updateChecksAllowed) {
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            Text(
+                            SectionHeaderWithHelp(
                                 text = t(R.string.update_section_title),
-                                style = MaterialTheme.typography.titleMedium
+                                onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Updates }
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -1200,7 +1204,7 @@ internal fun ButtonIconLabel(icon: ImageVector, text: String) {
 }
 
 @Composable
-private fun SectionHeaderWithHelp(
+internal fun SectionHeaderWithHelp(
     text: String,
     onHelpClick: () -> Unit
 ) {

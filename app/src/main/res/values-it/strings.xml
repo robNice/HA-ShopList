@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">Attiva solo i reparti del negozio che devono comparire nei menu a discesa dei reparti. I reparti disattivati vengono nascosti nei menu a discesa per gli elementi nuovi o modificati, ma restano visibili nella lista della spesa se elementi già esistenti li usano ancora.</string>
     <string name="help_product_history_title">Cronologia prodotti</string>
     <string name="help_product_history_text">L’app salva localmente su questo dispositivo i nomi dei prodotti già usati per offrire l’autocompletamento quando aggiungi nuovi elementi. Cancellare la cronologia rimuove solo questi suggerimenti locali.</string>
+    <string name="help_list_display_mode_title">Visualizzazione lista</string>
+    <string name="help_list_display_mode_text">Semplice mostra tutti gli articoli in un unico elenco. Per categoria raggruppa gli articoli per reparto nell’ordine impostato sotto.</string>
+    <string name="help_backup_title">Backup e ripristino</string>
+    <string name="help_backup_text">Esporta i dati selezionati (connessione, impostazioni delle categorie, cronologia prodotti) in un file cifrato con password. Durante il ripristino scegli quali parti del backup importare. La password non viene salvata: senza di essa il backup non può essere aperto.</string>
+    <string name="help_updates_title">Aggiornamenti</string>
+    <string name="help_updates_text">Questa versione non è stata installata da uno store, quindi l’app cerca regolarmente nuove versioni su GitHub. Se è disponibile un aggiornamento, puoi scaricarlo e installarlo qui. Android ti chiederà di confermare l’installazione.</string>
     <string name="offline_chip">Offline</string>
     <string name="connecting_chip">Riconnessione</string>
     <string name="offline_dialog_title">Modalità offline</string>

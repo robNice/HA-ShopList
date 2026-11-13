@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">구역 드롭다운에 표시할 매장 구역만 활성화하세요. 비활성화된 구역은 새 항목이나 수정 중인 항목의 드롭다운에서는 숨겨지지만, 기존 항목이 이미 그 구역을 사용 중이면 장보기 목록에는 계속 표시됩니다.</string>
     <string name="help_product_history_title">제품 기록</string>
     <string name="help_product_history_text">이 앱은 새 항목을 추가할 때 자동완성을 제공하기 위해 이전에 사용한 제품 이름을 이 기기에 로컬로 저장합니다. 기록을 삭제하면 이런 로컬 제안만 제거됩니다.</string>
+    <string name="help_list_display_mode_title">목록 표시</string>
+    <string name="help_list_display_mode_text">단순은 모든 항목을 하나의 목록으로 표시합니다. 분류별은 아래에서 설정한 순서대로 매장 구역별로 항목을 묶습니다.</string>
+    <string name="help_backup_title">백업 및 복원</string>
+    <string name="help_backup_text">선택한 데이터(연결 정보, 카테고리 설정, 제품 기록)를 비밀번호로 암호화된 파일로 내보냅니다. 복원할 때 가져올 항목을 선택할 수 있습니다. 비밀번호는 저장되지 않으므로 비밀번호 없이는 백업을 열 수 없습니다.</string>
+    <string name="help_updates_title">업데이트</string>
+    <string name="help_updates_text">이 버전은 앱 스토어를 통해 설치되지 않았으므로 앱이 GitHub에서 새 버전을 정기적으로 확인합니다. 업데이트가 있으면 여기에서 다운로드하고 설치할 수 있습니다. 설치 시 Android에서 확인을 요청합니다.</string>
     <string name="offline_chip">오프라인</string>
     <string name="connecting_chip">다시 연결 중</string>
     <string name="offline_dialog_title">오프라인 모드</string>

@@ -1,8 +1,7 @@
 name: Pull Play store listing
 
 # Downloads the current Google Play store listing (texts, icon, feature graphic, screenshots)
-# in fastlane layout as a workflow artifact. Copy the result into fastlane/metadata/android
-# to start from the live Play state. Changes nothing on Play.
+# in the layout of store/playstore as a workflow artifact. Changes nothing on Play.
 
 on:
   workflow_dispatch:
@@ -35,7 +34,7 @@ jobs:
         run: |
           python .github/scripts/play_publish.py pull \
             --package "$PACKAGE_NAME" \
-            --out play-store-listing
+            --store-dir play-store-listing
 
       - name: Upload store listing
         uses: actions/upload-artifact@v4

@@ -3,6 +3,7 @@ package de.robnice.homeshoplist.wear.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -64,7 +65,6 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
-import androidx.wear.compose.material.CompactButton
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
@@ -77,7 +77,6 @@ import androidx.wear.compose.material.dialog.Confirmation
 import androidx.wear.compose.material.scrollAway
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import androidx.wear.compose.material.dialog.Alert
-import androidx.wear.compose.material.dialog.Dialog
 import de.robnice.homeshoplist.wear.WearViewModel
 import de.robnice.homeshoplist.wear.model.AREA_EMOJIS
 import de.robnice.homeshoplist.wear.model.WearShoppingItem
@@ -147,6 +146,36 @@ private fun ShoppingListScreen(
     val checked = items.filter { it.complete }
     val categorized = listDisplayMode == "categorized"
     var showConfirmDelete by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Shown in place of the list instead of in a Dialog: on some watches (Galaxy Watch) the
+    // dialog window was not removed after confirming and left a black screen.
+    if (showConfirmDelete) {
+        BackHandler { showConfirmDelete = false }
+        Alert(
+            title = { Text(stringResource(R.string.confirm_delete_title), textAlign = TextAlign.Center) },
+            negativeButton = {
+                Button(
+                    onClick = { showConfirmDelete = false },
+                    colors = ButtonDefaults.secondaryButtonColors()
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel))
+                }
+            },
+            positiveButton = {
+                Button(onClick = {
+                    onClearCompleted()
+                    showConfirmDelete = false
+                    // The list got shorter: go back to the start position below the header
+                    coroutineScope.launch { listState.scrollToItem(1) }
+                }) {
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.delete))
+                }
+            }
+        )
+        return
+    }
+
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -204,43 +233,30 @@ private fun ShoppingListScreen(
 
         if (checked.isNotEmpty()) {
             item(key = "clear_button") {
-                CompactButton(
+                // Full-size chip (52 dp high) with label: clear tap target well above 48 dp
+                Chip(
                     onClick = { showConfirmDelete = true },
-                    modifier = Modifier.padding(top = 4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DeleteSweep,
-                        contentDescription = stringResource(R.string.cd_delete_completed),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    colors = ChipDefaults.secondaryChipColors(),
+                    label = {
+                        Text(
+                            text = stringResource(R.string.cd_delete_completed),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.DeleteSweep,
+                            contentDescription = null,
+                            modifier = Modifier.size(ChipDefaults.IconSize)
+                        )
+                    }
+                )
             }
         }
-    }
-
-    Dialog(
-        showDialog = showConfirmDelete,
-        onDismissRequest = { showConfirmDelete = false }
-    ) {
-        Alert(
-            title = { Text(stringResource(R.string.confirm_delete_title)) },
-            negativeButton = {
-                Button(
-                    onClick = { showConfirmDelete = false },
-                    colors = ButtonDefaults.secondaryButtonColors()
-                ) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel))
-                }
-            },
-            positiveButton = {
-                Button(onClick = {
-                    onClearCompleted()
-                    showConfirmDelete = false
-                }) {
-                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.delete))
-                }
-            }
-        )
     }
 }
 
@@ -396,6 +412,27 @@ private fun SetupScreen(listState: ScalingLazyListState) {
     val context = LocalContext.current
     var showOpenedOnPhone by remember { mutableStateOf(false) }
 
+    // Shown in place of the screen instead of in a Dialog (see ShoppingListScreen)
+    if (showOpenedOnPhone) {
+        BackHandler { showOpenedOnPhone = false }
+        Confirmation(
+            onTimeout = { showOpenedOnPhone = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.PhoneAndroid,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+        ) {
+            Text(
+                text = stringResource(R.string.continue_on_phone),
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
+
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -443,27 +480,6 @@ private fun SetupScreen(listState: ScalingLazyListState) {
                         modifier = Modifier.size(ChipDefaults.IconSize)
                     )
                 }
-            )
-        }
-    }
-
-    Dialog(
-        showDialog = showOpenedOnPhone,
-        onDismissRequest = { showOpenedOnPhone = false }
-    ) {
-        Confirmation(
-            onTimeout = { showOpenedOnPhone = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.PhoneAndroid,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-        ) {
-            Text(
-                text = stringResource(R.string.continue_on_phone),
-                textAlign = TextAlign.Center
             )
         }
     }

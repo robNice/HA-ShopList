@@ -50,6 +50,7 @@ private enum class BackupDialog { EXPORT_SELECTION, EXPORT_PASSWORD, IMPORT_PASS
 @Composable
 fun SettingsBackupSection(
     context: Context,
+    onHelpClick: () -> Unit,
     onImported: (SettingsBackupPayload, Set<BackupSection>) -> Unit
 ) {
     val service = remember(context) { SettingsBackupService(context) }
@@ -96,7 +97,7 @@ fun SettingsBackupSection(
         }
     }
 
-    Text(text = t(R.string.settings_backup_title), style = MaterialTheme.typography.titleMedium)
+    SectionHeaderWithHelp(text = t(R.string.settings_backup_title), onHelpClick = onHelpClick)
     Spacer(Modifier.height(8.dp))
     Text(
         text = t(R.string.settings_backup_description),

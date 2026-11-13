@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">売り場のドロップダウンに表示したい売り場だけを有効にしてください。無効にした売り場は新規項目や編集項目のドロップダウンからは非表示になりますが、既存の項目ですでに使われている場合は買い物リスト上に引き続き表示されます。</string>
     <string name="help_product_history_title">商品履歴</string>
     <string name="help_product_history_text">このアプリは、新しい項目を追加するときにオートコンプリートを提供するため、過去に使った商品名をこの端末にローカル保存します。履歴を削除すると、これらのローカル候補だけが削除されます。</string>
+    <string name="help_list_display_mode_title">リスト表示</string>
+    <string name="help_list_display_mode_text">シンプルはすべてのアイテムを1つのリストに表示します。カテゴリ別は下で設定した順序で売り場ごとにアイテムをまとめます。</string>
+    <string name="help_backup_title">バックアップと復元</string>
+    <string name="help_backup_text">選択したデータ（接続情報、カテゴリ設定、商品履歴）をパスワードで暗号化したファイルにエクスポートします。復元時には、インポートする項目を選択できます。パスワードは保存されないため、忘れるとバックアップを開けません。</string>
+    <string name="help_updates_title">アップデート</string>
+    <string name="help_updates_text">このバージョンはアプリストア経由でインストールされていないため、アプリが定期的にGitHubで新しいバージョンを確認します。アップデートがある場合は、ここからダウンロードしてインストールできます。インストール時にAndroidが確認を求めます。</string>
     <string name="offline_chip">オフライン</string>
     <string name="connecting_chip">再接続中</string>
     <string name="offline_dialog_title">オフラインモード</string>

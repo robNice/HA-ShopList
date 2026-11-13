@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Takes the Wear OS store screenshots (list, further down, completed items, tile) in English
-# and German and writes them to fastlane/metadata/android/<locale>/images/wearScreenshots/.
+# and German and writes them to store/playstore/<locale>/wear_N.png.
 #
 # Requirements:
 #   - a running round Wear OS emulator (e.g. "Wear OS Large Round", 454 x 454 px) as $DEVICE
@@ -29,7 +29,7 @@ TOOLS="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$TOOLS/../.." && pwd)"
 PKG=de.robnice.homeshoplist
 TILE="$PKG/.wear.tile.ShoppingTileService"
-STORE="$ROOT/fastlane/metadata/android"
+STORE="$ROOT/store/playstore"
 PREFS_FILE=shared_prefs/wear_ha_settings.xml
 BACKUP=files/wear_ha_settings.backup.xml
 
@@ -89,7 +89,7 @@ rebuild_tile() {
 
 capture() {
   local lang=$1 locale=$2 entity=$3
-  local out="$STORE/$locale/images/wearScreenshots"
+  local out="$STORE/$locale"
   mkdir -p "$out"
 
   python "$(hostpath "$TOOLS/mock_ha.py")" "$lang" > /dev/null 2>&1 &
@@ -106,21 +106,20 @@ capture() {
   done
   adb shell am start -W -n "$PKG/.wear.WearMainActivity" > /dev/null
   sleep 7
-  adb exec-out screencap -p > "$out/1.png"                 # header and top of the list
+  adb exec-out screencap -p > "$out/wear_1.png"                 # header and top of the list
 
   adb shell input swipe 227 380 227 140 500; sleep 2
-  adb exec-out screencap -p > "$out/2.png"                 # further down
+  adb exec-out screencap -p > "$out/wear_2.png"                 # further down
 
   for _ in 1 2 3 4; do adb shell input swipe 227 400 227 60 200; done; sleep 2
-  adb shell input swipe 227 150 227 330 600; sleep 2
-  adb exec-out screencap -p > "$out/3.png"                 # completed items + delete button
+  adb exec-out screencap -p > "$out/wear_3.png"                 # completed items + delete button (end of list)
 
   rebuild_tile
   adb shell input keyevent KEYCODE_HOME; sleep 1
   adb shell am broadcast -a com.google.android.wearable.app.DEBUG_SYSUI \
     --es operation show-tile --ei index 0 > /dev/null
   sleep 7
-  adb exec-out screencap -p > "$out/4.png"                 # tile
+  adb exec-out screencap -p > "$out/wear_4.png"                 # tile
 
   kill "$server"
   echo "Wrote $out"

@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">Ative apenas as seções da loja que devem aparecer nos menus suspensos de seção. As seções desativadas ficam ocultas nos menus de novos itens ou itens editados, mas continuam visíveis na lista de compras se itens existentes já as utilizarem.</string>
     <string name="help_product_history_title">Histórico de produtos</string>
     <string name="help_product_history_text">O aplicativo salva localmente neste dispositivo os nomes de produtos já usados para oferecer preenchimento automático ao adicionar novos itens. Limpar o histórico remove apenas essas sugestões locais.</string>
+    <string name="help_list_display_mode_title">Exibição da lista</string>
+    <string name="help_list_display_mode_text">Simples mostra todos os itens numa única lista. Categorizado agrupa os itens por secção da loja pela ordem definida abaixo.</string>
+    <string name="help_backup_title">Cópia de segurança e restauro</string>
+    <string name="help_backup_text">Exporta os dados selecionados (ligação, definições de categorias, histórico de produtos) para um ficheiro encriptado com palavra-passe. Ao restaurar, escolhe quais as partes da cópia a importar. A palavra-passe não é guardada – sem ela não é possível abrir a cópia.</string>
+    <string name="help_updates_title">Atualizações</string>
+    <string name="help_updates_text">Esta versão não foi instalada através de uma loja de aplicações, por isso a app procura regularmente novas versões no GitHub. Se houver uma atualização, pode transferi-la e instalá-la aqui. O Android pedirá a confirmação da instalação.</string>
     <string name="offline_chip">Offline</string>
     <string name="connecting_chip">Reconectando</string>
     <string name="offline_dialog_title">Modo offline</string>

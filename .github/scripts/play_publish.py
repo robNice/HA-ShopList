@@ -1,27 +1,3 @@
-"""Upload bundles, release notes and store listing to Google Play.
-
-Store listing layout (fastlane, also read by F-Droid):
-
-    fastlane/metadata/android/<language>/
-        title.txt, short_description.txt, full_description.txt
-        images/icon.png, images/featureGraphic.png
-        images/phoneScreenshots/1.png, 2.png ...
-        images/wearScreenshots/1.png, 2.png ...
-
-Release notes: one file per version with a block per language, e.g.
-
-    <en-US>
-    • New feature
-    </en-US>
-    <de-DE>
-    • Neue Funktion
-    </de-DE>
-
-Commands:
-    check    writes bundle_exists / wear_bundle_exists to GITHUB_OUTPUT
-    publish  uploads bundles, optionally syncs the store listing, sets the tracks
-    pull     downloads the current Play store listing into a fastlane folder
-"""
 import argparse
 import hashlib
 import json
@@ -32,87 +8,73 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-try:
-    from google.oauth2 import service_account
-    from googleapiclient.discovery import build
-    from googleapiclient.http import MediaFileUpload
-except ImportError:  # "validate" works without the Play API client
-    service_account = build = MediaFileUpload = None
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload
 
 SCOPES = ["https://www.googleapis.com/auth/androidpublisher"]
-
-# fastlane file -> (Play API field, max length)
-TEXT_FILES = {
-    "title.txt": ("title", 30),
-    "short_description.txt": ("shortDescription", 80),
-    "full_description.txt": ("fullDescription", 4000),
-}
-# Play image type -> fastlane file below images/
-SINGLE_IMAGES = {"icon": "icon.png", "featureGraphic": "featureGraphic.png"}
-# Play image type -> fastlane folder below images/
-SCREENSHOT_DIRS = {
-    "phoneScreenshots": "phoneScreenshots",
-    "sevenInchScreenshots": "sevenInchScreenshots",
-    "tenInchScreenshots": "tenInchScreenshots",
-    "wearScreenshots": "wearScreenshots",
-}
-MAX_SCREENSHOTS = 8
-MAX_RELEASE_NOTES = 500
+LISTING_FIELDS = {"title": "title", "short_description": "shortDescription", "full_description": "fullDescription"}
+SINGLE_IMAGES = {"icon": "icon_512.png", "featureGraphic": "feature_graphic.png"}
+SCREENSHOTS = {"phoneScreenshots": re.compile(r"phone_(\d+)\.png$"), "wearScreenshots": re.compile(r"wear_(\d+)\.png$")}
 
 
 class PlayPublisher:
     def __init__(self, package_name: str, credentials_json: str):
-        if build is None:
-            sys.exit("Play API client missing: pip install google-api-python-client google-auth")
         info = json.loads(credentials_json)
         credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
         self.package = package_name
         self.edits = build("androidpublisher", "v3", credentials=credentials, cache_discovery=False).edits()
         self.edit_id = self.edits.insert(packageName=package_name, body={}).execute()["id"]
 
-    def _args(self, **kwargs):
-        return {"packageName": self.package, "editId": self.edit_id, **kwargs}
-
     def abort(self):
-        self.edits.delete(**self._args()).execute()
+        self.edits.delete(packageName=self.package, editId=self.edit_id).execute()
 
     def commit(self):
-        self.edits.commit(**self._args()).execute()
+        self.edits.commit(packageName=self.package, editId=self.edit_id).execute()
 
     def has_bundle(self, version_code: int) -> bool:
-        bundles = self.edits.bundles().list(**self._args()).execute()
+        bundles = self.edits.bundles().list(packageName=self.package, editId=self.edit_id).execute()
         return any(b["versionCode"] == version_code for b in bundles.get("bundles", []))
 
     def upload_bundle(self, aab: Path) -> int:
         media = MediaFileUpload(str(aab), mimetype="application/octet-stream", resumable=True)
-        return self.edits.bundles().upload(**self._args(), media_body=media).execute()["versionCode"]
+        result = self.edits.bundles().upload(packageName=self.package, editId=self.edit_id, media_body=media).execute()
+        return result["versionCode"]
 
-    def listings(self) -> dict:
-        result = self.edits.listings().list(**self._args()).execute()
-        return {l["language"]: l for l in result.get("listings", [])}
+    def listing_languages(self) -> set:
+        listings = self.edits.listings().list(packageName=self.package, editId=self.edit_id).execute()
+        return {l["language"] for l in listings.get("listings", [])}
 
-    def update_listing(self, language: str, current: dict, wanted: dict) -> bool:
+    def sync_listing(self, language: str, folder: Path) -> bool:
+        data = json.loads((folder / "listing.json").read_text(encoding="utf-8"))
+        wanted = {api: data[key] for key, api in LISTING_FIELDS.items() if data.get(key)}
+        try:
+            current = self.edits.listings().get(packageName=self.package, editId=self.edit_id, language=language).execute()
+        except HttpError as e:
+            if e.resp.status != 404:
+                raise
+            current = {}
         if all(current.get(k) == v for k, v in wanted.items()):
             return False
-        body = {**current, "language": language, **wanted}
-        self.edits.listings().update(**self._args(language=language), body=body).execute()
+        self.edits.listings().update(packageName=self.package, editId=self.edit_id, language=language,
+                                     body={**current, "language": language, **wanted}).execute()
         return True
-
-    def list_images(self, language: str, image_type: str) -> list:
-        return self.edits.images().list(**self._args(language=language, imageType=image_type)).execute().get("images", [])
 
     def sync_images(self, language: str, image_type: str, files: list) -> bool:
         if not files:
             return False
-        current = self.list_images(language, image_type)
+        images = self.edits.images()
+        current = images.list(packageName=self.package, editId=self.edit_id, language=language,
+                              imageType=image_type).execute().get("images", [])
         wanted = [hashlib.sha256(f.read_bytes()).hexdigest() for f in files]
         if [i.get("sha256") for i in current] == wanted:
             return False
-        images = self.edits.images()
         if current:
-            images.deleteall(**self._args(language=language, imageType=image_type)).execute()
+            images.deleteall(packageName=self.package, editId=self.edit_id, language=language,
+                             imageType=image_type).execute()
         for f in files:
-            images.upload(**self._args(language=language, imageType=image_type),
+            images.upload(packageName=self.package, editId=self.edit_id, language=language, imageType=image_type,
                           media_body=MediaFileUpload(str(f), mimetype="image/png")).execute()
         return True
 
@@ -124,108 +86,66 @@ class PlayPublisher:
             "status": status,
             "releaseNotes": [{"language": lang, "text": text} for lang, text in sorted(notes.items())],
         }
-        self.edits.tracks().update(**self._args(track=track), body={"track": track, "releases": [release]}).execute()
+        self.edits.tracks().update(packageName=self.package, editId=self.edit_id, track=track,
+                                   body={"track": track, "releases": [release]}).execute()
 
-
-# ------------------------------------------------------------------ helpers
 
 def read_release_notes(path: Path) -> dict:
     if not path.is_file():
         sys.exit(f"Release notes missing: {path}")
     text = path.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
     notes = {lang: body.strip() for lang, body in re.findall(r"<([\w-]+)>\s*\n(.*?)\n\s*</\1>", text, re.S)}
-    too_long = {lang: len(t) for lang, t in notes.items() if len(t) > MAX_RELEASE_NOTES}
+    too_long = {lang: len(t) for lang, t in notes.items() if len(t) > 500}
     if not notes or too_long:
-        sys.exit(f"Release notes invalid in {path}: "
-                 + (f"over {MAX_RELEASE_NOTES} characters: {too_long}" if too_long else "no language blocks"))
+        sys.exit(f"Release notes invalid in {path}: " + (f"over 500 characters: {too_long}" if too_long else "no language blocks"))
     return notes
 
 
-def numbered_pngs(folder: Path) -> list:
-    if not folder.is_dir():
-        return []
-    files = [f for f in folder.iterdir() if re.fullmatch(r"\d+\.png", f.name)]
-    return sorted(files, key=lambda f: int(f.stem))
-
-
-def read_texts(folder: Path) -> dict:
-    wanted, errors = {}, []
-    for name, (field, limit) in TEXT_FILES.items():
-        file = folder / name
-        if not file.is_file():
-            continue
-        value = file.read_text(encoding="utf-8-sig").replace("\r\n", "\n").strip()
-        if len(value) > limit:
-            errors.append(f"{file}: {len(value)} characters, Play allows {limit}")
-        elif value:
-            wanted[field] = value
-    if errors:
-        sys.exit("Store texts too long:\n  " + "\n  ".join(errors))
-    return wanted
-
-
-def validate_store(store_dir: Path):
-    errors = []
-    for folder in sorted(p for p in store_dir.iterdir() if p.is_dir()):
-        for subdir in SCREENSHOT_DIRS.values():
-            count = len(numbered_pngs(folder / "images" / subdir))
-            if count > MAX_SCREENSHOTS:
-                errors.append(f"{folder.name}/images/{subdir}: {count} screenshots, Play allows {MAX_SCREENSHOTS}")
-        read_texts(folder)
-    if errors:
-        sys.exit("Store listing invalid:\n  " + "\n  ".join(errors))
-
-
 def sync_store(publisher: PlayPublisher, store_dir: Path):
-    validate_store(store_dir)
-    listings = publisher.listings()
-    for folder in sorted(p for p in store_dir.iterdir() if p.is_dir()):
+    for folder in sorted(p for p in store_dir.iterdir() if (p / "listing.json").is_file()):
         language = folder.name
-        wanted = read_texts(folder)
-        if language not in listings and "title" not in wanted:
-            print(f"Store listing {language}: skipped, not on Play and no title.txt")
-            continue
         changes = []
-        if wanted and publisher.update_listing(language, listings.get(language, {}), wanted):
+        if publisher.sync_listing(language, folder):
             changes.append("texts")
-        images = folder / "images"
         for image_type, name in SINGLE_IMAGES.items():
-            if (images / name).is_file() and publisher.sync_images(language, image_type, [images / name]):
+            if (folder / name).is_file() and publisher.sync_images(language, image_type, [folder / name]):
                 changes.append(image_type)
-        for image_type, subdir in SCREENSHOT_DIRS.items():
-            if publisher.sync_images(language, image_type, numbered_pngs(images / subdir)):
+        for image_type, pattern in SCREENSHOTS.items():
+            shots = sorted((f for f in folder.iterdir() if pattern.match(f.name)),
+                           key=lambda f: int(pattern.match(f.name).group(1)))
+            if publisher.sync_images(language, image_type, shots):
                 changes.append(image_type)
         print(f"Store listing {language}: {', '.join(changes) if changes else 'unchanged'}")
 
 
-def download(url: str, target: Path, sha256: str):
+def download(url: str, target: Path):
     # Play image URLs serve a scaled copy by default; "=s0" asks for the original size.
     for candidate in (f"{url}=s0", url):
         try:
-            data = urllib.request.urlopen(candidate, timeout=60).read()
+            target.write_bytes(urllib.request.urlopen(candidate, timeout=60).read())
+            return
         except urllib.error.HTTPError:
             continue
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(data)
-        if sha256 and hashlib.sha256(data).hexdigest() != sha256:
-            print(f"  note: {target} differs from the uploaded original (Play re-encoded it)")
-        return
     print(f"  warning: could not download {url}")
 
 
+# Writes the live Play listing in the layout of store/playstore, without feature_title, feature_tagline and captions.
 def pull_store(publisher: PlayPublisher, out_dir: Path):
-    for language, listing in sorted(publisher.listings().items()):
+    listings = publisher.edits.listings().list(packageName=publisher.package, editId=publisher.edit_id).execute()
+    for listing in listings.get("listings", []):
+        language = listing["language"]
         folder = out_dir / language
         folder.mkdir(parents=True, exist_ok=True)
-        for name, (field, _) in TEXT_FILES.items():
-            if listing.get(field):
-                (folder / name).write_text(listing[field] + "\n", encoding="utf-8")
-        for image_type, name in SINGLE_IMAGES.items():
-            for image in publisher.list_images(language, image_type)[:1]:
-                download(image["url"], folder / "images" / name, image.get("sha256"))
-        for image_type, subdir in SCREENSHOT_DIRS.items():
-            for index, image in enumerate(publisher.list_images(language, image_type), start=1):
-                download(image["url"], folder / "images" / subdir / f"{index}.png", image.get("sha256"))
+        data = {key: listing[api] for key, api in LISTING_FIELDS.items() if listing.get(api)}
+        (folder / "listing.json").write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        targets = {**{t: [name] for t, name in SINGLE_IMAGES.items()},
+                   "phoneScreenshots": [f"phone_{i}.png" for i in range(1, 9)],
+                   "wearScreenshots": [f"wear_{i}.png" for i in range(1, 9)]}
+        for image_type, names in targets.items():
+            current = publisher.edits.images().list(packageName=publisher.package, editId=publisher.edit_id,
+                                                    language=language, imageType=image_type).execute()
+            for image, name in zip(current.get("images", []), names):
+                download(image["url"], folder / name)
         print(f"Pulled store listing {language}")
 
 
@@ -237,12 +157,10 @@ def write_output(name: str, value: str):
     print(f"{name}={value}")
 
 
-# --------------------------------------------------------------------- main
-
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["check", "publish", "pull", "validate"])
-    parser.add_argument("--package")
+    parser.add_argument("command", choices=["check", "publish", "pull"])
+    parser.add_argument("--package", required=True)
     parser.add_argument("--version-code", type=int)
     parser.add_argument("--version-name")
     parser.add_argument("--track")
@@ -251,21 +169,15 @@ def main():
     parser.add_argument("--wear-version-code", type=int)
     parser.add_argument("--wear-track")
     parser.add_argument("--wear-aab", type=Path)
-    parser.add_argument("--release-notes", type=Path)
-    parser.add_argument("--store-dir", type=Path, help="fastlane metadata folder; omit to leave the listing untouched")
-    parser.add_argument("--out", type=Path, help="target folder for pull")
+    parser.add_argument("--store-dir", type=Path)
     args = parser.parse_args()
 
-    # Offline check of texts, screenshot counts and release notes (no Play access needed)
-    if args.command == "validate":
-        if args.store_dir:
-            validate_store(args.store_dir)
-        if args.release_notes:
-            read_release_notes(args.release_notes)
-        print("Store data valid")
-        return
-
     publisher = PlayPublisher(args.package, os.environ["PLAY_SERVICE_ACCOUNT_JSON"])
+
+    if args.command == "pull":
+        pull_store(publisher, args.store_dir)
+        publisher.abort()
+        return
 
     if args.command == "check":
         write_output("bundle_exists", str(publisher.has_bundle(args.version_code)).lower())
@@ -274,15 +186,7 @@ def main():
         publisher.abort()
         return
 
-    if args.command == "pull":
-        pull_store(publisher, args.out)
-        publisher.abort()
-        return
-
-    notes = read_release_notes(args.release_notes)
-    if args.store_dir:
-        validate_store(args.store_dir)
-
+    notes = read_release_notes(args.store_dir / f"release_notes_{args.version_name}.txt")
     if args.aab:
         uploaded = publisher.upload_bundle(args.aab)
         if uploaded != args.version_code:
@@ -299,12 +203,9 @@ def main():
             sys.exit(f"Uploaded watch bundle has versionCode {uploaded}, expected {args.wear_version_code}")
         print(f"Uploaded watch bundle {uploaded}")
 
-    if args.store_dir:
-        sync_store(publisher, args.store_dir)
-    else:
-        print("Store listing: not synced (disabled)")
+    sync_store(publisher, args.store_dir)
 
-    languages = set(publisher.listings())
+    languages = publisher.listing_languages()
     skipped = sorted(set(notes) - languages)
     if skipped:
         print(f"Release notes skipped, no store listing in: {', '.join(skipped)}")

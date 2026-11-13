@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">Bölüm açılır listelerinde yalnızca görünmesini istediğiniz mağaza bölümlerini etkinleştirin. Devre dışı bırakılan bölümler yeni veya düzenlenen ögelerin açılır listelerinden gizlenir, ancak mevcut ögeler onları zaten kullanıyorsa alışveriş listesinde görünmeye devam eder.</string>
     <string name="help_product_history_title">Ürün geçmişi</string>
     <string name="help_product_history_text">Uygulama, yeni ögeler eklerken otomatik tamamlama sunmak için daha önce kullanılan ürün adlarını bu cihazda yerel olarak saklar. Geçmişi temizlemek yalnızca bu yerel önerileri kaldırır.</string>
+    <string name="help_list_display_mode_title">Liste görünümü</string>
+    <string name="help_list_display_mode_text">Basit, tüm öğeleri tek bir listede gösterir. Kategorize, öğeleri aşağıda belirlenen sırayla mağaza reyonlarına göre gruplar.</string>
+    <string name="help_backup_title">Yedekleme ve geri yükleme</string>
+    <string name="help_backup_text">Seçilen verileri (bağlantı, kategori ayarları, ürün geçmişi) parolayla şifrelenmiş bir dosyaya aktarır. Geri yüklerken yedeğin hangi bölümlerinin içe aktarılacağını seçersiniz. Parola kaydedilmez – parola olmadan yedek açılamaz.</string>
+    <string name="help_updates_title">Güncellemeler</string>
+    <string name="help_updates_text">Bu sürüm bir uygulama mağazasından yüklenmediği için uygulama GitHub\'da düzenli olarak yeni sürümleri kontrol eder. Bir güncelleme varsa buradan indirip yükleyebilirsiniz. Android yüklemeyi onaylamanızı ister.</string>
     <string name="offline_chip">Çevrimdışı</string>
     <string name="connecting_chip">Yeniden bağlanıyor</string>
     <string name="offline_dialog_title">Çevrimdışı mod</string>
