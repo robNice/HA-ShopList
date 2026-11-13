@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">Włącz tylko te sekcje sklepu, które mają się pojawiać na listach rozwijanych sekcji. Wyłączone sekcje znikają z rozwijanych list dla nowych lub edytowanych elementów, ale nadal pozostają widoczne na liście zakupów, jeśli istniejące elementy już z nich korzystają.</string>
     <string name="help_product_history_title">Historia produktów</string>
     <string name="help_product_history_text">Aplikacja zapisuje lokalnie na tym urządzeniu nazwy wcześniej używanych produktów, aby oferować autouzupełnianie podczas dodawania nowych elementów. Wyczyszczenie historii usuwa tylko te lokalne sugestie.</string>
+    <string name="help_list_display_mode_title">Widok listy</string>
+    <string name="help_list_display_mode_text">Prosty pokazuje wszystkie pozycje na jednej liście. Kategoryzowany grupuje pozycje według działów sklepu w kolejności ustawionej poniżej.</string>
+    <string name="help_backup_title">Kopia zapasowa i przywracanie</string>
+    <string name="help_backup_text">Eksportuje wybrane dane (połączenie, ustawienia kategorii, historię produktów) do pliku zaszyfrowanego hasłem. Podczas przywracania wybierasz, które części kopii zaimportować. Hasło nie jest zapisywane – bez niego nie można otworzyć kopii.</string>
+    <string name="help_updates_title">Aktualizacje</string>
+    <string name="help_updates_text">Ta wersja nie została zainstalowana ze sklepu z aplikacjami, dlatego aplikacja regularnie sprawdza nowe wersje na GitHubie. Jeśli aktualizacja jest dostępna, możesz ją tutaj pobrać i zainstalować. Android poprosi o potwierdzenie instalacji.</string>
     <string name="offline_chip">Offline</string>
     <string name="connecting_chip">Ponowne łączenie</string>
     <string name="offline_dialog_title">Tryb offline</string>

@@ -1,0 +1,5 @@
+{
+  "title": "HA-ShopList",
+  "short_description": "Shopping lists for Home Assistant with live updates",
+  "full_description": "HA-ShopList is an Android app for managing Home Assistant shopping and todo lists on the go.\n\nThe app connects directly to your Home Assistant instance and lets you open and manage a selected list from your phone. Changes are synchronized in real time, so updates made in Home Assistant or on another device appear without manual refresh.\n\nFeatures:\n- connect to a Home Assistant instance\n- use a selected shopping or todo list\n- add, check, uncheck, rename, sort, and delete items\n- assign categories when adding items\n- organize items in simple or categorized list view\n- change an item's category directly in the list\n- move items between categories with drag and drop\n- customize visible categories and their order in settings\n- receive live updates via Home Assistant WebSocket\n- simple interface focused on fast list usage while away from home\n\nThe app stores the Home Assistant URL, access token, and selected list locally on the device in order to connect to your instance.\nNo external cloud service is used."
+}

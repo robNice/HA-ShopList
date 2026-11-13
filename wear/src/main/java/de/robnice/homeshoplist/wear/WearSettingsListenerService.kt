@@ -2,6 +2,7 @@ package de.robnice.homeshoplist.wear
 
 import androidx.wear.tiles.TileService
 import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.WearableListenerService
 import de.robnice.homeshoplist.wear.tile.ShoppingTileService
@@ -9,7 +10,12 @@ import de.robnice.homeshoplist.wear.tile.ShoppingTileService
 class WearSettingsListenerService : WearableListenerService() {
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
+        if (WearSettingsStore(applicationContext).isScreenshotMode()) return
         dataEvents.forEach { event ->
+            if (event.dataItem.uri.path == LIST_STATE_PATH) {
+                onListState(DataMapItem.fromDataItem(event.dataItem).dataMap)
+                return@forEach
+            }
             if (event.dataItem.uri.path?.startsWith("/ha_settings") != true) return@forEach
             val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
             val url = dataMap.getString("ha_url") ?: return@forEach
@@ -25,5 +31,24 @@ class WearSettingsListenerService : WearableListenerService() {
                     .requestUpdate(ShoppingTileService::class.java)
             }
         }
+    }
+
+    /** Open item count sent by the phone app; updates the tile without asking Home Assistant. */
+    private fun onListState(dataMap: DataMap) {
+        val store = WearSettingsStore(applicationContext)
+        val entity = dataMap.getString("todo_entity") ?: return
+        if (entity != store.getSettings()?.entity) return
+        if (!dataMap.containsKey("open_count")) return
+        val total = if (dataMap.containsKey("total_count")) dataMap.getInt("total_count") else -1
+        if (store.saveOpenCount(dataMap.getInt("open_count"), total)) {
+            runCatching {
+                TileService.getUpdater(applicationContext)
+                    .requestUpdate(ShoppingTileService::class.java)
+            }
+        }
+    }
+
+    companion object {
+        const val LIST_STATE_PATH = "/list_state"
     }
 }

@@ -10,6 +10,10 @@
     <string name="tile_setup">Відкрити додаток</string>
     <string name="tile_error">Помилка завантаження</string>
     <string name="tile_empty">Все готово!</string>
-    <string name="tile_overflow">+%d ще</string>
-    <string name="tile_refresh">Оновити</string>
+    <string name="tile_show_list">Показати список</string>
+    <string name="tile_open_items">залишилось купити</string>
+    <string name="open_on_phone">Відкрити на телефоні</string>
+    <string name="continue_on_phone">Продовжте на телефоні</string>
+    <string name="cd_item_open">Не куплено</string>
+    <string name="cd_item_done">Готово</string>
 </resources>

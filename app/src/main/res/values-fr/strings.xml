@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">Activez uniquement les rayons du magasin qui doivent apparaître dans les menus déroulants de rayon. Les rayons désactivés sont masqués dans les menus déroulants pour les nouveaux éléments ou les éléments modifiés, mais restent visibles dans la liste de courses si des éléments existants les utilisent déjà.</string>
     <string name="help_product_history_title">Historique des produits</string>
     <string name="help_product_history_text">L’application enregistre localement sur cet appareil les noms de produits déjà utilisés afin de proposer l’autocomplétion lors de l’ajout de nouveaux éléments. Effacer l’historique supprime uniquement ces suggestions locales.</string>
+    <string name="help_list_display_mode_title">Affichage de la liste</string>
+    <string name="help_list_display_mode_text">Simple affiche tous les articles dans une seule liste. Par catégories regroupe les articles par rayon dans l’ordre défini ci-dessous.</string>
+    <string name="help_backup_title">Sauvegarde et restauration</string>
+    <string name="help_backup_text">Exporte les données sélectionnées (connexion, réglages des catégories, historique des produits) dans un fichier chiffré par mot de passe. Lors de la restauration, vous choisissez les parties à importer. Le mot de passe n’est pas enregistré : sans lui, la sauvegarde ne peut pas être ouverte.</string>
+    <string name="help_updates_title">Mises à jour</string>
+    <string name="help_updates_text">Cette version n’a pas été installée via une boutique d’applications, l’app recherche donc régulièrement de nouvelles versions sur GitHub. Si une mise à jour est disponible, vous pouvez la télécharger et l’installer ici. Android vous demandera de confirmer l’installation.</string>
     <string name="offline_chip">Hors ligne</string>
     <string name="connecting_chip">Reconnexion</string>
     <string name="offline_dialog_title">Mode hors ligne</string>

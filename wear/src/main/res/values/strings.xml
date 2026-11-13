@@ -6,10 +6,14 @@
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
     <string name="cd_delete_completed">Delete completed</string>
-    <string name="setup_hint">Open „Shopping List" on your phone – settings will be transferred automatically.</string>
+    <string name="setup_hint">Open “Shopping List” on your phone – settings will be transferred automatically.</string>
     <string name="tile_setup">Open phone app</string>
     <string name="tile_error">Error loading</string>
     <string name="tile_empty">Nothing to do!</string>
-    <string name="tile_overflow">+%d more</string>
-    <string name="tile_refresh">Refresh</string>
+    <string name="tile_show_list">Show list</string>
+    <string name="tile_open_items">open items</string>
+    <string name="open_on_phone">Open on phone</string>
+    <string name="continue_on_phone">Continue on phone</string>
+    <string name="cd_item_open">Open</string>
+    <string name="cd_item_done">Done</string>
 </resources>

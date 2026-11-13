@@ -10,6 +10,10 @@
     <string name="tile_setup">휴대폰 앱 열기</string>
     <string name="tile_error">로드 오류</string>
     <string name="tile_empty">모두 완료!</string>
-    <string name="tile_overflow">+%d 더보기</string>
-    <string name="tile_refresh">새로고침</string>
+    <string name="tile_show_list">목록 보기</string>
+    <string name="tile_open_items">남은 항목</string>
+    <string name="open_on_phone">휴대폰에서 열기</string>
+    <string name="continue_on_phone">휴대폰에서 계속</string>
+    <string name="cd_item_open">미완료</string>
+    <string name="cd_item_done">완료</string>
 </resources>

@@ -13,6 +13,7 @@ import de.robnice.homeshoplist.model.parseMetaItemName
 import de.robnice.homeshoplist.util.Debug
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -20,6 +21,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -80,7 +85,9 @@ class HaWebSocketRepository(
     private val initialSnapshotBaseUrl: String? = null,
     private val initialSnapshotToken: String? = null,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
-    private val currentTimeMillis: () -> Long = System::currentTimeMillis
+    private val currentTimeMillis: () -> Long = System::currentTimeMillis,
+    /** Called with (todoEntity, open items, all items) whenever the counts change after loading. */
+    private val onOpenCountChanged: ((String, Int, Int) -> Unit)? = null
 ) {
 
     constructor(
@@ -99,8 +106,26 @@ class HaWebSocketRepository(
         todoListName = todoListName,
         initialSnapshotBaseUrl = baseUrl,
         initialSnapshotToken = token,
-        scope = scope
+        scope = scope,
+        onOpenCountChanged = WearListStatePublisher(appContext)::publish
     )
+
+    /**
+     * Reports the open/total item counts after loading. The short debounce skips the
+     * intermediate empty list while a load is applied, so the watch never sees a false 0.
+     */
+    @OptIn(FlowPreview::class)
+    private fun startPublishingCounts(publish: (String, Int, Int) -> Unit) {
+        scope.launch {
+            combine(_loaded, _items) { loaded, items ->
+                if (loaded) items.count { !it.complete } to items.size else null
+            }
+                .filterNotNull()
+                .debounce(COUNT_PUBLISH_DEBOUNCE_MS)
+                .distinctUntilChanged()
+                .collect { (open, total) -> publish(todoEntity, open, total) }
+        }
+    }
 
     private sealed interface PendingAction {
         data class Update(
@@ -168,6 +193,7 @@ class HaWebSocketRepository(
     private var syncInProgress = false
 
     init {
+        onOpenCountChanged?.let { startPublishingCounts(it) }
         restorePendingChanges()
         _isConnecting.value = true
         _isOffline.value = false
@@ -1454,3 +1480,5 @@ class HaWebSocketRepository(
         private const val PENDING_MOVE_RETRY_AFTER_MILLIS = 30_000L
     }
 }
+
+private const val COUNT_PUBLISH_DEBOUNCE_MS = 300L

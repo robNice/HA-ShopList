@@ -1,0 +1,91 @@
+<en-US>
+• Wear OS: new tile with the number of open items, progress ring and app branding – tap to open the list
+• Changes made on the phone now show up on the watch within seconds
+• Wear OS app: new header with logo and list name
+• Wear OS: fixed a crash when opening the app
+• Wear OS: larger touch targets, better layout on round screens, "Open on phone" during setup
+</en-US>
+<de-DE>
+• Wear OS: neue Kachel mit Anzahl offener Artikel, Fortschrittsring und App-Branding – Tippen öffnet die Liste
+• Änderungen auf dem Handy erscheinen jetzt innerhalb von Sekunden auf der Uhr
+• Wear-OS-App: neuer Kopfbereich mit Logo und Listenname
+• Wear OS: Absturz beim Öffnen der App behoben
+• Wear OS: größere Tippflächen, bessere Darstellung auf runden Displays, „Auf Handy öffnen“ bei der Einrichtung
+</de-DE>
+<es-ES>
+• Wear OS: nueva tarjeta con el número de artículos pendientes, anillo de progreso y diseño de la app; tócala para abrir la lista
+• Los cambios en el teléfono aparecen en el reloj en segundos
+• App de Wear OS: nuevo encabezado con logotipo y nombre de la lista
+• Wear OS: corregido un cierre al abrir la app
+• Wear OS: botones más grandes, mejor diseño en pantallas redondas y «Abrir en el teléfono» durante la configuración
+</es-ES>
+<fr-FR>
+• Wear OS : nouvelle vignette avec le nombre d'articles à acheter, un anneau de progression et l'identité de l'app – touchez pour ouvrir la liste
+• Les modifications faites sur le téléphone apparaissent sur la montre en quelques secondes
+• App Wear OS : nouvel en-tête avec logo et nom de la liste
+• Wear OS : correction d'un plantage à l'ouverture
+• Wear OS : zones tactiles plus grandes, meilleur affichage sur écran rond
+</fr-FR>
+<it-IT>
+• Wear OS: nuovo riquadro con il numero di articoli da comprare, anello di avanzamento e grafica dell'app – tocca per aprire la lista
+• Le modifiche fatte sul telefono compaiono sull'orologio in pochi secondi
+• App Wear OS: nuova intestazione con logo e nome della lista
+• Wear OS: risolto un arresto anomalo all'apertura
+• Wear OS: aree di tocco più grandi, layout migliore sugli schermi rotondi
+</it-IT>
+<ja-JP>
+• Wear OS：未完了の件数、進捗リング、アプリのデザインを表示する新しいタイル（タップでリストを表示）
+• スマホでの変更が数秒でウォッチに反映されるようになりました
+• Wear OS アプリ：ロゴとリスト名の新しいヘッダー
+• Wear OS：アプリを開くとクラッシュする問題を修正
+• Wear OS：タップ領域の拡大、丸型画面での表示を改善
+</ja-JP>
+<ko-KR>
+• Wear OS: 남은 항목 수, 진행 링, 앱 디자인을 보여주는 새 타일 – 탭하면 목록이 열립니다
+• 휴대폰에서 변경한 내용이 몇 초 안에 시계에 반영됩니다
+• Wear OS 앱: 로고와 목록 이름이 있는 새 헤더
+• Wear OS: 앱을 열 때 종료되는 문제 수정
+• Wear OS: 더 큰 터치 영역, 원형 화면 레이아웃 개선
+</ko-KR>
+<nl-NL>
+• Wear OS: nieuwe tegel met het aantal open artikelen, voortgangsring en app-huisstijl – tik om de lijst te openen
+• Wijzigingen op de telefoon verschijnen binnen enkele seconden op het horloge
+• Wear OS-app: nieuwe kop met logo en lijstnaam
+• Wear OS: crash bij het openen van de app opgelost
+• Wear OS: grotere tikvlakken, betere weergave op ronde schermen, "Openen op telefoon" bij het instellen
+</nl-NL>
+<pl-PL>
+• Wear OS: nowy kafelek z liczbą produktów do kupienia, pierścieniem postępu i wyglądem aplikacji – dotknij, aby otworzyć listę
+• Zmiany wprowadzone na telefonie pojawiają się na zegarku w ciągu kilku sekund
+• Aplikacja Wear OS: nowy nagłówek z logo i nazwą listy
+• Wear OS: naprawiono awarię przy otwieraniu aplikacji
+• Wear OS: większe pola dotyku, lepszy układ na okrągłych ekranach
+</pl-PL>
+<pt-BR>
+• Wear OS: novo bloco com o número de itens pendentes, anel de progresso e visual do app – toque para abrir a lista
+• As alterações feitas no telefone aparecem no relógio em segundos
+• App Wear OS: novo cabeçalho com logotipo e nome da lista
+• Wear OS: corrigido um travamento ao abrir o app
+• Wear OS: áreas de toque maiores, layout melhor em telas redondas e "Abrir no telefone" na configuração
+</pt-BR>
+<ru-RU>
+• Wear OS: новая карточка с числом оставшихся покупок, кольцом прогресса и оформлением приложения – нажмите, чтобы открыть список
+• Изменения на телефоне появляются на часах за несколько секунд
+• Приложение Wear OS: новый заголовок с логотипом и названием списка
+• Wear OS: исправлен сбой при открытии приложения
+• Wear OS: крупнее области нажатия, лучше вид на круглых экранах
+</ru-RU>
+<tr-TR>
+• Wear OS: açık ürün sayısı, ilerleme halkası ve uygulama tasarımıyla yeni kutucuk – listeyi açmak için dokunun
+• Telefonda yapılan değişiklikler artık saniyeler içinde saatte görünür
+• Wear OS uygulaması: logo ve liste adıyla yeni başlık
+• Wear OS: uygulama açılırken oluşan çökme giderildi
+• Wear OS: daha büyük dokunma alanları, yuvarlak ekranlarda daha iyi görünüm
+</tr-TR>
+<uk>
+• Wear OS: нова плитка з кількістю непридбаних товарів, кільцем прогресу та оформленням застосунку – торкніться, щоб відкрити список
+• Зміни на телефоні з'являються на годиннику за кілька секунд
+• Застосунок Wear OS: новий заголовок з логотипом і назвою списку
+• Wear OS: виправлено збій під час відкриття застосунку
+• Wear OS: більші зони дотику, кращий вигляд на круглих екранах
+</uk>

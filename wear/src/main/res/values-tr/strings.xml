@@ -10,6 +10,10 @@
     <string name="tile_setup">Telefon uygulamasını aç</string>
     <string name="tile_error">Yükleme hatası</string>
     <string name="tile_empty">Her şey tamam!</string>
-    <string name="tile_overflow">+%d daha</string>
-    <string name="tile_refresh">Yenile</string>
+    <string name="tile_show_list">Listeyi göster</string>
+    <string name="tile_open_items">açık ürün</string>
+    <string name="open_on_phone">Telefonda aç</string>
+    <string name="continue_on_phone">Telefonda devam edin</string>
+    <string name="cd_item_open">Açık</string>
+    <string name="cd_item_done">Tamamlandı</string>
 </resources>

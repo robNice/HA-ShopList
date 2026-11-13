@@ -11,8 +11,8 @@ android {
         applicationId = "de.robnice.homeshoplist"
         minSdk = 26
         targetSdk = 35
-        versionCode = 101013000
-        versionName = "1.13.0-wear"
+        versionCode = 101014000
+        versionName = "1.14.0-wear"
     }
 
     compileOptions {
@@ -44,6 +44,7 @@ android {
         release {
             buildConfigField("boolean", "ALLOW_INSECURE_HA", "false")
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -64,6 +65,7 @@ dependencies {
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.tiles)
     implementation(libs.wear.protolayout)
+    implementation(libs.wear.remote.interactions)
     implementation(libs.concurrent.futures)
     implementation(libs.work.runtime.ktx)
     implementation(libs.okhttp)

@@ -1,0 +1,104 @@
+<en-US>
+• Local http:// addresses now supported (e.g. http://192.168.1.10:8123), also on Wear OS
+• Warning and confirmation before your token is sent unencrypted – or switch to https:// with one tap
+• Settings reorganized into tabs: Connection, View, Data
+• Store section order is now always visible
+• Buttons with icons, shorter Export/Import labels
+• Privacy policy updated
+</en-US>
+<de-DE>
+• Lokale http://-Adressen werden jetzt unterstützt (z. B. http://192.168.1.10:8123), auch auf Wear OS
+• Warnung und Rückfrage, bevor dein Token unverschlüsselt gesendet wird – oder mit einem Tipp zu https:// wechseln
+• Einstellungen in Reiter aufgeteilt: Verbindung, Ansicht, Daten
+• Reihenfolge der Bereiche ist jetzt immer sichtbar
+• Buttons mit Icons, kürzere Beschriftung Exportieren/Importieren
+• Datenschutzerklärung aktualisiert
+</de-DE>
+<es-ES>
+• Ahora se admiten direcciones locales http:// (p. ej. http://192.168.1.10:8123), también en Wear OS
+• Aviso y confirmación antes de enviar tu token sin cifrar, o cambia a https:// con un toque
+• Ajustes organizados en pestañas: Conexión, Vista, Datos
+• El orden de las secciones ahora siempre está visible
+• Botones con iconos y etiquetas más cortas Exportar/Importar
+• Política de privacidad actualizada
+</es-ES>
+<fr-FR>
+• Les adresses locales http:// sont désormais prises en charge (ex. http://192.168.1.10:8123), aussi sur Wear OS
+• Avertissement et confirmation avant l'envoi non chiffré de votre jeton, ou passage à https:// en un geste
+• Paramètres répartis en onglets : Connexion, Affichage, Données
+• L'ordre des rayons est désormais toujours visible
+• Boutons avec icônes, libellés Exporter/Importer raccourcis
+• Politique de confidentialité mise à jour
+</fr-FR>
+<it-IT>
+• Ora sono supportati indirizzi locali http:// (es. http://192.168.1.10:8123), anche su Wear OS
+• Avviso e conferma prima di inviare il token senza crittografia, oppure passa a https:// con un tocco
+• Impostazioni suddivise in schede: Connessione, Visualizzazione, Dati
+• L'ordine dei reparti ora è sempre visibile
+• Pulsanti con icone, etichette Esporta/Importa più brevi
+• Informativa sulla privacy aggiornata
+</it-IT>
+<ja-JP>
+• ローカルの http:// アドレスに対応しました（例: http://192.168.1.10:8123）。Wear OS でも利用可能
+• トークンを暗号化せずに送信する前に警告と確認を表示。ワンタップで https:// に切り替えも可能
+• 設定を「接続」「表示」「データ」のタブに整理
+• 売り場の並び順を常に表示
+• ボタンにアイコンを追加し、「エクスポート」「インポート」の表記を簡潔に
+• プライバシーポリシーを更新
+</ja-JP>
+<ko-KR>
+• 이제 로컬 http:// 주소를 지원합니다(예: http://192.168.1.10:8123). Wear OS에서도 사용 가능
+• 토큰이 암호화되지 않은 상태로 전송되기 전에 경고 및 확인 표시, 또는 한 번의 탭으로 https://로 전환
+• 설정을 연결, 보기, 데이터 탭으로 정리
+• 구역 순서가 이제 항상 표시됨
+• 버튼에 아이콘 추가, 내보내기/가져오기 레이블 간소화
+• 개인정보 처리방침 업데이트
+</ko-KR>
+<nl-NL>
+• Lokale http://-adressen worden nu ondersteund (bijv. http://192.168.1.10:8123), ook op Wear OS
+• Waarschuwing en bevestiging voordat je token onversleuteld wordt verzonden, of schakel met één tik over naar https://
+• Instellingen verdeeld over tabbladen: Verbinding, Weergave, Gegevens
+• Volgorde van de afdelingen is nu altijd zichtbaar
+• Knoppen met pictogrammen, kortere labels Exporteren/Importeren
+• Privacybeleid bijgewerkt
+</nl-NL>
+<pl-PL>
+• Obsługa lokalnych adresów http:// (np. http://192.168.1.10:8123), także na Wear OS
+• Ostrzeżenie i potwierdzenie przed wysłaniem tokena bez szyfrowania lub przełączenie na https:// jednym dotknięciem
+• Ustawienia podzielone na karty: Połączenie, Widok, Dane
+• Kolejność działów jest teraz zawsze widoczna
+• Przyciski z ikonami, krótsze etykiety Eksportuj/Importuj
+• Zaktualizowano politykę prywatności
+</pl-PL>
+<pt-BR>
+• Agora há suporte a endereços locais http:// (ex.: http://192.168.1.10:8123), também no Wear OS
+• Aviso e confirmação antes de enviar seu token sem criptografia, ou mude para https:// com um toque
+• Configurações organizadas em abas: Conexão, Visualização, Dados
+• A ordem das seções agora fica sempre visível
+• Botões com ícones e rótulos mais curtos Exportar/Importar
+• Política de privacidade atualizada
+</pt-BR>
+<ru-RU>
+• Теперь поддерживаются локальные адреса http:// (например, http://192.168.1.10:8123), в том числе на Wear OS
+• Предупреждение и подтверждение перед отправкой токена без шифрования или переход на https:// одним касанием
+• Настройки разделены на вкладки: Подключение, Вид, Данные
+• Порядок отделов теперь всегда виден
+• Кнопки с иконками, более короткие подписи Экспорт/Импорт
+• Обновлена политика конфиденциальности
+</ru-RU>
+<tr-TR>
+• Yerel http:// adresleri artık destekleniyor (ör. http://192.168.1.10:8123), Wear OS'ta da
+• Belirteciniz şifrelenmeden gönderilmeden önce uyarı ve onay; ya da tek dokunuşla https:// adresine geçin
+• Ayarlar sekmelere ayrıldı: Bağlantı, Görünüm, Veriler
+• Bölüm sırası artık her zaman görünür
+• Simgeli düğmeler, daha kısa Dışa aktar/İçe aktar etiketleri
+• Gizlilik politikası güncellendi
+</tr-TR>
+<uk>
+• Тепер підтримуються локальні адреси http:// (наприклад, http://192.168.1.10:8123), зокрема на Wear OS
+• Попередження та підтвердження перед надсиланням токена без шифрування або перехід на https:// одним дотиком
+• Налаштування розділено на вкладки: Підключення, Вигляд, Дані
+• Порядок відділів тепер завжди видно
+• Кнопки з іконками, коротші підписи Експорт/Імпорт
+• Оновлено політику конфіденційності
+</uk>

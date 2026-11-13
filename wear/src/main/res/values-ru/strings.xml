@@ -10,6 +10,10 @@
     <string name="tile_setup">Открыть приложение</string>
     <string name="tile_error">Ошибка загрузки</string>
     <string name="tile_empty">Всё готово!</string>
-    <string name="tile_overflow">+%d ещё</string>
-    <string name="tile_refresh">Обновить</string>
+    <string name="tile_show_list">Показать список</string>
+    <string name="tile_open_items">осталось купить</string>
+    <string name="open_on_phone">Открыть на телефоне</string>
+    <string name="continue_on_phone">Продолжите на телефоне</string>
+    <string name="cd_item_open">Не куплено</string>
+    <string name="cd_item_done">Готово</string>
 </resources>

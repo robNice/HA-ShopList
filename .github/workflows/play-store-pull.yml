@@ -1,0 +1,44 @@
+name: Pull Play store listing
+
+# Downloads the current Google Play store listing (texts, icon, feature graphic, screenshots)
+# in the layout of store/playstore as a workflow artifact. Changes nothing on Play.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PACKAGE_NAME: de.robnice.homeshoplist
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Play API client
+        run: pip install google-api-python-client google-auth
+
+      - name: Pull store listing
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          python .github/scripts/play_publish.py pull \
+            --package "$PACKAGE_NAME" \
+            --store-dir play-store-listing
+
+      - name: Upload store listing
+        uses: actions/upload-artifact@v4
+        with:
+          name: play-store-listing
+          path: play-store-listing
+          if-no-files-found: error

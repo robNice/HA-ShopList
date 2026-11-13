@@ -62,6 +62,12 @@
     <string name="help_area_visibility_text">Schakel alleen de winkelafdelingen in die in de afdelingsdropdowns zichtbaar moeten zijn. Uitgeschakelde afdelingen verdwijnen uit de dropdowns voor nieuwe of bewerkte items, maar blijven wel zichtbaar in de boodschappenlijst als bestaande items ze al gebruiken.</string>
     <string name="help_product_history_title">Productgeschiedenis</string>
     <string name="help_product_history_text">De app slaat eerder gebruikte productnamen lokaal op dit apparaat op om automatisch aanvullen aan te bieden wanneer je nieuwe items toevoegt. Bij het wissen van de geschiedenis worden alleen deze lokale suggesties verwijderd.</string>
+    <string name="help_list_display_mode_title">Lijstweergave</string>
+    <string name="help_list_display_mode_text">Eenvoudig toont alle items in één lijst. Gecategoriseerd groepeert items per winkelafdeling in de hieronder ingestelde volgorde.</string>
+    <string name="help_backup_title">Back-up maken en herstellen</string>
+    <string name="help_backup_text">Exporteert de geselecteerde gegevens (verbinding, categorie-instellingen, productgeschiedenis) naar een met wachtwoord versleuteld bestand. Bij het herstellen kies je welke delen van de back-up worden geïmporteerd. Het wachtwoord wordt niet opgeslagen – zonder wachtwoord kan de back-up niet worden geopend.</string>
+    <string name="help_updates_title">Updates</string>
+    <string name="help_updates_text">Deze versie is niet via een app store geïnstalleerd, daarom zoekt de app regelmatig op GitHub naar nieuwe versies. Als er een update beschikbaar is, kun je die hier downloaden en installeren. Android vraagt je de installatie te bevestigen.</string>
     <string name="offline_chip">Offline</string>
     <string name="connecting_chip">Opnieuw verbinden</string>
     <string name="offline_dialog_title">Offline-modus</string>
