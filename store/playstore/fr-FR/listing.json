@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList : Listes courses",
+  "short_description": "Ta liste de courses Home Assistant sur téléphone et montre, en direct, par rayon",
+  "full_description": "HomeShopList apporte les listes de courses et de tâches de ton Home Assistant sur ton téléphone et ta montre Wear OS. Les modifications s'affichent en direct : ce qui est ajouté à la maison apparaît au magasin un instant plus tard, sans actualiser.\n\nLISTE DE COURSES\n• Fonctionne avec n'importe quelle liste de tâches Home Assistant – tu choisis laquelle\n• Ajoute, coche, renomme et supprime des articles en quelques secondes\n• Suggestions tirées de tes achats précédents pendant la saisie, avec leur rayon\n• Supprime d'un coup tous les articles terminés\n\nTRIÉE COMME TON MAGASIN\n• Attribue un rayon à chaque article – fruits et légumes, boulangerie, produits laitiers, surgelés et plus, chacun avec son icône\n• Liste simple ou regroupée par rayon\n• Réorganise les articles et déplace-les entre les rayons par glisser-déposer\n• Choisis les rayons affichés et classe-les selon ton parcours dans le magasin\n\nMONTRE (WEAR OS)\n• Ta liste au poignet : coche des articles même les mains pleines\n• Supprime les articles terminés directement sur la montre\n• Vignette avec le nombre d'articles restants et un anneau de progression\n• Aucune configuration sur la montre : elle reprend la connexion du téléphone\n\nPARAMÈTRES ET SAUVEGARDE\n• Paramètres en onglets clairs : Connexion, Affichage, Données\n• Sauvegarde la connexion, les rayons et les suggestions dans un fichier chiffré par mot de passe et restaure-les\n• Suit le mode clair ou sombre de ton système\n• Disponible en 13 langues\n\nCONFIDENTIALITÉ\nHomeShopList ne communique qu'avec ton propre Home Assistant. Pas de publicité, pas de compte, aucune donnée envoyée à des serveurs externes. L'adresse, le jeton et les suggestions restent sur ton appareil. Avec une montre, le téléphone lui transmet la connexion via les services Google Play. Pour les adresses locales en http://, l'app t'avertit avant d'envoyer ton jeton non chiffré. HomeShopList est open source (licence MIT).\n\nConfiguration requise : Android 7.0 ou plus récent, Home Assistant 2023.11 ou plus récent avec une liste de tâches (p. ex. l'intégration Liste de courses) et un jeton d'accès longue durée.\nPour la montre : une montre Wear OS associée à un téléphone Android avec HomeShopList.\n\nHomeShopList est un projet indépendant, sans lien avec Home Assistant ni Nabu Casa. Home Assistant est une marque de son propriétaire respectif.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Ta liste de courses Home Assistant, en direct",
+  "captions": [
+    "Ta liste de courses Home Assistant – en direct sur ton téléphone",
+    "Triée par rayon, comme ton parcours dans le magasin",
+    "Glisser-déposer pour réorganiser et changer de rayon",
+    "Ajoute vite des articles grâce à tes achats précédents",
+    "Choisis et classe tes rayons",
+    "Clair ou sombre, comme ton système"
+  ]
+}

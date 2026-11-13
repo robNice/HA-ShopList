@@ -43,6 +43,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
@@ -50,7 +51,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
@@ -86,6 +89,31 @@ private sealed interface MarkdownBlock {
     data class Bullet(val text: String) : MarkdownBlock
     data class Paragraph(val text: String) : MarkdownBlock
     data object Spacer : MarkdownBlock
+}
+
+// Long translations shrink to fit instead of wrapping onto a second line
+@Composable
+private fun SingleLineTabLabel(text: String) {
+    val baseSize = LocalTextStyle.current.fontSize
+    var fontSize by remember(text, baseSize) { mutableStateOf(baseSize) }
+    var fitted by remember(text, baseSize) { mutableStateOf(false) }
+    val atMinimum = fontSize.value <= 10f
+    Text(
+        text = text,
+        fontSize = fontSize,
+        maxLines = 1,
+        softWrap = false,
+        // Ellipsis would hide the overflow, so it only applies once the smallest size is reached
+        overflow = if (atMinimum) TextOverflow.Ellipsis else TextOverflow.Clip,
+        modifier = Modifier.drawWithContent { if (fitted) drawContent() },
+        onTextLayout = { layout ->
+            if (layout.didOverflowWidth && !atMinimum) {
+                fontSize = (fontSize.value * 0.92f).coerceAtLeast(10f).sp
+            } else {
+                fitted = true
+            }
+        }
+    )
 }
 
 private enum class SettingsTab(val titleRes: Int) {
@@ -492,7 +520,7 @@ fun SettingsScreen(
                     Tab(
                         selected = selectedTab == tab,
                         onClick = { selectedTab = tab },
-                        text = { Text(t(tab.titleRes)) }
+                        text = { SingleLineTabLabel(t(tab.titleRes)) }
                     )
                 }
             }

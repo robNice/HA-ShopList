@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList：购物清单",
+  "short_description": "Home Assistant 购物清单，手机和手表同步——实时更新，按货区排序",
+  "full_description": "HomeShopList 将 Home Assistant 中的购物清单和待办事项清单带到你的手机和 Wear OS 手表上。更改实时显示——家里刚添加的物品，无需刷新，片刻后在店里就能看到。\n\n购物清单\n• 支持 Home Assistant 中的任意待办事项清单，由你选择\n• 几秒内添加、勾选、重命名和删除物品\n• 输入时根据以往购买记录给出建议，并附带货区\n• 一次性删除所有已勾选的物品\n\n按你的商店排序\n• 为每件物品指定货区——果蔬、面包、乳制品、冷冻食品等，各有专属图标\n• 简单列表或按货区分组显示\n• 拖放即可调整顺序并在货区之间移动\n• 选择显示哪些货区，并按你在店内的路线排序\n\n手表（WEAR OS）\n• 清单就在手腕上：双手不空也能勾选\n• 直接在手表上删除已勾选的物品\n• 显示剩余物品数量和进度环的卡片\n• 手表无需设置：直接沿用手机的连接\n\n设置与备份\n• 设置分为清晰的标签页：连接、视图、数据\n• 将连接、货区和建议备份到密码加密的文件中并可恢复\n• 跟随系统的浅色或深色模式\n• 支持 13 种语言\n\n隐私\nHomeShopList 只与你自己的 Home Assistant 通信。无广告、无需账号、不向外部服务器发送数据。地址、令牌和建议都保存在你的设备上。使用手表时，手机通过 Google Play 服务将连接信息传给手表。对于本地 http:// 地址，应用会在令牌以未加密方式发送前提醒你。HomeShopList 是开源软件（MIT 许可证）。\n\n要求：Android 7.0 或更高版本；Home Assistant 2023.11 或更高版本，并有一个待办事项清单（例如购物清单集成）；一个长期访问令牌。\n手表：与安装了 HomeShopList 的 Android 手机配对的 Wear OS 手表。\n\nHomeShopList 是独立项目，与 Home Assistant 或 Nabu Casa 无关。Home Assistant 是其各自所有者的商标。",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "你的 Home Assistant 购物清单，实时同步",
+  "captions": [
+    "Home Assistant 购物清单——在手机上实时同步",
+    "按货区排序，就像你在店里的路线",
+    "拖放即可调整顺序和货区",
+    "从以往购买记录中快速添加",
+    "选择并排列你的货区",
+    "浅色或深色，跟随系统"
+  ]
+}

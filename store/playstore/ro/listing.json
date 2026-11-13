@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Cumpărături",
+  "short_description": "Lista de cumpărături din Home Assistant pe telefon și ceas – live, pe raioane",
+  "full_description": "HomeShopList aduce listele de cumpărături și de sarcini din Home Assistant pe telefonul și pe ceasul tău Wear OS. Modificările apar live – ce se adaugă acasă vezi în magazin o clipă mai târziu, fără reîmprospătare.\n\nLISTA DE CUMPĂRĂTURI\n• Funcționează cu orice listă de sarcini din Home Assistant – tu alegi care\n• Adaugă, bifează, redenumește și șterge produse în câteva secunde\n• Sugestii din cumpărăturile anterioare în timp ce scrii, cu raionul lor\n• Șterge dintr-odată toate produsele bifate\n\nORDONATĂ CA MAGAZINUL TĂU\n• Atribuie fiecărui produs un raion – fructe și legume, panificație, lactate, congelate și altele, fiecare cu pictograma sa\n• Listă simplă sau grupată pe raioane\n• Reordonează produsele și mută-le între raioane prin glisare și plasare\n• Alege ce raioane apar și ordonează-le după traseul tău prin magazin\n\nCEAS (WEAR OS)\n• Lista la încheietură: bifează chiar și cu mâinile ocupate\n• Șterge produsele bifate direct de pe ceas\n• Panou cu numărul de produse rămase și un inel de progres\n• Nicio configurare pe ceas: preia conexiunea de pe telefon\n\nSETĂRI ȘI COPIE DE REZERVĂ\n• Setări în file clare: Conexiune, Afișare, Date\n• Salvează conexiunea, raioanele și sugestiile într-un fișier criptat cu parolă și restaurează-le\n• Urmează modul luminos sau întunecat al sistemului\n• Disponibilă în 13 limbi\n\nCONFIDENȚIALITATE\nHomeShopList comunică doar cu propriul tău Home Assistant. Fără reclame, fără cont, fără date trimise către servere externe. Adresa, tokenul și sugestiile rămân pe dispozitiv. Cu un ceas, telefonul îi transmite conexiunea prin serviciile Google Play. Pentru adresele locale http://, aplicația te avertizează înainte ca tokenul să fie trimis necriptat. HomeShopList este open source (licență MIT).\n\nCerințe: Android 7.0 sau mai nou, Home Assistant 2023.11 sau mai nou cu o listă de sarcini (de ex. integrarea Listă de cumpărături) și un token de acces de lungă durată.\nPentru ceas: un ceas Wear OS asociat cu un telefon Android cu HomeShopList.\n\nHomeShopList este un proiect independent și nu este afiliat cu Home Assistant sau Nabu Casa. Home Assistant este o marcă a proprietarului său.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Lista ta de cumpărături din Home Assistant, live",
+  "captions": [
+    "Lista de cumpărături din Home Assistant – live pe telefon",
+    "Ordonată pe raioane, ca traseul tău prin magazin",
+    "Glisează pentru a reordona și a schimba raionul",
+    "Adaugă rapid produse din cumpărăturile anterioare",
+    "Alege și ordonează raioanele",
+    "Luminos sau întunecat – ca sistemul tău"
+  ]
+}

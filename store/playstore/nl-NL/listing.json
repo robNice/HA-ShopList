@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Boodschappen",
+  "short_description": "Je Home Assistant-boodschappenlijst op telefoon en horloge – live, per afdeling",
+  "full_description": "HomeShopList brengt de boodschappen- en takenlijsten van je Home Assistant naar je telefoon en je Wear OS-horloge. Wijzigingen verschijnen live – wat thuis wordt toegevoegd, zie je een moment later in de winkel, zonder te verversen.\n\nBOODSCHAPPENLIJST\n• Werkt met elke takenlijst uit Home Assistant – jij kiest welke\n• Artikelen in seconden toevoegen, afvinken, hernoemen en verwijderen\n• Suggesties uit je eerdere aankopen tijdens het typen, inclusief winkelafdeling\n• Alle afgevinkte artikelen in één keer verwijderen\n\nGESORTEERD ALS JE WINKEL\n• Geef elk artikel een winkelafdeling – groente en fruit, bakkerij, zuivel, diepvries en meer, elk met een eigen pictogram\n• Eenvoudige lijst of gegroepeerd per afdeling\n• Artikelen herschikken en tussen afdelingen verplaatsen met slepen en neerzetten\n• Kies welke afdelingen zichtbaar zijn en zet ze in de volgorde van je route door de winkel\n\nHORLOGE (WEAR OS)\n• Je lijst om je pols: afvinken terwijl je je handen vol hebt\n• Afgevinkte artikelen direct op het horloge verwijderen\n• Tegel met het aantal openstaande artikelen en een voortgangsring\n• Niets instellen op het horloge: het neemt de verbinding van je telefoon over\n\nINSTELLINGEN EN BACK-UP\n• Instellingen in overzichtelijke tabbladen: Verbinding, Weergave, Gegevens\n• Verbinding, afdelingen en suggesties opslaan in een met wachtwoord versleuteld bestand en herstellen\n• Volgt de lichte of donkere modus van je systeem\n• Beschikbaar in 13 talen\n\nPRIVACY\nHomeShopList praat alleen met je eigen Home Assistant. Geen advertenties, geen account, geen gegevens naar externe servers. Adres, token en suggesties blijven op je apparaat. Met een horloge geeft de telefoon de verbinding door via Google Play-services. Bij lokale http://-adressen waarschuwt de app je voordat je token onversleuteld wordt verzonden. HomeShopList is open source (MIT-licentie).\n\nVereisten: Android 7.0 of nieuwer, Home Assistant 2023.11 of nieuwer met een takenlijst (bijv. de integratie Boodschappenlijst) en een langlevend toegangstoken.\nVoor het horloge: een Wear OS-horloge, gekoppeld aan een Android-telefoon met HomeShopList.\n\nHomeShopList is een onafhankelijk project en is niet verbonden aan Home Assistant of Nabu Casa. Home Assistant is een handelsmerk van de betreffende eigenaar.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Je Home Assistant-boodschappenlijst, live",
+  "captions": [
+    "Je Home Assistant-boodschappenlijst – live op je telefoon",
+    "Gesorteerd per afdeling, zoals je route door de winkel",
+    "Slepen om te herschikken en van afdeling te wisselen",
+    "Snel artikelen toevoegen – met suggesties uit eerdere aankopen",
+    "Kies en orden je winkelafdelingen",
+    "Licht of donker – net als je systeem"
+  ]
+}

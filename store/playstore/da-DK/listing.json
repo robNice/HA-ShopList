@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Indkøbslister",
+  "short_description": "Din Home Assistant-indkøbsliste på telefon og ur – live, sorteret efter afdeling",
+  "full_description": "HomeShopList bringer indkøbs- og opgavelisterne fra din Home Assistant over på din telefon og dit Wear OS-ur. Ændringer vises live – det, der bliver tilføjet derhjemme, ser du i butikken et øjeblik senere uden at opdatere.\n\nINDKØBSLISTE\n• Virker med enhver opgaveliste fra Home Assistant – du vælger hvilken\n• Tilføj, afkryds, omdøb og slet varer på få sekunder\n• Forslag fra dine tidligere indkøb, mens du skriver, med butiksafdeling\n• Slet alle afkrydsede varer på én gang\n\nSORTERET SOM DIN BUTIK\n• Giv hver vare en butiksafdeling – frugt og grønt, bageri, mejeri, frost og mere, hver med sit eget ikon\n• Enkel liste eller grupperet efter afdeling\n• Flyt rundt på varer og mellem afdelinger med træk og slip\n• Vælg hvilke afdelinger der vises, og sæt dem i rækkefølge efter din rute gennem butikken\n\nUR (WEAR OS)\n• Din liste på håndleddet: kryds af, mens du har hænderne fulde\n• Slet afkrydsede varer direkte på uret\n• Felt med antallet af manglende varer og en fremskridtsring\n• Ingen opsætning på uret: det overtager forbindelsen fra telefonen\n\nINDSTILLINGER OG SIKKERHEDSKOPI\n• Indstillinger i overskuelige faner: Forbindelse, Visning, Data\n• Gem forbindelse, afdelinger og forslag i en adgangskodekrypteret fil, og gendan dem\n• Følger systemets lyse eller mørke tilstand\n• Fås på 13 sprog\n\nPRIVATLIV\nHomeShopList taler kun med din egen Home Assistant. Ingen reklamer, ingen konto, ingen data til eksterne servere. Adresse, token og forslag bliver på din enhed. Med et ur giver telefonen forbindelsen videre via Google Play-tjenester. Ved lokale http://-adresser advarer appen dig, før dit token sendes ukrypteret. HomeShopList er open source (MIT-licens).\n\nKrav: Android 7.0 eller nyere, Home Assistant 2023.11 eller nyere med en opgaveliste (f.eks. integrationen Indkøbsliste) og et langtidsadgangstoken.\nTil uret: et Wear OS-ur parret med en Android-telefon med HomeShopList.\n\nHomeShopList er et uafhængigt projekt og har ingen tilknytning til Home Assistant eller Nabu Casa. Home Assistant er et varemærke tilhørende dets respektive ejer.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Din Home Assistant-indkøbsliste, live",
+  "captions": [
+    "Din Home Assistant-indkøbsliste – live på telefonen",
+    "Sorteret efter afdeling, som din rute gennem butikken",
+    "Træk og slip for at flytte og skifte afdeling",
+    "Tilføj varer hurtigt – med forslag fra tidligere indkøb",
+    "Vælg og sorter dine butiksafdelinger",
+    "Lys eller mørk – ligesom dit system"
+  ]
+}

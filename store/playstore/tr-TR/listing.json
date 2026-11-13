@@ -1,0 +1,15 @@
+{
+  "title": "HomeShopList: Alışveriş",
+  "short_description": "Home Assistant alışveriş listen telefonda ve saatte – canlı, reyonlara göre",
+  "full_description": "HomeShopList, Home Assistant'ındaki alışveriş ve yapılacaklar listelerini telefonuna ve Wear OS saatine getirir. Değişiklikler canlı görünür – evde eklenen ürünü, yenilemeye gerek kalmadan bir an sonra markette görürsün.\n\nALIŞVERİŞ LİSTESİ\n• Home Assistant'taki her yapılacaklar listesiyle çalışır – hangisi olacağını sen seçersin\n• Ürünleri saniyeler içinde ekle, işaretle, yeniden adlandır ve sil\n• Yazarken önceki alışverişlerinden öneriler, mağaza bölümüyle birlikte\n• İşaretlenen tüm ürünleri tek seferde sil\n\nMAĞAZANA GÖRE SIRALI\n• Her ürüne bir mağaza bölümü ata – meyve ve sebze, fırın ürünleri, süt ürünleri, dondurulmuş ürünler ve daha fazlası, her biri kendi simgesiyle\n• Basit liste ya da bölümlere göre gruplu görünüm\n• Ürünleri sürükle bırak ile yeniden sırala ve bölümler arasında taşı\n• Hangi bölümlerin görüneceğini seç ve onları mağazadaki rotana göre sırala\n\nSAAT (WEAR OS)\n• Listen bileğinde: ellerin doluyken bile ürünleri işaretle\n• İşaretlenen ürünleri doğrudan saatte sil\n• Kalan ürün sayısını ve ilerleme halkasını gösteren kutucuk\n• Saatte kurulum yok: bağlantıyı telefondan alır\n\nAYARLAR VE YEDEKLEME\n• Anlaşılır sekmelerde ayarlar: Bağlantı, Görünüm, Veriler\n• Bağlantıyı, bölümleri ve önerileri parolayla şifrelenmiş bir dosyaya yedekle ve geri yükle\n• Sistemin açık veya koyu modunu izler\n• 13 dilde kullanılabilir\n\nGİZLİLİK\nHomeShopList yalnızca kendi Home Assistant'ınla iletişim kurar. Reklam yok, hesap yok, harici sunuculara veri gönderilmez. Adres, token ve öneriler cihazında kalır. Saat kullanıyorsan telefon bağlantıyı Google Play hizmetleri üzerinden ona aktarır. Yerel http:// adreslerinde uygulama, token'ın şifrelenmeden gönderilmesinden önce seni uyarır. HomeShopList açık kaynaklıdır (MIT lisansı).\n\nGereksinimler: Android 7.0 veya üzeri, bir yapılacaklar listesi (ör. Alışveriş Listesi entegrasyonu) bulunan Home Assistant 2023.11 veya üzeri ve uzun ömürlü bir erişim token'ı.\nSaat için: HomeShopList yüklü bir Android telefonla eşlenmiş bir Wear OS saat.\n\nHomeShopList bağımsız bir projedir; Home Assistant veya Nabu Casa ile bağlantısı yoktur. Home Assistant, ilgili sahibinin ticari markasıdır.",
+  "feature_title": "HomeShopList",
+  "feature_tagline": "Home Assistant alışveriş listen, canlı",
+  "captions": [
+    "Home Assistant alışveriş listen – telefonunda canlı",
+    "Bölümlere göre, mağazadaki rotan gibi",
+    "Sürükle bırak ile sırala ve bölüm değiştir",
+    "Önceki alışverişlerinden hızlıca ürün ekle",
+    "Mağaza bölümlerini seç ve sırala",
+    "Açık veya koyu – tıpkı sistemin gibi"
+  ]
+}

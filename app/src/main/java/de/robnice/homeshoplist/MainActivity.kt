@@ -583,7 +583,13 @@ fun ShoppingScreen(
                                     value = newItem,
                                     onValueChange = { newItem = it },
                                     modifier = Modifier.weight(1f),
-                                    placeholder = { Text(t(R.string.new_item)) },
+                                    placeholder = {
+                                        Text(
+                                            t(R.string.new_item),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    },
                                     singleLine = true,
                                     shape = MaterialTheme.shapes.large,
                                     keyboardOptions = KeyboardOptions(

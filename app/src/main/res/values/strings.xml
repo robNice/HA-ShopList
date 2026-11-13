@@ -4,7 +4,7 @@
     <string name="settings_cta">Open settings</string>
     <string name="settings_title">Settings</string>
     <string name="ha_url">Home Assistant URL</string>
-    <string name="notifications_enabled">enable Notifications</string>
+    <string name="notifications_enabled">Enable notifications</string>
     <string name="long_token">Long-Lived Access Token</string>
     <string name="todo_entity">Select list</string>
     <string name="language">Language</string>
