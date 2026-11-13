@@ -30,8 +30,17 @@ class PlayPublisher:
     def abort(self):
         self.edits.delete(packageName=self.package, editId=self.edit_id).execute()
 
-    def commit(self):
-        self.edits.commit(packageName=self.package, editId=self.edit_id).execute()
+    # Returns False if Play only saved the edit: with changes from the Play Console that are not sent for review
+    # (e.g. a new form factor), everything has to be sent for review there together.
+    def commit(self) -> bool:
+        try:
+            self.edits.commit(packageName=self.package, editId=self.edit_id).execute()
+            return True
+        except HttpError as e:
+            if e.resp.status != 400 or "changesNotSentForReview" not in str(e):
+                raise
+        self.edits.commit(packageName=self.package, editId=self.edit_id, changesNotSentForReview=True).execute()
+        return False
 
     def has_bundle(self, version_code: int) -> bool:
         bundles = self.edits.bundles().list(packageName=self.package, editId=self.edit_id).execute()
@@ -214,8 +223,12 @@ def main():
     if args.wear_track and args.wear_version_code and publisher.has_bundle(args.wear_version_code):
         publisher.set_track(args.wear_track, args.wear_version_code, args.version_name, args.status, listed_notes)
         print(f"Released watch {args.version_name} ({args.wear_version_code}) to track '{args.wear_track}'")
-    publisher.commit()
-    print(f"Released {args.version_name} ({args.version_code}) to track '{args.track}' with status '{args.status}'")
+    if publisher.commit():
+        print(f"Released {args.version_name} ({args.version_code}) to track '{args.track}' with status '{args.status}'")
+    else:
+        print(f"Saved {args.version_name} ({args.version_code}) for track '{args.track}', not sent for review yet")
+        print("::warning::The Play Console has changes that must be sent for review there. "
+              "Open Publishing overview in the Play Console and send all changes for review.")
 
 
 if __name__ == "__main__":
