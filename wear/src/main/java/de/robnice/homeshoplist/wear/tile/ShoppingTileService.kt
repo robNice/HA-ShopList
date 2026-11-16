@@ -22,6 +22,7 @@ import de.robnice.homeshoplist.R
 import de.robnice.homeshoplist.wear.WearMainActivity
 import de.robnice.homeshoplist.wear.WearSettingsStore
 import de.robnice.homeshoplist.wear.data.HaWearClient
+import de.robnice.homeshoplist.wear.data.WearListSync
 import de.robnice.homeshoplist.wear.model.todoEntityTitle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -90,7 +91,11 @@ class ShoppingTileService : TileService() {
         }
 
         return try {
-            val items = HaWearClient(settings.url, settings.token, settings.entity).fetchItems()
+            // Sends changes made offline first, so the server state never hides them
+            val result = WearListSync(this, settings)
+                .sync(HaWearClient(settings.url, settings.token, settings.entity))
+            if (!result.online) throw java.io.IOException("Home Assistant not reachable")
+            val items = result.items
             val open = items.count { !it.complete }
             store.saveOpenCount(open, items.size)
             countTile(device, listName, open, items.size, stale = false)

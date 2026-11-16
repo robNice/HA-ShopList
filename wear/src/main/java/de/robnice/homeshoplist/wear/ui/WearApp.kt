@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -88,6 +89,7 @@ fun WearApp(viewModel: WearViewModel) {
     val items by viewModel.items.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val isOffline by viewModel.isOffline.collectAsState()
     val listDisplayMode by viewModel.listDisplayMode.collectAsState()
     val areaOrder by viewModel.areaOrder.collectAsState()
 
@@ -120,6 +122,7 @@ fun WearApp(viewModel: WearViewModel) {
                 items = items,
                 isLoading = isLoading,
                 error = error,
+                isOffline = isOffline,
                 listDisplayMode = listDisplayMode,
                 areaOrder = areaOrder,
                 onToggle = viewModel::toggleItem,
@@ -136,6 +139,7 @@ private fun ShoppingListScreen(
     items: List<WearShoppingItem>,
     isLoading: Boolean,
     error: String?,
+    isOffline: Boolean,
     listDisplayMode: String,
     areaOrder: String,
     onToggle: (WearShoppingItem) -> Unit,
@@ -184,7 +188,14 @@ private fun ShoppingListScreen(
         state = listState
     ) {
         item(key = "status_row") {
-            BrandHeader(listName = listName, uncheckedCount = unchecked.size, isLoading = isLoading, error = error)
+            BrandHeader(
+                listName = listName,
+                uncheckedCount = unchecked.size,
+                isLoading = isLoading,
+                // Offline with a cached list: show the list, not an error
+                error = error ?: if (isOffline && items.isEmpty()) "offline" else null,
+                isOffline = isOffline
+            )
         }
 
         if (categorized) {
@@ -288,7 +299,13 @@ private fun Modifier.rotaryScroll(listState: ScalingLazyListState): Modifier {
 
 /** Same as the phone app's top bar: ShopList wordmark, colored status line with cart, list name. */
 @Composable
-private fun BrandHeader(listName: String?, uncheckedCount: Int, isLoading: Boolean, error: String?) {
+private fun BrandHeader(
+    listName: String?,
+    uncheckedCount: Int,
+    isLoading: Boolean,
+    error: String?,
+    isOffline: Boolean
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -323,7 +340,7 @@ private fun BrandHeader(listName: String?, uncheckedCount: Int, isLoading: Boole
             )
         }
         Box(modifier = Modifier.padding(top = 2.dp)) {
-            StatusRowContent(uncheckedCount, isLoading, error)
+            StatusRowContent(uncheckedCount, isLoading, error, isOffline)
         }
     }
 }
@@ -356,7 +373,7 @@ private val BRAND_LINE_SEGMENTS = listOf(
 )
 
 @Composable
-private fun StatusRowContent(uncheckedCount: Int, isLoading: Boolean, error: String?) {
+private fun StatusRowContent(uncheckedCount: Int, isLoading: Boolean, error: String?, isOffline: Boolean) {
     when {
         isLoading && uncheckedCount == 0 -> CircularProgressIndicator(
             modifier = Modifier
@@ -369,6 +386,21 @@ private fun StatusRowContent(uncheckedCount: Int, isLoading: Boolean, error: Str
             tint = Color(0xFFFFAA00),
             modifier = Modifier.size(20.dp)
         )
+        // Cached list without connection: changes are kept and sent later
+        isOffline -> Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.CloudOff,
+                contentDescription = stringResource(R.string.cd_offline),
+                tint = Color(0xFFFFAA00),
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = stringResource(R.string.status_open, uncheckedCount),
+                style = MaterialTheme.typography.caption1,
+                textAlign = TextAlign.Center
+            )
+        }
         else -> Text(
             text = stringResource(R.string.status_open, uncheckedCount),
             style = MaterialTheme.typography.caption1,

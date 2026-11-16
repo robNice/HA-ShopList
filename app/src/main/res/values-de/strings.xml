@@ -163,4 +163,8 @@
     <string name="settings_tab_data">Daten</string>
     <string name="settings_backup_export_button">Exportieren</string>
     <string name="settings_backup_import_button">Importieren</string>
+    <string name="offline_mode">Offline-Liste</string>
+    <string name="offline_list_title">Offline-Liste</string>
+    <string name="help_offline_mode_title">Offline-Liste</string>
+    <string name="help_offline_mode_text">Die Liste wird nur auf diesem Gerät gespeichert. Es werden keine Listendaten von Home Assistant gelesen oder dorthin geschrieben, daher kannst du sie jederzeit bearbeiten – auch ohne Verbindung. Benachrichtigungen sind in diesem Modus nicht verfügbar.\n\nPraktisch, wenn du die Liste allein nutzen möchtest oder keinen Home-Assistant-Server zur Verfügung hast. Die Offline-Liste wird getrennt von deiner Home-Assistant-Liste gespeichert.</string>
 </resources>

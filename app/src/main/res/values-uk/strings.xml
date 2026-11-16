@@ -163,4 +163,8 @@
     <string name="settings_tab_data">Дані</string>
     <string name="settings_backup_export_button">Експорт</string>
     <string name="settings_backup_import_button">Імпорт</string>
+    <string name="offline_mode">Офлайн-список</string>
+    <string name="offline_list_title">Офлайн-список</string>
+    <string name="help_offline_mode_title">Офлайн-список</string>
+    <string name="help_offline_mode_text">Список зберігається лише на цьому пристрої. Дані списку не зчитуються з Home Assistant і не записуються до нього, тож його можна редагувати завжди — навіть без підключення. Сповіщення в цьому режимі недоступні.\n\nЗручно, якщо ви користуєтеся списком самостійно або не маєте сервера Home Assistant. Офлайн-список зберігається окремо від списку Home Assistant.</string>
 </resources>

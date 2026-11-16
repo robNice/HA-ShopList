@@ -16,4 +16,5 @@
     <string name="continue_on_phone">휴대폰에서 계속</string>
     <string name="cd_item_open">미완료</string>
     <string name="cd_item_done">완료</string>
+    <string name="cd_offline">오프라인 – 변경 사항은 나중에 동기화됩니다</string>
 </resources>

@@ -16,4 +16,5 @@
     <string name="continue_on_phone">スマホで続行</string>
     <string name="cd_item_open">未完了</string>
     <string name="cd_item_done">完了</string>
+    <string name="cd_offline">オフライン – 変更は後で同期されます</string>
 </resources>

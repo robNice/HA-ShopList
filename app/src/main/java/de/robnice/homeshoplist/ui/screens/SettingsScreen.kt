@@ -61,6 +61,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import de.robnice.homeshoplist.BuildConfig
 import de.robnice.homeshoplist.R
 import de.robnice.homeshoplist.data.HaRuntime
+import de.robnice.homeshoplist.data.HaWebSocketRepository
 import de.robnice.homeshoplist.data.SettingsDataStore
 import de.robnice.homeshoplist.data.backup.BackupSection
 import de.robnice.homeshoplist.data.history.ProductHistoryRepository
@@ -127,6 +128,7 @@ private enum class SettingsHelpTopic(
     val textRes: Int
 ) {
     Notifications(R.string.help_notifications_title, R.string.help_notifications_text),
+    OfflineMode(R.string.help_offline_mode_title, R.string.help_offline_mode_text),
     HaUrl(R.string.help_ha_url_title, R.string.help_ha_url_text),
     Token(R.string.help_token_title, R.string.help_token_text),
     ListSelection(R.string.help_list_selection_title, R.string.help_list_selection_text),
@@ -221,6 +223,7 @@ fun SettingsScreen(
     val storedEnabledAreas by dataStore.enabledAreas.collectAsState(initial = "")
     val storedListDisplayMode by dataStore.listDisplayMode.collectAsState(initial = "categorized")
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
+    val storedOfflineMode by dataStore.offlineMode.collectAsState(initial = false)
     val updateLastCheckMillis by dataStore.updateLastCheckMillis.collectAsState(initial = 0L)
     val updateVersionName by dataStore.updateVersionName.collectAsState(initial = "")
     val updateTagName by dataStore.updateTagName.collectAsState(initial = "")
@@ -262,6 +265,7 @@ fun SettingsScreen(
     var token by remember { mutableStateOf("") }
     var todoEntity by remember { mutableStateOf("") }
     var todoListName by remember { mutableStateOf("") }
+    var offlineMode by remember { mutableStateOf(false) }
     var listDisplayMode by remember { mutableStateOf(ShoppingListDisplayMode.CATEGORIZED) }
     var areaOrderDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
     var enabledAreasDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
@@ -287,7 +291,8 @@ fun SettingsScreen(
 
     fun isUnconfirmedHttpUrl(): Boolean {
         val cleanedUrl = normalizeHaUrl(url)
-        return urlEditedByUser &&
+        return !offlineMode &&
+            urlEditedByUser &&
             cleanedUrl.startsWith("http://") &&
             cleanedUrl != normalizeHaUrl(storedUrl) &&
             cleanedUrl != confirmedHttpUrl
@@ -300,8 +305,10 @@ fun SettingsScreen(
         storedTodoListName,
         storedAreaOrder,
         storedEnabledAreas,
-        storedListDisplayMode
+        storedListDisplayMode,
+        storedOfflineMode
     ) {
+        offlineMode = storedOfflineMode
         url = storedUrl
         urlEditedByUser = false
         token = storedToken
@@ -380,14 +387,15 @@ fun SettingsScreen(
         }
     }
 
-    LaunchedEffect(url, token, todoReloadKey, confirmedHttpUrl) {
+    LaunchedEffect(url, token, todoReloadKey, confirmedHttpUrl, offlineMode) {
         todoLoadError = null
 
         val cleanedUrl = normalizeHaUrl(url)
         val cleanedToken = token.trim()
 
-        // Do not send the token over plain HTTP before the user has confirmed it
-        if (cleanedUrl.isBlank() || cleanedToken.isBlank() || isUnconfirmedHttpUrl()) {
+        // Do not send the token over plain HTTP before the user has confirmed it.
+        // The offline list does not contact Home Assistant at all.
+        if (offlineMode || cleanedUrl.isBlank() || cleanedToken.isBlank() || isUnconfirmedHttpUrl()) {
             return@LaunchedEffect
         }
 
@@ -395,7 +403,7 @@ fun SettingsScreen(
 
         try {
             val loaded = withContext(Dispatchers.IO) {
-                val runtimeRepo = HaRuntime.repository
+                val runtimeRepo = (HaRuntime.repository as? HaWebSocketRepository)
                     ?.takeIf {
                         HaRuntime.baseUrl == cleanedUrl &&
                             HaRuntime.token == cleanedToken
@@ -457,6 +465,7 @@ fun SettingsScreen(
         val cleanedToken = token.trim()
 
         coroutineScope.launch {
+            dataStore.setOfflineMode(offlineMode)
             dataStore.saveHaUrl(cleanedUrl)
             dataStore.saveHaToken(cleanedToken)
             dataStore.saveTodoEntity(todoEntity)
@@ -472,7 +481,7 @@ fun SettingsScreen(
                 ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
             )
             dataStore.saveListDisplayMode(listDisplayMode.storageValue)
-            if (cleanedUrl.isNotBlank() && cleanedToken.isNotBlank()) {
+            if (!offlineMode && cleanedUrl.isNotBlank() && cleanedToken.isNotBlank()) {
                 runCatching {
                     val putRequest = PutDataMapRequest.create("/ha_settings").apply {
                         dataMap.putString("ha_url", cleanedUrl)
@@ -535,6 +544,27 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (selectedTab == SettingsTab.Connection) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            SettingLabelWithHelp(
+                                text = t(R.string.offline_mode),
+                                onHelpClick = { selectedHelpTopic = SettingsHelpTopic.OfflineMode },
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Switch(
+                                checked = offlineMode,
+                                onCheckedChange = { offlineMode = it }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    if (selectedTab == SettingsTab.Connection && !offlineMode) {
                         SettingFieldHeader(
                             text = t(R.string.ha_url),
                             onHelpClick = { selectedHelpTopic = SettingsHelpTopic.HaUrl }
@@ -711,16 +741,19 @@ fun SettingsScreen(
                             SettingLabelWithHelp(
                                 text = t(R.string.notifications_enabled),
                                 onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Notifications },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                enabled = !offlineMode
                             )
 
+                            // The offline list never changes remotely, so there is nothing to notify about
                             Switch(
-                                checked = notificationsEnabled,
+                                checked = notificationsEnabled && !offlineMode,
                                 onCheckedChange = {
                                     coroutineScope.launch {
                                         dataStore.setNotificationsEnabled(it)
                                     }
-                                }
+                                },
+                                enabled = !offlineMode
                             )
                         }
 
@@ -1001,7 +1034,7 @@ fun SettingsScreen(
                     onClick = {
                         val popped = navController.popBackStack()
                         if (!popped) {
-                            if (storedUrl.isNotBlank() && storedToken.isNotBlank()) {
+                            if (storedOfflineMode || (storedUrl.isNotBlank() && storedToken.isNotBlank())) {
                                 navController.navigate(Screen.Shopping.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         inclusive = true
@@ -1195,7 +1228,8 @@ private fun SettingFieldHeader(
 private fun SettingLabelWithHelp(
     text: String,
     onHelpClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     Row(
         modifier = modifier,
@@ -1204,6 +1238,11 @@ private fun SettingLabelWithHelp(
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            },
             modifier = Modifier.weight(1f)
         )
 
