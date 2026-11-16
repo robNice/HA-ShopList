@@ -22,6 +22,7 @@ class SettingsDataStore(private val context: Context) {
         private val HA_URL = stringPreferencesKey("ha_url")
         private val HA_TOKEN = stringPreferencesKey("ha_token")
         private val KEY_NOTIFICATIONS = booleanPreferencesKey("notifications_enabled")
+        private val OFFLINE_MODE = booleanPreferencesKey("offline_mode")
         private val TODO_ENTITY = stringPreferencesKey("todo_entity")
         private val TODO_LIST_NAME = stringPreferencesKey("todo_list_name")
         private val LAST_USED_AREA = stringPreferencesKey("last_used_area")
@@ -39,6 +40,10 @@ class SettingsDataStore(private val context: Context) {
 
     val notificationsEnabled = context.dataStore.data
         .map { it[KEY_NOTIFICATIONS] ?: true }
+    /** Offline list: the list is kept only on this device, no Home Assistant involved. */
+    val offlineMode: Flow<Boolean> = context.dataStore.data
+        .map { it[OFFLINE_MODE] ?: false }
+
     val haUrl: Flow<String> = context.dataStore.data
         .map { it[HA_URL] ?: "" }
 
@@ -91,6 +96,10 @@ class SettingsDataStore(private val context: Context) {
         context.dataStore.edit {
             it[HA_TOKEN] = token
         }
+    }
+
+    suspend fun setOfflineMode(enabled: Boolean) {
+        context.dataStore.edit { it[OFFLINE_MODE] = enabled }
     }
 
     suspend fun setNotificationsEnabled(enabled: Boolean) {

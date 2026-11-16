@@ -16,4 +16,5 @@
     <string name="continue_on_phone">Продовжте на телефоні</string>
     <string name="cd_item_open">Не куплено</string>
     <string name="cd_item_done">Готово</string>
+    <string name="cd_offline">Офлайн – зміни буде синхронізовано пізніше</string>
 </resources>

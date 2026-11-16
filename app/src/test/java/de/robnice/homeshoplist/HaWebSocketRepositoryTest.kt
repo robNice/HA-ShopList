@@ -591,6 +591,8 @@ class HaWebSocketRepositoryTest {
             return true
         }
 
+        override suspend fun request(type: String, payload: JSONObject, timeoutMillis: Long): JSONObject? = null
+
         override fun ensureConnected() {
             ensureConnectedCalls += 1
         }

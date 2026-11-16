@@ -86,6 +86,8 @@ import androidx.compose.ui.platform.LocalDensity
 import de.robnice.homeshoplist.util.Debug
 import de.robnice.homeshoplist.data.HaRuntime
 import de.robnice.homeshoplist.data.HaWebSocketRepository
+import de.robnice.homeshoplist.data.LocalShoppingRepository
+import de.robnice.homeshoplist.data.ShoppingRepository
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import androidx.compose.ui.layout.ContentScale
@@ -126,8 +128,8 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 val updateRepository = remember(context) { AppUpdateRepository(context.applicationContext) }
 
                 val configFlow = remember(dataStore) {
-                    combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity, dataStore.todoListName) { url, token, entity, listName ->
-                        arrayOf(url, token, entity, listName)
+                    combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity, dataStore.todoListName, dataStore.offlineMode) { url, token, entity, listName, offline ->
+                        arrayOf(url, token, entity, listName, offline.toString())
                     }
                 }
 
@@ -137,9 +139,10 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 val haToken = config?.getOrNull(1)
                 val todoEntity = config?.getOrNull(2)
                 val todoListName = config?.getOrNull(3)
+                val offlineMode = config?.getOrNull(4) == "true"
 
                 val startDestination =
-                    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
+                    if (!offlineMode && (haUrl.isNullOrBlank() || haToken.isNullOrBlank())) {
                         Screen.Settings.route
                     } else {
                         Screen.Shopping.route
@@ -147,7 +150,7 @@ class MainActivity : androidx.activity.ComponentActivity() {
 
                 val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
                 var runtimeRepository by remember {
-                    mutableStateOf<HaWebSocketRepository?>(HaRuntime.repository)
+                    mutableStateOf<ShoppingRepository?>(HaRuntime.repository)
                 }
 
                 LaunchedEffect(updateLastCheckMillis) {
@@ -183,7 +186,23 @@ class MainActivity : androidx.activity.ComponentActivity() {
                     }
                 }
 
-                LaunchedEffect(haUrl, haToken, todoEntity, todoListName) {
+                LaunchedEffect(haUrl, haToken, todoEntity, todoListName, offlineMode) {
+                    if (config == null) {
+                        return@LaunchedEffect
+                    }
+
+                    if (offlineMode) {
+                        // Offline list: never talk to Home Assistant
+                        if (!HaRuntime.offlineMode || HaRuntime.repository == null) {
+                            Debug.log("MainActivity: switch to offline list")
+                            HaRuntime.repository?.disconnect()
+                            HaRuntime.offlineMode = true
+                            HaRuntime.repository = LocalShoppingRepository(context.applicationContext)
+                        }
+                        runtimeRepository = HaRuntime.repository
+                        return@LaunchedEffect
+                    }
+
                     if (haUrl.isNullOrBlank() || haToken.isNullOrBlank() || todoEntity.isNullOrBlank()) {
                         runtimeRepository = null
                         return@LaunchedEffect
@@ -192,6 +211,7 @@ class MainActivity : androidx.activity.ComponentActivity() {
                     val repo = HaRuntime.repository
                     val configChanged =
                         repo == null ||
+                                HaRuntime.offlineMode ||
                                 HaRuntime.baseUrl != haUrl ||
                                 HaRuntime.token != haToken ||
                                 HaRuntime.todoEntity != todoEntity ||
@@ -202,6 +222,7 @@ class MainActivity : androidx.activity.ComponentActivity() {
 
                         HaRuntime.repository?.disconnect()
 
+                        HaRuntime.offlineMode = false
                         HaRuntime.baseUrl = haUrl
                         HaRuntime.token = haToken
                         HaRuntime.todoEntity = todoEntity
@@ -259,7 +280,7 @@ class MainActivity : androidx.activity.ComponentActivity() {
 @Composable
 fun ShoppingScreen(
     navController: NavController,
-    repository: HaWebSocketRepository?
+    repository: ShoppingRepository?
 ) {
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -267,8 +288,8 @@ fun ShoppingScreen(
     val dataStore = remember { SettingsDataStore(context) }
     val productHistoryRepository = remember(context) { ProductHistoryRepository.getInstance(context) }
     val configFlow = remember(dataStore) {
-        combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity, dataStore.todoListName) { url, token, entity, listName ->
-            arrayOf(url, token, entity, listName)
+        combine(dataStore.haUrl, dataStore.haToken, dataStore.todoEntity, dataStore.todoListName, dataStore.offlineMode) { url, token, entity, listName, offline ->
+            arrayOf(url, token, entity, listName, offline.toString())
         }
     }
     val config by configFlow.collectAsState(initial = null)
@@ -276,6 +297,7 @@ fun ShoppingScreen(
     val haToken = config?.getOrNull(1)
     val todoEntity = config?.getOrNull(2)
     val todoListName = config?.getOrNull(3)
+    val offlineMode = config?.getOrNull(4) == "true"
     val areaOrderRaw by dataStore.areaOrder.collectAsState(initial = "")
     val enabledAreasRaw by dataStore.enabledAreas.collectAsState(initial = "")
     val listDisplayModeRaw by dataStore.listDisplayMode.collectAsState(initial = "categorized")
@@ -305,7 +327,7 @@ fun ShoppingScreen(
         return
     }
 
-    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
+    if (!offlineMode && (haUrl.isNullOrBlank() || haToken.isNullOrBlank())) {
         LaunchedEffect(Unit) {
             navController.navigate(Screen.Settings.route) {
                 popUpTo(Screen.Shopping.route) { inclusive = true }
@@ -321,7 +343,8 @@ fun ShoppingScreen(
     }
 
 
-    if (repository == null) {
+    // Wait until MainActivity has switched to the repository of the current mode
+    if (repository == null || (repository is LocalShoppingRepository) != offlineMode) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -462,7 +485,10 @@ fun ShoppingScreen(
         }
     }
     val autocompleteSuggestions by autocompleteFlow.collectAsState(initial = emptyList())
-    val listTitle = remember(todoEntity) { todoEntity.orEmpty().toDisplayListTitle() }
+    val offlineListTitle = t(R.string.offline_list_title)
+    val listTitle = remember(todoEntity, offlineMode, offlineListTitle) {
+        if (offlineMode) offlineListTitle else todoEntity.orEmpty().toDisplayListTitle()
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,

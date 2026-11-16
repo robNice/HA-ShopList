@@ -163,4 +163,8 @@
     <string name="settings_tab_data">Veriler</string>
     <string name="settings_backup_export_button">Dışa aktar</string>
     <string name="settings_backup_import_button">İçe aktar</string>
+    <string name="offline_mode">Çevrimdışı liste</string>
+    <string name="offline_list_title">Çevrimdışı liste</string>
+    <string name="help_offline_mode_title">Çevrimdışı liste</string>
+    <string name="help_offline_mode_text">Liste yalnızca bu cihazda saklanır. Home Assistant’tan liste verisi okunmaz ve oraya yazılmaz; bu nedenle listeyi bağlantı olmadan da her zaman düzenleyebilirsiniz. Bu modda bildirimler kullanılamaz.\n\nListeyi tek başınıza kullanmak istiyorsanız veya kullanılabilir bir Home Assistant sunucunuz yoksa kullanışlıdır. Çevrimdışı liste, Home Assistant listenizden ayrı saklanır.</string>
 </resources>

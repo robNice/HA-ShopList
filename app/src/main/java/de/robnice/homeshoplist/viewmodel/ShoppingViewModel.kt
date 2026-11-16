@@ -2,7 +2,7 @@ package de.robnice.homeshoplist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.robnice.homeshoplist.data.HaWebSocketRepository
+import de.robnice.homeshoplist.data.ShoppingRepository
 import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingItem
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 class ShoppingViewModel(
-    private val repository: HaWebSocketRepository
+    private val repository: ShoppingRepository
 ) : ViewModel() {
 
     val items: StateFlow<List<ShoppingItem>> = repository.items

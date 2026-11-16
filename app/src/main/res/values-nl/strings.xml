@@ -163,4 +163,8 @@
     <string name="settings_tab_data">Gegevens</string>
     <string name="settings_backup_export_button">Exporteren</string>
     <string name="settings_backup_import_button">Importeren</string>
+    <string name="offline_mode">Offline lijst</string>
+    <string name="offline_list_title">Offline lijst</string>
+    <string name="help_offline_mode_title">Offline lijst</string>
+    <string name="help_offline_mode_text">De lijst wordt alleen op dit apparaat opgeslagen. Er worden geen lijstgegevens uit Home Assistant gelezen of naar Home Assistant geschreven, dus je kunt de lijst altijd bewerken – ook zonder verbinding. Meldingen zijn in deze modus niet beschikbaar.\n\nHandig als je de lijst alleen wilt gebruiken of geen Home Assistant-server beschikbaar hebt. De offline lijst wordt los van je Home Assistant-lijst bewaard.</string>
 </resources>

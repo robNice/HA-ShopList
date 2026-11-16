@@ -163,4 +163,8 @@
     <string name="settings_tab_data">Datos</string>
     <string name="settings_backup_export_button">Exportar</string>
     <string name="settings_backup_import_button">Importar</string>
+    <string name="offline_mode">Lista sin conexión</string>
+    <string name="offline_list_title">Lista sin conexión</string>
+    <string name="help_offline_mode_title">Lista sin conexión</string>
+    <string name="help_offline_mode_text">La lista se guarda solo en este dispositivo. No se leen ni escriben datos de la lista en Home Assistant, así que puedes editarla siempre, incluso sin conexión. Las notificaciones no están disponibles en este modo.\n\nÚtil si quieres usar la lista tú solo o no tienes un servidor de Home Assistant disponible. La lista sin conexión se guarda por separado de tu lista de Home Assistant.</string>
 </resources>

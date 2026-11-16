@@ -16,4 +16,5 @@
     <string name="continue_on_phone">Weiter auf dem Handy</string>
     <string name="cd_item_open">Offen</string>
     <string name="cd_item_done">Erledigt</string>
+    <string name="cd_offline">Offline – Änderungen werden später übertragen</string>
 </resources>

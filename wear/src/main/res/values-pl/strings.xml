@@ -16,4 +16,5 @@
     <string name="continue_on_phone">Kontynuuj na telefonie</string>
     <string name="cd_item_open">Do zrobienia</string>
     <string name="cd_item_done">Gotowe</string>
+    <string name="cd_offline">Offline – zmiany zostaną zsynchronizowane później</string>
 </resources>

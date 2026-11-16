@@ -163,4 +163,8 @@
     <string name="settings_tab_data">데이터</string>
     <string name="settings_backup_export_button">내보내기</string>
     <string name="settings_backup_import_button">가져오기</string>
+    <string name="offline_mode">오프라인 목록</string>
+    <string name="offline_list_title">오프라인 목록</string>
+    <string name="help_offline_mode_title">오프라인 목록</string>
+    <string name="help_offline_mode_text">목록은 이 기기에만 저장됩니다. Home Assistant에서 목록 데이터를 읽거나 쓰지 않으므로 연결이 없어도 언제든지 편집할 수 있습니다. 이 모드에서는 알림을 사용할 수 없습니다.\n\n목록을 혼자 사용하거나 Home Assistant 서버가 없을 때 유용합니다. 오프라인 목록은 Home Assistant 목록과 별도로 저장됩니다.</string>
 </resources>

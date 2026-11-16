@@ -163,4 +163,8 @@
     <string name="settings_tab_data">Données</string>
     <string name="settings_backup_export_button">Exporter</string>
     <string name="settings_backup_import_button">Importer</string>
+    <string name="offline_mode">Liste hors ligne</string>
+    <string name="offline_list_title">Liste hors ligne</string>
+    <string name="help_offline_mode_title">Liste hors ligne</string>
+    <string name="help_offline_mode_text">La liste est enregistrée uniquement sur cet appareil. Aucune donnée de liste n’est lue depuis Home Assistant ni écrite dans Home Assistant, vous pouvez donc toujours la modifier, même sans connexion. Les notifications ne sont pas disponibles dans ce mode.\n\nPratique si vous souhaitez utiliser la liste seul ou si vous n’avez pas de serveur Home Assistant. La liste hors ligne est conservée séparément de votre liste Home Assistant.</string>
 </resources>

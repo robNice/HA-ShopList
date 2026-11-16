@@ -10,6 +10,8 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import androidx.wear.tiles.TileService
 import de.robnice.homeshoplist.wear.data.HaWearClient
+import de.robnice.homeshoplist.wear.data.WearListSync
+import de.robnice.homeshoplist.wear.tile.TileRefreshWorker
 import de.robnice.homeshoplist.wear.model.WearShoppingItem
 import de.robnice.homeshoplist.wear.tile.ShoppingTileService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +26,7 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
     private val _isLoading = MutableStateFlow(false)
     private val _hasSettings = MutableStateFlow(false)
     private val _error = MutableStateFlow<String?>(null)
+    private val _isOffline = MutableStateFlow(false)
     private val _listDisplayMode = MutableStateFlow(settingsStore.getDisplayMode())
     private val _areaOrder = MutableStateFlow(settingsStore.getAreaOrder())
 
@@ -31,10 +34,13 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
     val isLoading = _isLoading.asStateFlow()
     val hasSettings = _hasSettings.asStateFlow()
     val error = _error.asStateFlow()
+    /** Home Assistant not reachable: the cached list is shown and changes are queued. */
+    val isOffline = _isOffline.asStateFlow()
     val listDisplayMode = _listDisplayMode.asStateFlow()
     val areaOrder = _areaOrder.asStateFlow()
 
     private var haClient: HaWearClient? = null
+    private var listSync: WearListSync? = null
     private var activeSettings: WearSettingsStore.WearSettings? = null
 
     // SharedPreferences backing WearSettingsStore — must match the name used there.
@@ -103,48 +109,55 @@ class WearViewModel(app: Application) : AndroidViewModel(app) {
     private fun initClient(url: String, token: String, entity: String) {
         val settings = WearSettingsStore.WearSettings(url, token, entity)
         haClient = HaWearClient(url, token, entity)
+        val sync = WearListSync(getApplication(), settings)
+        listSync = sync
         activeSettings = settings
+        // Show the last known list right away, also without any connection
+        _items.value = sync.cachedItems() ?: emptyList()
         _hasSettings.value = true
     }
 
     fun refresh() {
-        val client = haClient ?: return
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val newItems = client.fetchItems()
-                _items.value = newItems
-                _error.value = null
-                publishOpenCount()
-            } catch (e: Exception) {
-                _error.value = e.message
-            } finally {
-                _isLoading.value = false
-            }
-        }
+        runSync(fetch = true)
     }
 
     fun toggleItem(item: WearShoppingItem) {
-        val newComplete = !item.complete
-        _items.value = _items.value.map { if (it.id == item.id) it.copy(complete = newComplete) else it }
-        viewModelScope.launch {
-            runCatching { haClient?.toggleItem(item.id, newComplete) }
-                .onFailure {
-                    _items.value = _items.value.map {
-                        if (it.id == item.id) it.copy(complete = item.complete) else it
-                    }
-                }
-            publishOpenCount()
-        }
+        val sync = listSync ?: return
+        _items.value = sync.toggle(item, !item.complete)
+        publishOpenCount()
+        runSync(fetch = false)
     }
 
     fun clearCompleted() {
-        val completed = _items.value.filter { it.complete }
-        if (completed.isEmpty()) return
-        _items.value = _items.value.filterNot { it.complete }
+        val sync = listSync ?: return
+        if (_items.value.none { it.complete }) return
+        _items.value = sync.clearCompleted()
+        publishOpenCount()
+        runSync(fetch = false)
+    }
+
+    /** Sends queued changes (and reloads); if that fails, they are sent once a connection is back. */
+    private fun runSync(fetch: Boolean) {
+        val client = haClient ?: return
+        val sync = listSync ?: return
         viewModelScope.launch {
-            completed.forEach { item -> runCatching { haClient?.removeItem(item.id) } }
-            publishOpenCount()
+            if (fetch) _isLoading.value = true
+            try {
+                val result = sync.sync(client, fetch)
+                _items.value = result.items
+                _isOffline.value = !result.online
+                _error.value = null
+                publishOpenCount()
+                if (sync.hasPendingChanges()) {
+                    runCatching { TileRefreshWorker.scheduleSync(getApplication()) }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _error.value = e.message
+            } finally {
+                if (fetch) _isLoading.value = false
+            }
         }
     }
 

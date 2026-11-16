@@ -1,0 +1,145 @@
+<en-US>
+• New offline list: use the list on this device only, without a Home Assistant server
+• Wear OS: the list stays available without phone or internet – changes are sent later
+• Wear OS: a failed load no longer empties the list
+</en-US>
+<de-DE>
+• Neu: Offline-Liste – die Liste nur auf diesem Gerät nutzen, ohne Home-Assistant-Server
+• Wear OS: Die Liste bleibt ohne Handy und Internet verfügbar – Änderungen werden später übertragen
+• Wear OS: Ein fehlgeschlagenes Laden leert die Liste nicht mehr
+</de-DE>
+<ar>
+• جديد: قائمة دون اتصال – استخدم القائمة على هذا الجهاز فقط، دون خادم Home Assistant
+• Wear OS: تبقى القائمة متاحة دون هاتف أو إنترنت – تُرسل التغييرات لاحقًا
+• Wear OS: لم يعد فشل التحميل يُفرغ القائمة
+</ar>
+<cs-CZ>
+• Novinka: offline seznam – používejte seznam jen v tomto zařízení, bez serveru Home Assistant
+• Wear OS: seznam zůstává dostupný i bez telefonu a internetu – změny se odešlou později
+• Wear OS: neúspěšné načtení už seznam nevyprázdní
+</cs-CZ>
+<da-DK>
+• Nyt: offlineliste – brug listen kun på denne enhed, uden en Home Assistant-server
+• Wear OS: listen er tilgængelig uden telefon og internet – ændringer sendes senere
+• Wear OS: en mislykket indlæsning tømmer ikke længere listen
+</da-DK>
+<es-419>
+• Nuevo: lista sin conexión; usa la lista solo en este dispositivo, sin servidor de Home Assistant
+• Wear OS: la lista sigue disponible sin teléfono ni internet; los cambios se envían después
+• Wear OS: una carga fallida ya no vacía la lista
+</es-419>
+<es-ES>
+• Nuevo: lista sin conexión; usa la lista solo en este dispositivo, sin servidor de Home Assistant
+• Wear OS: la lista sigue disponible sin teléfono ni internet; los cambios se envían después
+• Wear OS: una carga fallida ya no vacía la lista
+</es-ES>
+<fi-FI>
+• Uutta: offline-lista – käytä listaa vain tällä laitteella ilman Home Assistant -palvelinta
+• Wear OS: lista pysyy käytettävissä ilman puhelinta ja internetiä – muutokset lähetetään myöhemmin
+• Wear OS: epäonnistunut lataus ei enää tyhjennä listaa
+</fi-FI>
+<fr-FR>
+• Nouveau : liste hors ligne – utilisez la liste uniquement sur cet appareil, sans serveur Home Assistant
+• Wear OS : la liste reste disponible sans téléphone ni internet – les modifications sont envoyées plus tard
+• Wear OS : un échec de chargement ne vide plus la liste
+</fr-FR>
+<hi-IN>
+• नया: ऑफ़लाइन सूची – Home Assistant सर्वर के बिना, सूची को केवल इसी डिवाइस पर इस्तेमाल करें
+• Wear OS: फ़ोन और इंटरनेट के बिना भी सूची उपलब्ध रहती है – बदलाव बाद में भेजे जाते हैं
+• Wear OS: लोड विफल होने पर अब सूची खाली नहीं होती
+</hi-IN>
+<hu-HU>
+• Új: offline lista – használja a listát csak ezen az eszközön, Home Assistant-szerver nélkül
+• Wear OS: a lista telefon és internet nélkül is elérhető marad – a módosítások később lesznek elküldve
+• Wear OS: a sikertelen betöltés már nem üríti ki a listát
+</hu-HU>
+<id>
+• Baru: daftar offline – gunakan daftar hanya di perangkat ini, tanpa server Home Assistant
+• Wear OS: daftar tetap tersedia tanpa ponsel dan internet – perubahan dikirim nanti
+• Wear OS: gagal memuat tidak lagi mengosongkan daftar
+</id>
+<it-IT>
+• Novità: lista offline – usa la lista solo su questo dispositivo, senza server Home Assistant
+• Wear OS: la lista resta disponibile senza telefono né internet – le modifiche vengono inviate più tardi
+• Wear OS: un caricamento non riuscito non svuota più la lista
+</it-IT>
+<iw-IL>
+• חדש: רשימה לא מקוונת – שימוש ברשימה במכשיר זה בלבד, ללא שרת Home Assistant
+• Wear OS: הרשימה נשארת זמינה גם בלי טלפון ואינטרנט – השינויים נשלחים מאוחר יותר
+• Wear OS: טעינה שנכשלה כבר לא מרוקנת את הרשימה
+</iw-IL>
+<ja-JP>
+• 新機能：オフラインリスト – Home Assistant サーバーなしで、この端末だけでリストを使用
+• Wear OS：スマートフォンやインターネットがなくてもリストを利用可能 – 変更は後で送信
+• Wear OS：読み込みに失敗してもリストが空にならないように
+</ja-JP>
+<ko-KR>
+• 새 기능: 오프라인 목록 – Home Assistant 서버 없이 이 기기에서만 목록 사용
+• Wear OS: 휴대전화와 인터넷 없이도 목록 사용 가능 – 변경 사항은 나중에 전송
+• Wear OS: 불러오기에 실패해도 더 이상 목록이 비워지지 않음
+</ko-KR>
+<nl-NL>
+• Nieuw: offline lijst – gebruik de lijst alleen op dit apparaat, zonder Home Assistant-server
+• Wear OS: de lijst blijft beschikbaar zonder telefoon en internet – wijzigingen worden later verstuurd
+• Wear OS: een mislukte laadpoging maakt de lijst niet meer leeg
+</nl-NL>
+<no-NO>
+• Nytt: frakoblet liste – bruk listen bare på denne enheten, uten en Home Assistant-server
+• Wear OS: listen er tilgjengelig uten telefon og internett – endringer sendes senere
+• Wear OS: en mislykket innlasting tømmer ikke lenger listen
+</no-NO>
+<pl-PL>
+• Nowość: lista offline – korzystaj z listy tylko na tym urządzeniu, bez serwera Home Assistant
+• Wear OS: lista pozostaje dostępna bez telefonu i internetu – zmiany zostaną wysłane później
+• Wear OS: nieudane wczytanie nie czyści już listy
+</pl-PL>
+<pt-BR>
+• Novo: lista offline – use a lista apenas neste dispositivo, sem servidor Home Assistant
+• Wear OS: a lista continua disponível sem celular e internet – as alterações são enviadas depois
+• Wear OS: uma falha ao carregar não esvazia mais a lista
+</pt-BR>
+<ro>
+• Nou: listă offline – folosește lista doar pe acest dispozitiv, fără server Home Assistant
+• Wear OS: lista rămâne disponibilă fără telefon și internet – modificările sunt trimise mai târziu
+• Wear OS: o încărcare eșuată nu mai golește lista
+</ro>
+<ru-RU>
+• Новое: офлайн-список – пользуйтесь списком только на этом устройстве, без сервера Home Assistant
+• Wear OS: список доступен без телефона и интернета – изменения отправляются позже
+• Wear OS: неудачная загрузка больше не очищает список
+</ru-RU>
+<sk>
+• Novinka: offline zoznam – používajte zoznam len v tomto zariadení, bez servera Home Assistant
+• Wear OS: zoznam zostáva dostupný aj bez telefónu a internetu – zmeny sa odošlú neskôr
+• Wear OS: neúspešné načítanie už zoznam nevyprázdni
+</sk>
+<sv-SE>
+• Nytt: offlinelista – använd listan bara på den här enheten, utan Home Assistant-server
+• Wear OS: listan är tillgänglig utan telefon och internet – ändringar skickas senare
+• Wear OS: en misslyckad inläsning tömmer inte längre listan
+</sv-SE>
+<th>
+• ใหม่: รายการออฟไลน์ – ใช้รายการเฉพาะบนอุปกรณ์นี้ โดยไม่ต้องมีเซิร์ฟเวอร์ Home Assistant
+• Wear OS: รายการยังใช้งานได้แม้ไม่มีโทรศัพท์และอินเทอร์เน็ต – การเปลี่ยนแปลงจะถูกส่งภายหลัง
+• Wear OS: การโหลดล้มเหลวจะไม่ทำให้รายการว่างอีกต่อไป
+</th>
+<tr-TR>
+• Yeni: çevrimdışı liste – listeyi Home Assistant sunucusu olmadan yalnızca bu cihazda kullanın
+• Wear OS: liste telefon ve internet olmadan da kullanılabilir – değişiklikler daha sonra gönderilir
+• Wear OS: başarısız bir yükleme artık listeyi boşaltmıyor
+</tr-TR>
+<uk>
+• Нове: офлайн-список – користуйтеся списком лише на цьому пристрої, без сервера Home Assistant
+• Wear OS: список доступний без телефона й інтернету – зміни надсилаються пізніше
+• Wear OS: невдале завантаження більше не очищає список
+</uk>
+<vi>
+• Mới: danh sách ngoại tuyến – chỉ dùng danh sách trên thiết bị này, không cần máy chủ Home Assistant
+• Wear OS: danh sách vẫn dùng được khi không có điện thoại và internet – thay đổi được gửi sau
+• Wear OS: tải thất bại không còn làm trống danh sách
+</vi>
+<zh-CN>
+• 新增：离线清单 – 无需 Home Assistant 服务器，仅在此设备上使用清单
+• Wear OS：没有手机和网络时清单依然可用 – 更改稍后发送
+• Wear OS：加载失败不再清空清单
+</zh-CN>

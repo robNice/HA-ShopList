@@ -163,4 +163,8 @@ each    <string name="area_drinks">飲み物</string>
     <string name="settings_tab_data">データ</string>
     <string name="settings_backup_export_button">エクスポート</string>
     <string name="settings_backup_import_button">インポート</string>
+    <string name="offline_mode">オフラインリスト</string>
+    <string name="offline_list_title">オフラインリスト</string>
+    <string name="help_offline_mode_title">オフラインリスト</string>
+    <string name="help_offline_mode_text">リストはこの端末にのみ保存されます。Home Assistant からリストデータを読み込んだり書き込んだりしないため、接続がなくてもいつでも編集できます。このモードでは通知は利用できません。\n\nリストを一人で使いたい場合や、Home Assistant サーバーがない場合に便利です。オフラインリストは Home Assistant のリストとは別に保存されます。</string>
 </resources>

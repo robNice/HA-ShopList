@@ -88,7 +88,7 @@ class HaWebSocketRepository(
     private val currentTimeMillis: () -> Long = System::currentTimeMillis,
     /** Called with (todoEntity, open items, all items) whenever the counts change after loading. */
     private val onOpenCountChanged: ((String, Int, Int) -> Unit)? = null
-) {
+) : ShoppingRepository {
 
     constructor(
         baseUrl: String,
@@ -170,15 +170,15 @@ class HaWebSocketRepository(
     private val _loaded = MutableStateFlow(false)
     private val _reconnected = MutableStateFlow(0L)
 
-    val loaded = _loaded.asStateFlow()
-    val authFailed = _authFailed.asStateFlow()
-    val connectionErrors = _connectionErrors.asStateFlow()
-    val isOffline = _isOffline.asStateFlow()
-    val isConnecting = _isConnecting.asStateFlow()
-    val items = _items.asStateFlow()
-    val newItems = _newItems.asSharedFlow()
-    val remoteActivity = _remoteActivity.asSharedFlow()
-    val reconnected = _reconnected.asStateFlow()
+    override val loaded = _loaded.asStateFlow()
+    override val authFailed = _authFailed.asStateFlow()
+    override val connectionErrors = _connectionErrors.asStateFlow()
+    override val isOffline = _isOffline.asStateFlow()
+    override val isConnecting = _isConnecting.asStateFlow()
+    override val items = _items.asStateFlow()
+    override val newItems = _newItems.asSharedFlow()
+    override val remoteActivity = _remoteActivity.asSharedFlow()
+    override val reconnected = _reconnected.asStateFlow()
 
     private val locallyAddedItemNames = mutableSetOf<String>()
     private val pendingActions = mutableListOf<PendingAction>()
@@ -592,7 +592,7 @@ class HaWebSocketRepository(
         return parseTodoListsFromStates(states)
     }
 
-    fun addItem(name: String, area: ShoppingArea?) {
+    override fun addItem(name: String, area: ShoppingArea?) {
         val trimmed = name.trim()
         if (trimmed.isBlank()) {
             return
@@ -632,7 +632,7 @@ class HaWebSocketRepository(
         }
     }
 
-    fun toggleItem(item: ShoppingItem) {
+    override fun toggleItem(item: ShoppingItem) {
         val newStatus = !item.complete
         updateLocalItem(item.id) { current ->
             current.copy(complete = newStatus)
@@ -657,7 +657,7 @@ class HaWebSocketRepository(
         )
     }
 
-    fun updateItem(item: ShoppingItem, newName: String, area: ShoppingArea?) {
+    override fun updateItem(item: ShoppingItem, newName: String, area: ShoppingArea?) {
         val trimmed = newName.trim()
         if (trimmed.isBlank()) {
             return
@@ -705,7 +705,7 @@ class HaWebSocketRepository(
         }
     }
 
-    fun moveItem(itemId: String, previousItemId: String?, area: ShoppingArea? = null) {
+    override fun moveItem(itemId: String, previousItemId: String?, area: ShoppingArea?) {
         applyLocalMove(itemId, previousItemId)
 
         val currentItem = _items.value.firstOrNull { it.id == itemId }
@@ -749,7 +749,7 @@ class HaWebSocketRepository(
         schedulePendingMoveDispatch()
     }
 
-    fun clearCompleted() {
+    override fun clearCompleted() {
         val itemsSnapshot = _items.value
         val completedItems = itemsSnapshot.filter { it.complete }
         if (completedItems.isEmpty()) {
@@ -786,11 +786,11 @@ class HaWebSocketRepository(
             .forEach { enqueueOrSendRemove(it.id) }
     }
 
-    fun disconnect() {
+    override fun disconnect() {
         client.disconnect()
     }
 
-    fun ensureConnected() {
+    override fun ensureConnected() {
         _authFailed.value = false
         _connectionErrors.value = false
 
@@ -815,7 +815,7 @@ class HaWebSocketRepository(
         client.ensureConnected()
     }
 
-    fun setReconnectAllowed(allowed: Boolean) {
+    override fun setReconnectAllowed(allowed: Boolean) {
         client.setReconnectAllowed(allowed)
     }
 
