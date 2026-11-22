@@ -1,0 +1,203 @@
+<en-US>
+• New: stores – a category order for each store, linked to each list
+• Switch lists on the main screen; create and delete lists in Settings
+• Settings in tabs, built-in help and 69 new categories
+• Wear OS: add items with category and switch lists on the watch
+• Fixes for reconnecting and for offline changes
+</en-US>
+<de-DE>
+• Neu: Märkte – eine Kategorie-Reihenfolge pro Laden, mit jeder Liste verknüpft
+• Liste direkt im Hauptbildschirm wechseln; Listen in den Einstellungen anlegen und löschen
+• Einstellungen mit Reitern, eingebaute Hilfe und 69 neue Kategorien
+• Wear OS: Artikel mit Kategorie hinzufügen und Liste auf der Uhr wechseln
+• Korrekturen beim Wiederverbinden und bei Offline-Änderungen
+</de-DE>
+<ar>
+• جديد: المتاجر – ترتيب فئات لكل متجر، مرتبط بكل قائمة
+• تبديل القوائم من الشاشة الرئيسية؛ إنشاء القوائم وحذفها في الإعدادات
+• إعدادات بعلامات تبويب، ومساعدة مدمجة، و69 فئة جديدة
+• Wear OS: إضافة عناصر مع الفئة وتبديل القوائم على الساعة
+• إصلاحات لإعادة الاتصال وللتغييرات دون اتصال
+</ar>
+<cs-CZ>
+• Novinka: obchody – pořadí kategorií pro každý obchod, propojené s každým seznamem
+• Přepínání seznamů na hlavní obrazovce; vytváření a mazání seznamů v nastavení
+• Nastavení v kartách, vestavěná nápověda a 69 nových kategorií
+• Wear OS: přidávání položek s kategorií a přepínání seznamů na hodinkách
+• Opravy opětovného připojení a offline změn
+</cs-CZ>
+<da-DK>
+• Nyt: butikker – en kategorirækkefølge for hver butik, knyttet til hver liste
+• Skift liste på hovedskærmen; opret og slet lister i indstillingerne
+• Indstillinger i faner, indbygget hjælp og 69 nye kategorier
+• Wear OS: tilføj varer med kategori og skift liste på uret
+• Rettelser ved genforbindelse og offlineændringer
+</da-DK>
+<es-419>
+• Nuevo: tiendas; un orden de categorías para cada tienda, vinculado a cada lista
+• Cambia de lista en la pantalla principal; crea y elimina listas en la configuración
+• Configuración en pestañas, ayuda integrada y 69 categorías nuevas
+• Wear OS: agrega artículos con categoría y cambia de lista en el reloj
+• Correcciones al reconectar y en los cambios sin conexión
+</es-419>
+<es-ES>
+• Nuevo: tiendas; un orden de categorías para cada tienda, vinculado a cada lista
+• Cambia de lista en la pantalla principal; crea y elimina listas en los ajustes
+• Ajustes en pestañas, ayuda integrada y 69 categorías nuevas
+• Wear OS: añade artículos con categoría y cambia de lista en el reloj
+• Correcciones al reconectar y en los cambios sin conexión
+</es-ES>
+<fi-FI>
+• Uutta: kaupat – oma luokkajärjestys jokaiselle kaupalle, liitettynä jokaiseen listaan
+• Vaihda listaa päänäkymässä; luo ja poista listoja asetuksissa
+• Asetukset välilehdillä, sisäänrakennettu ohje ja 69 uutta luokkaa
+• Wear OS: lisää tuotteita luokan kanssa ja vaihda listaa kellossa
+• Korjauksia uudelleenyhdistämiseen ja offline-muutoksiin
+</fi-FI>
+<fr-FR>
+• Nouveau : magasins – un ordre des catégories par magasin, associé à chaque liste
+• Changez de liste depuis l’écran principal ; créez et supprimez des listes dans les paramètres
+• Paramètres en onglets, aide intégrée et 69 nouvelles catégories
+• Wear OS : ajoutez des articles avec catégorie et changez de liste sur la montre
+• Corrections de la reconnexion et des modifications hors ligne
+</fr-FR>
+<hi-IN>
+• नया: स्टोर – हर स्टोर के लिए श्रेणियों का क्रम, हर सूची से जुड़ा हुआ
+• मुख्य स्क्रीन पर सूची बदलें; सेटिंग्स में सूचियाँ बनाएँ और हटाएँ
+• टैब वाली सेटिंग्स, अंतर्निहित सहायता और 69 नई श्रेणियाँ
+• Wear OS: श्रेणी के साथ आइटम जोड़ें और घड़ी पर सूची बदलें
+• दोबारा कनेक्ट होने और ऑफ़लाइन बदलावों से जुड़े सुधार
+</hi-IN>
+<hu-HU>
+• Új: üzletek – külön kategóriasorrend minden üzlethez, minden listához hozzárendelve
+• Lista váltása a főképernyőn; listák létrehozása és törlése a beállításokban
+• Lapokra osztott beállítások, beépített súgó és 69 új kategória
+• Wear OS: tételek hozzáadása kategóriával és listaváltás az órán
+• Javítások az újracsatlakozásnál és az offline módosításoknál
+</hu-HU>
+<id>
+• Baru: toko – urutan kategori untuk setiap toko, terhubung ke setiap daftar
+• Ganti daftar di layar utama; buat dan hapus daftar di setelan
+• Setelan dalam tab, bantuan bawaan, dan 69 kategori baru
+• Wear OS: tambahkan item dengan kategori dan ganti daftar di jam
+• Perbaikan saat menyambung ulang dan untuk perubahan offline
+</id>
+<it-IT>
+• Novità: negozi – un ordine delle categorie per ogni negozio, collegato a ogni lista
+• Cambia lista dalla schermata principale; crea ed elimina liste nelle impostazioni
+• Impostazioni a schede, guida integrata e 69 nuove categorie
+• Wear OS: aggiungi articoli con categoria e cambia lista sull’orologio
+• Correzioni per la riconnessione e le modifiche offline
+</it-IT>
+<iw-IL>
+• חדש: חנויות – סדר קטגוריות לכל חנות, מקושר לכל רשימה
+• החלפת רשימה במסך הראשי; יצירה ומחיקה של רשימות בהגדרות
+• הגדרות בכרטיסיות, עזרה מובנית ו-69 קטגוריות חדשות
+• Wear OS: הוספת פריטים עם קטגוריה והחלפת רשימה בשעון
+• תיקונים בחיבור מחדש ובשינויים במצב לא מקוון
+</iw-IL>
+<ja-JP>
+• 新機能：店舗 – 店舗ごとのカテゴリ順を各リストに関連付け
+• メイン画面でリストを切り替え、設定でリストを作成・削除
+• タブ式の設定、内蔵ヘルプ、69 の新しいカテゴリ
+• Wear OS：カテゴリ付きでアイテムを追加し、ウォッチでリストを切り替え
+• 再接続とオフライン変更に関する修正
+</ja-JP>
+<ko-KR>
+• 새 기능: 매장 – 매장마다 카테고리 순서를 정하고 각 목록에 연결
+• 메인 화면에서 목록 전환, 설정에서 목록 만들기 및 삭제
+• 탭으로 나뉜 설정, 내장 도움말, 69개의 새 카테고리
+• Wear OS: 카테고리와 함께 항목 추가, 워치에서 목록 전환
+• 재연결 및 오프라인 변경 관련 수정
+</ko-KR>
+<nl-NL>
+• Nieuw: winkels – een categorievolgorde per winkel, gekoppeld aan elke lijst
+• Wissel van lijst op het hoofdscherm; maak en verwijder lijsten in de instellingen
+• Instellingen in tabbladen, ingebouwde hulp en 69 nieuwe categorieën
+• Wear OS: voeg items met categorie toe en wissel van lijst op het horloge
+• Verbeteringen bij opnieuw verbinden en offline wijzigingen
+</nl-NL>
+<no-NO>
+• Nytt: butikker – en kategorirekkefølge for hver butikk, knyttet til hver liste
+• Bytt liste på hovedskjermen; opprett og slett lister i innstillingene
+• Innstillinger i faner, innebygd hjelp og 69 nye kategorier
+• Wear OS: legg til varer med kategori og bytt liste på klokken
+• Rettelser ved ny tilkobling og frakoblede endringer
+</no-NO>
+<pl-PL>
+• Nowość: sklepy – kolejność kategorii dla każdego sklepu, powiązana z każdą listą
+• Zmiana listy na ekranie głównym; tworzenie i usuwanie list w ustawieniach
+• Ustawienia w kartach, wbudowana pomoc i 69 nowych kategorii
+• Wear OS: dodawanie pozycji z kategorią i zmiana listy na zegarku
+• Poprawki ponownego łączenia i zmian offline
+</pl-PL>
+<pt-BR>
+• Novo: lojas – uma ordem de categorias para cada loja, vinculada a cada lista
+• Troque de lista na tela principal; crie e exclua listas nas configurações
+• Configurações em abas, ajuda integrada e 69 novas categorias
+• Wear OS: adicione itens com categoria e troque de lista no relógio
+• Correções ao reconectar e nas alterações offline
+</pt-BR>
+<ro>
+• Nou: magazine – o ordine a categoriilor pentru fiecare magazin, legată de fiecare listă
+• Schimbă lista din ecranul principal; creează și șterge liste în setări
+• Setări pe file, ajutor integrat și 69 de categorii noi
+• Wear OS: adaugă articole cu categorie și schimbă lista pe ceas
+• Remedieri la reconectare și la modificările offline
+</ro>
+<ru-RU>
+• Новое: магазины – свой порядок категорий для каждого магазина, привязанный к списку
+• Смена списка на главном экране; создание и удаление списков в настройках
+• Настройки на вкладках, встроенная справка и 69 новых категорий
+• Wear OS: добавление товаров с категорией и смена списка на часах
+• Исправления при повторном подключении и для офлайн-изменений
+</ru-RU>
+<sk>
+• Novinka: obchody – poradie kategórií pre každý obchod, prepojené s každým zoznamom
+• Prepínanie zoznamov na hlavnej obrazovke; vytváranie a mazanie zoznamov v nastaveniach
+• Nastavenia v kartách, vstavaný pomocník a 69 nových kategórií
+• Wear OS: pridávanie položiek s kategóriou a prepínanie zoznamov na hodinkách
+• Opravy opätovného pripojenia a offline zmien
+</sk>
+<sv-SE>
+• Nytt: butiker – en kategoriordning för varje butik, kopplad till varje lista
+• Byt lista på huvudskärmen; skapa och ta bort listor i inställningarna
+• Inställningar i flikar, inbyggd hjälp och 69 nya kategorier
+• Wear OS: lägg till varor med kategori och byt lista på klockan
+• Rättelser vid återanslutning och för offlineändringar
+</sv-SE>
+<th>
+• ใหม่: ร้านค้า – ลำดับหมวดหมู่สำหรับแต่ละร้าน เชื่อมกับแต่ละรายการ
+• สลับรายการได้จากหน้าจอหลัก สร้างและลบรายการได้ในการตั้งค่า
+• การตั้งค่าแบบแท็บ ความช่วยเหลือในตัว และหมวดหมู่ใหม่ 69 หมวด
+• Wear OS: เพิ่มรายการพร้อมหมวดหมู่และสลับรายการบนนาฬิกา
+• แก้ไขการเชื่อมต่อใหม่และการเปลี่ยนแปลงแบบออฟไลน์
+</th>
+<tr-TR>
+• Yeni: mağazalar – her mağaza için bir kategori sırası, her listeye bağlı
+• Listeyi ana ekrandan değiştirin; ayarlarda liste oluşturun ve silin
+• Sekmeli ayarlar, yerleşik yardım ve 69 yeni kategori
+• Wear OS: kategorili öge ekleyin ve listeyi saatte değiştirin
+• Yeniden bağlanma ve çevrimdışı değişikliklerle ilgili düzeltmeler
+</tr-TR>
+<uk>
+• Нове: магазини – свій порядок категорій для кожного магазину, прив’язаний до списку
+• Зміна списку на головному екрані; створення й видалення списків у налаштуваннях
+• Налаштування на вкладках, вбудована довідка і 69 нових категорій
+• Wear OS: додавання товарів із категорією та зміна списку на годиннику
+• Виправлення під час повторного підключення та для офлайн-змін
+</uk>
+<vi>
+• Mới: cửa hàng – thứ tự danh mục cho từng cửa hàng, liên kết với từng danh sách
+• Chuyển danh sách ngay trên màn hình chính; tạo và xóa danh sách trong cài đặt
+• Cài đặt theo thẻ, trợ giúp tích hợp và 69 danh mục mới
+• Wear OS: thêm mục kèm danh mục và chuyển danh sách trên đồng hồ
+• Sửa lỗi khi kết nối lại và với thay đổi ngoại tuyến
+</vi>
+<zh-CN>
+• 新增：商店 – 为每家商店设置分类顺序，并与每个清单关联
+• 在主屏幕切换清单；在设置中创建和删除清单
+• 分页设置、内置帮助和 69 个新分类
+• Wear OS：添加带分类的条目，并在手表上切换清单
+• 修复重新连接和离线更改的问题
+</zh-CN>
