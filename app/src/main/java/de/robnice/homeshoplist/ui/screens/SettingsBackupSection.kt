@@ -16,6 +16,11 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -61,6 +66,9 @@ fun SettingsBackupSection(
     var importUri by remember { mutableStateOf<Uri?>(null) }
     var importPayload by remember { mutableStateOf<SettingsBackupPayload?>(null) }
     var busy by remember { mutableStateOf(false) }
+    // Shown in a blocking dialog while busy: decrypting/encrypting takes a few seconds, and leaving
+    // the settings in that time (e.g. "Save") would cancel the import or export.
+    var busyText by remember { mutableStateOf<String?>(null) }
     var status by remember { mutableStateOf<String?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -73,6 +81,7 @@ fun SettingsBackupSection(
         if (uri != null && password != null) {
             scope.launch {
                 busy = true
+                busyText = context.getString(R.string.settings_backup_busy_export)
                 status = null
                 try {
                     withContext(Dispatchers.IO) { service.export(uri, password, sections) }
@@ -83,6 +92,7 @@ fun SettingsBackupSection(
                 } finally {
                     password.fill('\u0000')
                     busy = false
+                    busyText = null
                 }
             }
         } else {
@@ -161,6 +171,7 @@ fun SettingsBackupSection(
                 dialog = null
                 scope.launch {
                     busy = true
+                    busyText = context.getString(R.string.settings_backup_busy_unlock)
                     try {
                         val payload = withContext(Dispatchers.IO) { service.decrypt(uri, password) }
                         importPayload = payload
@@ -174,6 +185,7 @@ fun SettingsBackupSection(
                     } finally {
                         password.fill('\u0000')
                         busy = false
+                        busyText = null
                     }
                 }
             }
@@ -190,6 +202,7 @@ fun SettingsBackupSection(
                 dialog = null
                 scope.launch {
                     busy = true
+                    busyText = context.getString(R.string.settings_backup_busy_import)
                     try {
                         withContext(Dispatchers.IO) { service.import(payload, sectionsToImport) }
                         onImported(payload, sectionsToImport)
@@ -205,11 +218,31 @@ fun SettingsBackupSection(
                         importPayload = null
                         importUri = null
                         busy = false
+                        busyText = null
                     }
                 }
             }
         )
         null -> Unit
+    }
+
+    busyText?.let { text ->
+        // Not dismissable on purpose; closes by itself when done
+        Dialog(
+            onDismissRequest = {},
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+        ) {
+            Card(shape = MaterialTheme.shapes.large) {
+                Row(
+                    modifier = Modifier.padding(24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.width(16.dp))
+                    Text(text, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
     }
 
     errorMessage?.let { message ->

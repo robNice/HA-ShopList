@@ -37,6 +37,7 @@ workManager = "2.10.1"
 material = "1.12.0"
 
 [libraries]
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version = "1.0.1" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
@@ -78,6 +79,7 @@ wear-compose-material = { module = "androidx.wear.compose:compose-material", ver
 wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wearCompose" }
 wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wearTiles" }
 wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "wearRemoteInteractions" }
+wear-input = { module = "androidx.wear:wear-input", version = "1.2.0" }
 wear-protolayout = { module = "androidx.wear.protolayout:protolayout", version.ref = "wearProtolayout" }
 androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "fragment" }
 concurrent-futures = { module = "androidx.concurrent:concurrent-futures", version.ref = "concurrentFutures" }

@@ -73,29 +73,40 @@ fun parseManagedItemName(name: String?): ManagedItemName {
         )
     }
 
-    val separatorIndex = name.lastIndexOf(AREA_NAME_SEPARATOR)
-    if (separatorIndex <= 0 || separatorIndex >= name.lastIndex) {
+    // A NUL byte never belongs to a user-visible name; it only ever starts our area suffix.
+    // Some backends (e.g. Mealie) return the suffix mangled ("Name\u0000 |",
+    // "Name\u0000\u0000 | key", "Name\u0000 |\u0000 | key"), so everything from the first NUL
+    // on is treated as suffix and the area is taken from the last intact separator, if any.
+    if (name.indexOf('\u0000') < 0) {
         return ManagedItemName(
             visibleName = name,
             area = null
         )
     }
 
-    val encodedArea = name.substring(separatorIndex + AREA_NAME_SEPARATOR.length)
-    val area = ShoppingArea.fromKey(encodedArea) ?: return ManagedItemName(
-        visibleName = name,
-        area = null
-    )
+    val separatorIndex = name.lastIndexOf(AREA_NAME_SEPARATOR)
+    val area = if (separatorIndex >= 0) {
+        ShoppingArea.fromKey(name.substring(separatorIndex + AREA_NAME_SEPARATOR.length))
+    } else {
+        null
+    }
 
     return ManagedItemName(
-        visibleName = name.substring(0, separatorIndex),
+        visibleName = sanitizeVisibleItemName(name),
         area = area
     )
 }
 
+/** Strips anything from the first NUL byte on (a possibly mangled area suffix). */
+fun sanitizeVisibleItemName(name: String): String {
+    val beforeNul = name.substringBefore('\u0000').trim()
+    return beforeNul.ifEmpty { name.replace("\u0000", "").trim() }
+}
+
 fun encodeManagedItemName(name: String, area: ShoppingArea?): String {
-    area ?: return name
-    return name + AREA_NAME_SEPARATOR + area.key
+    val cleanName = sanitizeVisibleItemName(name)
+    area ?: return cleanName
+    return cleanName + AREA_NAME_SEPARATOR + area.key
 }
 
 fun encodeAreaDescription(area: ShoppingArea?): String? {

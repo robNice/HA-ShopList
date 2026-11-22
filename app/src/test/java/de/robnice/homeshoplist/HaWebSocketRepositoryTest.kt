@@ -281,6 +281,36 @@ class HaWebSocketRepositoryTest {
     }
 
     @Test
+    fun `local add matches remote item whose area suffix lost its nullbyte`() = runTest {
+        val client = FakeRealtimeClient()
+        val repository = createRepository(client, backgroundScope)
+        advanceUntilIdle()
+
+        repository.addItem("Krempel", ShoppingArea.OTHER)
+        advanceUntilIdle()
+
+        listOf("Krempel | other", "Krempel |").forEachIndexed { index, remoteName ->
+            if (index > 0) {
+                repository.addItem("Krempel", ShoppingArea.OTHER)
+                advanceUntilIdle()
+            }
+            invokePrivate(
+                target = repository,
+                methodName = "reconcileLocalAdds",
+                parameterTypes = arrayOf(List::class.java, Set::class.java),
+                args = arrayOf(
+                    listOf(ShoppingItem(id = "uid-$index", name = remoteName, complete = false)),
+                    emptySet<String>()
+                )
+            )
+
+            @Suppress("UNCHECKED_CAST")
+            val pendingAdds = getPrivateField(repository, "pendingLocalAdds") as Map<String, *>
+            assertTrue("pending add for '$remoteName' should be resolved", pendingAdds.isEmpty())
+        }
+    }
+
+    @Test
     fun `flush pending update does not trigger redundant list reload`() = runTest {
         val client = FakeRealtimeClient()
         val repository = createRepository(client, backgroundScope)

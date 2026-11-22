@@ -66,3 +66,6 @@ out/
 
 # ---- Python ----
 __pycache__/
+
+# Raw help screenshots; only store/tools/make_help_images.py uses them, the app uses assets/help/*.webp
+store/help_raw/

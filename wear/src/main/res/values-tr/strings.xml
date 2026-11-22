@@ -17,4 +17,7 @@
     <string name="cd_item_open">Açık</string>
     <string name="cd_item_done">Tamamlandı</string>
     <string name="cd_offline">Çevrimdışı – değişiklikler daha sonra eşitlenecek</string>
+    <string name="pick_list">Liste seç</string>
+    <string name="add_item">Öge ekle</string>
+    <string name="no_category">Kategorisiz</string>
 </resources>

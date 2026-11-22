@@ -18,10 +18,20 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DragHandle
@@ -41,6 +51,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -71,13 +82,13 @@ import de.robnice.homeshoplist.data.update.InstallStartResult
 import de.robnice.homeshoplist.data.update.UpdateCheckResult
 import de.robnice.homeshoplist.model.ShoppingArea
 import de.robnice.homeshoplist.model.ShoppingList
+import de.robnice.homeshoplist.model.ShoppingMarket
+import de.robnice.homeshoplist.model.ShoppingMarkets
 import de.robnice.homeshoplist.model.ShoppingListDisplayMode
 import de.robnice.homeshoplist.model.label
 import de.robnice.homeshoplist.ui.navigation.Screen
 import de.robnice.homeshoplist.ui.util.t
 import de.robnice.homeshoplist.util.normalizeHaUrl
-import com.google.android.gms.wearable.PutDataMapRequest
-import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -92,35 +103,13 @@ private sealed interface MarkdownBlock {
     data object Spacer : MarkdownBlock
 }
 
-// Long translations shrink to fit instead of wrapping onto a second line
-@Composable
-private fun SingleLineTabLabel(text: String) {
-    val baseSize = LocalTextStyle.current.fontSize
-    var fontSize by remember(text, baseSize) { mutableStateOf(baseSize) }
-    var fitted by remember(text, baseSize) { mutableStateOf(false) }
-    val atMinimum = fontSize.value <= 10f
-    Text(
-        text = text,
-        fontSize = fontSize,
-        maxLines = 1,
-        softWrap = false,
-        // Ellipsis would hide the overflow, so it only applies once the smallest size is reached
-        overflow = if (atMinimum) TextOverflow.Ellipsis else TextOverflow.Clip,
-        modifier = Modifier.drawWithContent { if (fitted) drawContent() },
-        onTextLayout = { layout ->
-            if (layout.didOverflowWidth && !atMinimum) {
-                fontSize = (fontSize.value * 0.92f).coerceAtLeast(10f).sp
-            } else {
-                fitted = true
-            }
-        }
-    )
-}
-
-private enum class SettingsTab(val titleRes: Int) {
-    Connection(R.string.settings_tab_connection),
-    View(R.string.settings_tab_view),
-    Data(R.string.settings_tab_data)
+// Tabs show icons only, so long translations never have to shrink; the title is the content description
+private enum class SettingsTab(val titleRes: Int, val icon: ImageVector) {
+    Connection(R.string.settings_tab_connection, Icons.Default.Link),
+    Lists(R.string.settings_tab_lists, Icons.Default.Checklist),
+    Markets(R.string.settings_tab_markets, Icons.Default.Storefront),
+    Data(R.string.settings_tab_data, Icons.Default.Tune),
+    Help(R.string.settings_tab_help, Icons.AutoMirrored.Filled.HelpOutline)
 }
 
 private enum class SettingsHelpTopic(
@@ -131,8 +120,8 @@ private enum class SettingsHelpTopic(
     OfflineMode(R.string.help_offline_mode_title, R.string.help_offline_mode_text),
     HaUrl(R.string.help_ha_url_title, R.string.help_ha_url_text),
     Token(R.string.help_token_title, R.string.help_token_text),
-    ListSelection(R.string.help_list_selection_title, R.string.help_list_selection_text),
-    AreaVisibility(R.string.help_area_visibility_title, R.string.help_area_visibility_text),
+    Markets(R.string.help_markets_title, R.string.help_markets_text),
+    Lists(R.string.help_lists_title, R.string.help_lists_text),
     ProductHistory(R.string.help_product_history_title, R.string.help_product_history_text),
     ListDisplayMode(R.string.help_list_display_mode_title, R.string.help_list_display_mode_text),
     Backup(R.string.help_backup_title, R.string.help_backup_text),
@@ -204,7 +193,7 @@ private fun AreaOrderRow(
  * @todo: prevent screenshots
  * @todo: prevent autofill for token field
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun SettingsScreen(
     navController: NavController,
@@ -217,10 +206,8 @@ fun SettingsScreen(
 
     val storedUrl by dataStore.haUrl.collectAsState(initial = "")
     val storedToken by dataStore.haToken.collectAsState(initial = "")
-    val storedTodoEntity by dataStore.todoEntity.collectAsState(initial = "todo.einkaufsliste")
-    val storedTodoListName by dataStore.todoListName.collectAsState(initial = "")
-    val storedAreaOrder by dataStore.areaOrder.collectAsState(initial = "")
-    val storedEnabledAreas by dataStore.enabledAreas.collectAsState(initial = "")
+    val storedMarkets by dataStore.markets.collectAsState(initial = null)
+    val storedActiveMarket by dataStore.activeMarket.collectAsState(initial = null)
     val storedListDisplayMode by dataStore.listDisplayMode.collectAsState(initial = "categorized")
     val notificationsEnabled by dataStore.notificationsEnabled.collectAsState(initial = true)
     val storedOfflineMode by dataStore.offlineMode.collectAsState(initial = false)
@@ -260,20 +247,26 @@ fun SettingsScreen(
     }
 
     var selectedTab by rememberSaveable { mutableStateOf(SettingsTab.Connection) }
+    // Tabs can also be changed by swiping horizontally; the tab row follows the pager
+    val pagerState = rememberPagerState(initialPage = selectedTab.ordinal) { SettingsTab.entries.size }
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { selectedTab = SettingsTab.entries[it] }
+    }
     var tokenVisible by remember { mutableStateOf(false) }
     var url by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
-    var todoEntity by remember { mutableStateOf("") }
-    var todoListName by remember { mutableStateOf("") }
     var offlineMode by remember { mutableStateOf(false) }
     var listDisplayMode by remember { mutableStateOf(ShoppingListDisplayMode.CATEGORIZED) }
-    var areaOrderDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
-    var enabledAreasDraft by remember { mutableStateOf(ShoppingArea.entries.toList()) }
-    var todoOptions by remember { mutableStateOf<List<ShoppingList>>(emptyList()) }
-    var todoExpanded by remember { mutableStateOf(false) }
-    var todoLoading by remember { mutableStateOf(false) }
-    var todoLoadError by remember { mutableStateOf<String?>(null) }
-    var todoReloadKey by remember { mutableStateOf(0) }
+    // All markets are edited as a draft and stored together with the Save button
+    var marketsDraft by remember { mutableStateOf<List<ShoppingMarket>>(emptyList()) }
+    // Only selects which market is edited here; the active market is chosen on the shopping screen
+    var editingMarketId by remember { mutableStateOf("") }
+    var showAddMarketDialog by remember { mutableStateOf(false) }
+    var showRenameMarketDialog by remember { mutableStateOf(false) }
+    var showDeleteMarketDialog by remember { mutableStateOf(false) }
+    val editingMarket = marketsDraft.firstOrNull { it.id == editingMarketId } ?: marketsDraft.firstOrNull()
+    val areaOrderDraft = editingMarket?.areaOrder ?: ShoppingArea.entries.toList()
+    val enabledAreasDraft = editingMarket?.enabledAreas ?: ShoppingArea.entries.toList()
     var showHistoryClearDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var showUpdateChangelogDialog by remember { mutableStateOf(false) }
@@ -301,10 +294,6 @@ fun SettingsScreen(
     LaunchedEffect(
         storedUrl,
         storedToken,
-        storedTodoEntity,
-        storedTodoListName,
-        storedAreaOrder,
-        storedEnabledAreas,
         storedListDisplayMode,
         storedOfflineMode
     ) {
@@ -312,12 +301,21 @@ fun SettingsScreen(
         url = storedUrl
         urlEditedByUser = false
         token = storedToken
-        todoEntity = storedTodoEntity
-        todoListName = storedTodoListName
         listDisplayMode = ShoppingListDisplayMode.fromStorage(storedListDisplayMode)
-        val restoredAreaOrder = ShoppingArea.orderedFromStorage(storedAreaOrder)
-        areaOrderDraft = restoredAreaOrder
-        enabledAreasDraft = ShoppingArea.enabledFromStorage(storedEnabledAreas, restoredAreaOrder)
+    }
+
+    // Also refreshes the drafts after a backup import
+    LaunchedEffect(storedMarkets, storedActiveMarket?.id) {
+        val markets = storedMarkets ?: return@LaunchedEffect
+        marketsDraft = markets
+        editingMarketId = storedActiveMarket?.id ?: markets.first().id
+    }
+
+    fun updateEditingMarket(transform: (ShoppingMarket) -> ShoppingMarket) {
+        val id = marketsDraft.firstOrNull { it.id == editingMarketId }?.id
+            ?: marketsDraft.firstOrNull()?.id
+            ?: return
+        marketsDraft = ShoppingMarkets.update(marketsDraft, id, transform)
     }
 
     LaunchedEffect(Unit) {
@@ -387,79 +385,6 @@ fun SettingsScreen(
         }
     }
 
-    LaunchedEffect(url, token, todoReloadKey, confirmedHttpUrl, offlineMode) {
-        todoLoadError = null
-
-        val cleanedUrl = normalizeHaUrl(url)
-        val cleanedToken = token.trim()
-
-        // Do not send the token over plain HTTP before the user has confirmed it.
-        // The offline list does not contact Home Assistant at all.
-        if (offlineMode || cleanedUrl.isBlank() || cleanedToken.isBlank() || isUnconfirmedHttpUrl()) {
-            return@LaunchedEffect
-        }
-
-        todoLoading = true
-
-        try {
-            val loaded = withContext(Dispatchers.IO) {
-                val runtimeRepo = (HaRuntime.repository as? HaWebSocketRepository)
-                    ?.takeIf {
-                        HaRuntime.baseUrl == cleanedUrl &&
-                            HaRuntime.token == cleanedToken
-                    }
-
-                runtimeRepo?.loadAvailableLists()
-                    ?: run {
-                        val api = de.robnice.homeshoplist.data.HaServiceFactory.create(cleanedUrl)
-                        val repo = de.robnice.homeshoplist.data.HaTodoListRepository(api)
-                        repo.loadTodoLists(cleanedToken)
-                    }
-            }
-
-            val mergedLoaded = buildList {
-                addAll(loaded)
-                if (todoEntity.isNotBlank() && loaded.none { it.id == todoEntity }) {
-                    add(
-                        ShoppingList(
-                            id = todoEntity,
-                            name = todoListName.ifBlank { todoEntity }
-                        )
-                    )
-                }
-            }.distinctBy { it.id }
-                .sortedBy { it.name.lowercase() }
-
-            todoOptions = mergedLoaded
-
-            if (loaded.isEmpty() && todoEntity.isBlank()) {
-                todoLoadError = context.getString(R.string.error_no_lists_found)
-            } else if (todoEntity.isBlank()) {
-                todoEntity = mergedLoaded.firstOrNull()?.id.orEmpty()
-                todoListName = mergedLoaded.firstOrNull()?.name.orEmpty()
-            } else if (mergedLoaded.none { it.id == todoEntity }) {
-                todoEntity = mergedLoaded.firstOrNull()?.id.orEmpty()
-                todoListName = mergedLoaded.firstOrNull()?.name.orEmpty()
-            } else {
-                todoListName = mergedLoaded.firstOrNull { it.id == todoEntity }?.name.orEmpty()
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Throwable) {
-            if (todoOptions.isEmpty() && todoEntity.isNotBlank()) {
-                todoOptions = listOf(
-                    ShoppingList(
-                        id = todoEntity,
-                        name = todoListName.ifBlank { todoEntity }
-                    )
-                )
-            }
-            todoLoadError = e.message ?: context.getString(R.string.loading_failed)
-        } finally {
-            todoLoading = false
-        }
-    }
-
     fun saveSettings() {
         val cleanedUrl = normalizeHaUrl(url)
         val cleanedToken = token.trim()
@@ -468,32 +393,11 @@ fun SettingsScreen(
             dataStore.setOfflineMode(offlineMode)
             dataStore.saveHaUrl(cleanedUrl)
             dataStore.saveHaToken(cleanedToken)
-            dataStore.saveTodoEntity(todoEntity)
-            dataStore.saveTodoListName(
-                todoListName.ifBlank {
-                    todoOptions.firstOrNull { it.id == todoEntity }?.name.orEmpty()
-                }
-            )
-            dataStore.saveAreaOrder(
-                ShoppingArea.serializeOrder(areaOrderDraft)
-            )
-            dataStore.saveEnabledAreas(
-                ShoppingArea.serializeEnabledAreas(enabledAreasDraft)
-            )
-            dataStore.saveListDisplayMode(listDisplayMode.storageValue)
-            if (!offlineMode && cleanedUrl.isNotBlank() && cleanedToken.isNotBlank()) {
-                runCatching {
-                    val putRequest = PutDataMapRequest.create("/ha_settings").apply {
-                        dataMap.putString("ha_url", cleanedUrl)
-                        dataMap.putString("ha_token", cleanedToken)
-                        dataMap.putString("todo_entity", todoEntity)
-                        dataMap.putString("list_display_mode", listDisplayMode.storageValue)
-                        dataMap.putString("area_order", ShoppingArea.serializeOrder(areaOrderDraft))
-                        dataMap.putLong("timestamp", System.currentTimeMillis())
-                    }.asPutDataRequest().setUrgent()
-                    Wearable.getDataClient(context).putDataItem(putRequest)
-                }
+            if (marketsDraft.isNotEmpty()) {
+                dataStore.saveMarkets(marketsDraft)
             }
+            dataStore.saveListDisplayMode(listDisplayMode.storageValue)
+            // The watch gets the saved values via WearSettingsPublisher.publishOnChange
             navController.navigate(Screen.Shopping.route) {
                 popUpTo(navController.graph.findStartDestination().id) {
                     inclusive = true
@@ -504,7 +408,9 @@ fun SettingsScreen(
     }
 
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .semantics { testTagsAsResourceId = true },
         color = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) {
@@ -522,28 +428,36 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             TabRow(
-                selectedTabIndex = selectedTab.ordinal,
+                selectedTabIndex = pagerState.currentPage,
                 containerColor = MaterialTheme.colorScheme.background
             ) {
                 SettingsTab.entries.forEach { tab ->
                     Tab(
-                        selected = selectedTab == tab,
-                        onClick = { selectedTab = tab },
-                        text = { SingleLineTabLabel(t(tab.titleRes)) }
+                        selected = pagerState.currentPage == tab.ordinal,
+                        onClick = { coroutineScope.launch { pagerState.animateScrollToPage(tab.ordinal) } },
+                        // Stable ids for the screenshot tools (store/tools), independent of the language
+                        modifier = Modifier.testTag("tab_${tab.name.lowercase()}"),
+                        icon = { Icon(tab.icon, contentDescription = t(tab.titleRes)) }
                     )
                 }
             }
 
-            // Own scroll position per tab
-            key(selectedTab) {
+            // One page per tab, each with its own scroll position
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.Top
+            ) { page ->
+                val pageTab = SettingsTab.entries[page]
+                val pageScrollState = rememberScrollState()
                 Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
+                        .fillMaxSize()
+                        .verticalScroll(pageScrollState)
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    if (selectedTab == SettingsTab.Connection) {
+                    if (pageTab == SettingsTab.Connection) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -564,7 +478,7 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    if (selectedTab == SettingsTab.Connection && !offlineMode) {
+                    if (pageTab == SettingsTab.Connection && !offlineMode) {
                         SettingFieldHeader(
                             text = t(R.string.ha_url),
                             onHelpClick = { selectedHelpTopic = SettingsHelpTopic.HaUrl }
@@ -621,144 +535,12 @@ fun SettingsScreen(
                             colors = settingsTextFieldColors()
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        SettingFieldHeader(
-                            text = t(R.string.settings_list),
-                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListSelection }
-                        )
-
-                        when {
-                            todoLoading -> {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        strokeWidth = 2.dp
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(t(R.string.loading_lists))
-                                }
-                            }
-
-                            todoOptions.isNotEmpty() -> {
-                                ExposedDropdownMenuBox(
-                                    expanded = todoExpanded,
-                                    onExpandedChange = { todoExpanded = !todoExpanded }
-                                ) {
-                                    val selectedName = todoOptions
-                                        .firstOrNull { it.id == todoEntity }
-                                        ?.name
-                                        ?: todoEntity
-
-                                    OutlinedTextField(
-                                        value = selectedName,
-                                        onValueChange = {},
-                                        readOnly = true,
-                                        trailingIcon = {
-                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = todoExpanded)
-                                        },
-                                        modifier = Modifier
-                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                                            .fillMaxWidth(),
-                                        colors = settingsTextFieldColors()
-                                    )
-
-                                    ExposedDropdownMenu(
-                                        expanded = todoExpanded,
-                                        onDismissRequest = { todoExpanded = false },
-                                        containerColor = MaterialTheme.colorScheme.surface
-                                    ) {
-                                        todoOptions.forEach { option ->
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Text(
-                                                        text = option.name,
-                                                        color = MaterialTheme.colorScheme.onSurface
-                                                    )
-                                                },
-                                                onClick = {
-                                                    todoEntity = option.id
-                                                    todoListName = option.name
-                                                    todoExpanded = false
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            else -> {
-                                OutlinedTextField(
-                                    value = todoEntity,
-                                    onValueChange = {
-                                        todoEntity = it
-                                        if (todoListName.isBlank()) {
-                                            todoListName = it
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    singleLine = true,
-                                    colors = settingsTextFieldColors()
-                                )
-                            }
-                        }
-
-                        if (todoLoadError != null) {
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = t(R.string.error_list_not_loaded),
-                                color = MaterialTheme.colorScheme.error
-                            )
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            Text(
-                                text = todoLoadError.orEmpty(),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            OutlinedButton(onClick = { todoReloadKey++ }) {
-                                Text(t(R.string.retry))
-                            }
-                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    if (selectedTab == SettingsTab.View) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            SettingLabelWithHelp(
-                                text = t(R.string.notifications_enabled),
-                                onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Notifications },
-                                modifier = Modifier.weight(1f),
-                                enabled = !offlineMode
-                            )
-
-                            // The offline list never changes remotely, so there is nothing to notify about
-                            Switch(
-                                checked = notificationsEnabled && !offlineMode,
-                                onCheckedChange = {
-                                    coroutineScope.launch {
-                                        dataStore.setNotificationsEnabled(it)
-                                    }
-                                },
-                                enabled = !offlineMode
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
+                    if (pageTab == SettingsTab.Lists) {
+                        // Display mode is part of the draft and saved with the Save button
                         SettingFieldHeader(
                             text = t(R.string.list_display_mode_label),
                             onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ListDisplayMode }
@@ -784,9 +566,23 @@ fun SettingsScreen(
                         HorizontalDivider()
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        ListsSettingsSection(
+                            context = context,
+                            dataStore = dataStore,
+                            offlineMode = storedOfflineMode,
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Lists }
+                        )
+                    }
+
+                    if (pageTab == SettingsTab.Help) {
+                        // The table of contents scrolls this page to the chapters
+                        HelpSection(scrollState = pageScrollState)
+                    }
+
+                    if (pageTab == SettingsTab.Markets) {
                         SectionHeaderWithHelp(
                             text = t(R.string.area_order_title),
-                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.AreaVisibility }
+                            onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Markets }
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -799,6 +595,19 @@ fun SettingsScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        editingMarket?.let { market ->
+                            MarketSelectorRow(
+                                markets = marketsDraft,
+                                selected = market,
+                                onSelect = { editingMarketId = it.id },
+                                onAdd = { showAddMarketDialog = true },
+                                onRename = { showRenameMarketDialog = true },
+                                onDelete = { showDeleteMarketDialog = true }
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+
                         Card(
                             shape = MaterialTheme.shapes.large,
                             colors = CardDefaults.cardColors(
@@ -808,8 +617,12 @@ fun SettingsScreen(
                             ReorderableColumn(
                                 list = areaOrderDraft,
                                 onSettle = { fromIndex, toIndex ->
-                                    areaOrderDraft = areaOrderDraft.toMutableList().apply {
-                                        add(toIndex, removeAt(fromIndex))
+                                    updateEditingMarket { market ->
+                                        market.copy(
+                                            areaOrder = market.areaOrder.toMutableList().apply {
+                                                add(toIndex, removeAt(fromIndex))
+                                            }
+                                        )
                                     }
                                 },
                                 modifier = Modifier
@@ -823,12 +636,16 @@ fun SettingsScreen(
                                             enabled = area in enabledAreasDraft,
                                             canDisable = enabledAreasDraft.size > 1,
                                             onEnabledChanged = { isEnabled ->
-                                                enabledAreasDraft = if (isEnabled) {
-                                                    areaOrderDraft.filter {
-                                                        it in enabledAreasDraft || it == area
-                                                    }
-                                                } else {
-                                                    enabledAreasDraft.filterNot { it == area }
+                                                updateEditingMarket { market ->
+                                                    market.copy(
+                                                        enabledAreas = if (isEnabled) {
+                                                            market.areaOrder.filter {
+                                                                it in market.enabledAreas || it == area
+                                                            }
+                                                        } else {
+                                                            market.enabledAreas.filterNot { it == area }
+                                                        }
+                                                    )
                                                 }
                                             },
                                             dragHandleModifier = Modifier.draggableHandle(),
@@ -851,8 +668,13 @@ fun SettingsScreen(
 
                         OutlinedButton(
                             onClick = {
-                                areaOrderDraft = ShoppingArea.entries.toList()
-                                enabledAreasDraft = ShoppingArea.entries.toList()
+                                // Resets only the market being edited
+                                updateEditingMarket { market ->
+                                    market.copy(
+                                        areaOrder = ShoppingArea.entries.toList(),
+                                        enabledAreas = ShoppingArea.enabledByDefault
+                                    )
+                                }
                             }
                         ) {
                             Text(t(R.string.area_order_reset))
@@ -861,7 +683,35 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    if (selectedTab == SettingsTab.Data) {
+                    if (pageTab == SettingsTab.Data) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            SettingLabelWithHelp(
+                                text = t(R.string.notifications_enabled),
+                                onHelpClick = { selectedHelpTopic = SettingsHelpTopic.Notifications },
+                                modifier = Modifier.weight(1f),
+                                enabled = !offlineMode
+                            )
+
+                            // The offline list never changes remotely, so there is nothing to notify about
+                            Switch(
+                                checked = notificationsEnabled && !offlineMode,
+                                onCheckedChange = {
+                                    coroutineScope.launch {
+                                        dataStore.setNotificationsEnabled(it)
+                                    }
+                                },
+                                enabled = !offlineMode
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         SectionHeaderWithHelp(
                             text = t(R.string.product_history_title),
                             onHelpClick = { selectedHelpTopic = SettingsHelpTopic.ProductHistory }
@@ -895,22 +745,10 @@ fun SettingsScreen(
                                         url = importedConnection.url
                                         urlEditedByUser = false
                                         token = importedConnection.token
-                                        todoReloadKey++
                                     }
                                 }
 
-                                if (BackupSection.CATEGORIES in importedSections) {
-                                    payload.categories?.let { importedCategories ->
-                                        val importedOrder = ShoppingArea.orderedFromStorage(
-                                            importedCategories.order.joinToString(",")
-                                        )
-                                        areaOrderDraft = importedOrder
-                                        enabledAreasDraft = ShoppingArea.enabledFromStorage(
-                                            importedCategories.enabled.joinToString(","),
-                                            importedOrder
-                                        )
-                                    }
-                                }
+                                // Imported markets reach the drafts via storedMarkets
                             }
                         )
 
@@ -1098,6 +936,46 @@ fun SettingsScreen(
         }
     }
 
+    editingMarket?.let { market ->
+        if (showAddMarketDialog) {
+            AddMarketDialog(
+                markets = marketsDraft,
+                initialTemplate = market,
+                onDismiss = { showAddMarketDialog = false },
+                onConfirm = { name, templateId ->
+                    val newId = ShoppingMarkets.newId()
+                    marketsDraft = ShoppingMarkets.add(marketsDraft, name, templateId, newId)
+                    editingMarketId = newId
+                    showAddMarketDialog = false
+                }
+            )
+        }
+
+        if (showRenameMarketDialog) {
+            RenameMarketDialog(
+                market = market,
+                markets = marketsDraft,
+                onDismiss = { showRenameMarketDialog = false },
+                onConfirm = { name ->
+                    marketsDraft = ShoppingMarkets.rename(marketsDraft, market.id, name)
+                    showRenameMarketDialog = false
+                }
+            )
+        }
+
+        if (showDeleteMarketDialog && marketsDraft.size > 1) {
+            DeleteMarketDialog(
+                market = market,
+                onDismiss = { showDeleteMarketDialog = false },
+                onConfirm = {
+                    marketsDraft = ShoppingMarkets.delete(marketsDraft, market.id)
+                    editingMarketId = marketsDraft.first().id
+                    showDeleteMarketDialog = false
+                }
+            )
+        }
+    }
+
     if (showHistoryClearDialog) {
         AlertDialog(
             onDismissRequest = { showHistoryClearDialog = false },
@@ -1225,7 +1103,7 @@ private fun SettingFieldHeader(
 }
 
 @Composable
-private fun SettingLabelWithHelp(
+internal fun SettingLabelWithHelp(
     text: String,
     onHelpClick: () -> Unit,
     modifier: Modifier = Modifier,

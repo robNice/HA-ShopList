@@ -17,4 +17,7 @@
     <string name="cd_item_open">Не куплено</string>
     <string name="cd_item_done">Готово</string>
     <string name="cd_offline">Офлайн – зміни буде синхронізовано пізніше</string>
+    <string name="pick_list">Вибрати список</string>
+    <string name="add_item">Додати товар</string>
+    <string name="no_category">Без категорії</string>
 </resources>

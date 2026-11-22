@@ -89,6 +89,29 @@ class ShoppingAreaDescriptionTest {
     }
 
     @Test
+    fun `mangled suffixes from mealie are stripped from visible name`() {
+        val cases = mapOf(
+            "Tortellini\u0000 |" to null,
+            "Tortellini\u0000\u0000 | groceries" to ShoppingArea.GROCERIES,
+            "Tortellini\u0000 |\u0000 | groceries" to ShoppingArea.GROCERIES,
+            "Tortellini\u0000 | unknown" to null
+        )
+        cases.forEach { (raw, expectedArea) ->
+            val managed = parseManagedItemName(raw)
+            assertEquals(raw, "Tortellini", managed.visibleName)
+            assertEquals(raw, expectedArea, managed.area)
+        }
+    }
+
+    @Test
+    fun `encoding a mangled name does not stack suffixes`() {
+        assertEquals(
+            "Tortellini\u0000 | groceries",
+            encodeManagedItemName("Tortellini\u0000 |", ShoppingArea.GROCERIES)
+        )
+    }
+
+    @Test
     fun `legacy visible pipe suffix is no longer parsed as area`() {
         val managed = parseManagedItemName("Tomaten | other | produce")
 

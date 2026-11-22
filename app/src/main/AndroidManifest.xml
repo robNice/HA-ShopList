@@ -32,6 +32,10 @@
                     android:host="*"
                     android:pathPrefix="/request_settings"
                     android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/select_"
+                    android:scheme="wear" />
             </intent-filter>
         </service>
 

@@ -1,18 +1,25 @@
 """Minimal Home Assistant todo API with demo items, for store screenshots.
 
-Usage: python mock_ha.py <language> [phone [entity id]]   (listens on port 8123)
+Usage: python mock_ha.py <language> [phone [entity id [help]]]   (listens on port 8123)
        python mock_ha.py <language> letter                  (prints a letter that gives several suggestions)
+       python mock_ha.py <language> name                    (prints the name of the phone demo list)
 The emulator reaches it at http://10.0.2.2:8123.
 
 Without "phone" it serves the short watch demo list (en, de) over the REST API.
 With "phone" it serves the longer phone demo list over the REST and the WebSocket API.
+With "help" it also serves two more lists (help_demo.py) and answers as an administrator,
+for the screenshots of the help in the settings.
 """
 import base64
 import hashlib
 import http.server
 import json
 import sys
+import os
 import threading
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import help_demo  # noqa: E402
 
 # Same separator as the app uses between item name and area key
 SEP = "\x00 | "
@@ -68,6 +75,10 @@ PHONE_LISTS = {
 language = sys.argv[1] if len(sys.argv) > 1 else "en"
 phone = len(sys.argv) > 2 and sys.argv[2] in ("phone", "letter")
 entity = sys.argv[3] if len(sys.argv) > 3 else "todo.shopping_list"
+if len(sys.argv) > 2 and sys.argv[2] == "name":
+    # Name of the phone demo list, e.g. for help_prefs.py
+    sys.stdout.buffer.write(PHONE_LISTS.get(language, PHONE_LISTS["en"])[0].encode("utf-8"))
+    sys.exit()
 if len(sys.argv) > 2 and sys.argv[2] == "letter":
     # The first letter shared by most item names, so typing it shows several suggestions
     words = [n.lower() for n in PHONE_LISTS.get(language, PHONE_LISTS["en"])[1]]
@@ -81,6 +92,10 @@ if phone:
 else:
     list_name, names = "Shopping list", WATCH_NAMES.get(language, WATCH_NAMES["en"])
     areas, completed_from = WATCH_AREAS, WATCH_COMPLETED_FROM
+
+help_mode = len(sys.argv) > 4 and sys.argv[4] == "help"
+# (entity id, friendly name) of all lists
+todo_lists = help_demo.lists(language, entity, list_name) if help_mode else [(entity, list_name)]
 
 items = [
     {"uid": str(i + 1), "summary": name + SEP + area, "status": "completed" if i >= completed_from else "needs_action"}
@@ -147,8 +162,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def states(self):
+        open_count = str(sum(i["status"] == "needs_action" for i in items))
+        return [{"entity_id": list_id, "state": open_count, "attributes": {"friendly_name": name}}
+                for list_id, name in todo_lists]
+
     def do_GET(self):
         if self.headers.get("Upgrade", "").lower() != "websocket":
+            if self.path.startswith("/api/states"):
+                data = json.dumps(self.states()).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
             self.send_error(404)
             return
         accept = base64.b64encode(hashlib.sha1((self.headers["Sec-WebSocket-Key"] + WS_GUID).encode()).digest())
@@ -208,8 +236,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             msg_id = message.get("id")
             result = None
             if kind == "get_states":
-                result = [{"entity_id": entity, "state": str(sum(i["status"] == "needs_action" for i in items)),
-                           "attributes": {"friendly_name": list_name}}]
+                result = self.states()
+            elif kind == "auth/current_user":
+                result = {"id": "demo", "name": "Demo", "is_owner": help_mode, "is_admin": help_mode}
+            elif kind == "config/entity_registry/get":
+                list_id = message.get("entity_id")
+                deletable = list_id == help_demo.DELETABLE_ENTITY
+                result = {"entity_id": list_id, "platform": "local_todo" if deletable else "shopping_list",
+                          "config_entry_id": "demo_" + str(list_id).replace(".", "_")}
             elif kind == "todo/item/list":
                 with lock:
                     result = {"items": [dict(i) for i in items]}

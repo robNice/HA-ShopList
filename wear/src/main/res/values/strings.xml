@@ -17,4 +17,7 @@
     <string name="cd_item_open">Open</string>
     <string name="cd_item_done">Done</string>
     <string name="cd_offline">Offline – changes will be synced later</string>
+    <string name="pick_list">Choose list</string>
+    <string name="add_item">Add item</string>
+    <string name="no_category">No category</string>
 </resources>
