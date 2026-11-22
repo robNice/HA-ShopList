@@ -21,7 +21,14 @@ class WearListSync(context: Context, private val settings: WearSettingsStore.Wea
 
     data class Result(val items: List<WearShoppingItem>, val online: Boolean)
 
-    private data class PendingOp(val type: String, val id: String, val complete: Boolean = false)
+    private data class PendingOp(
+        val type: String,
+        val id: String,
+        val complete: Boolean = false,
+        // Only for adds: name and category of the new item
+        val name: String? = null,
+        val areaKey: String? = null
+    )
 
     private val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val owner = "${settings.url}|${settings.entity}"
@@ -52,6 +59,18 @@ class WearListSync(context: Context, private val settings: WearSettingsStore.Wea
         val items = (cachedItems() ?: emptyList()).map {
             if (it.id == item.id) it.copy(complete = complete) else it
         }
+        writeItems(items)
+        items
+    }
+
+    /**
+     * Adds an item locally (with a temporary id), queues it and returns the updated list.
+     * It is sent with the next sync, also if there is no connection right now.
+     */
+    fun add(name: String, areaKey: String?): List<WearShoppingItem> = synchronized(LOCK) {
+        val tempId = LOCAL_ID_PREFIX + java.util.UUID.randomUUID()
+        writePending(readPending() + PendingOp(TYPE_ADD, tempId, name = name, areaKey = areaKey))
+        val items = (cachedItems() ?: emptyList()) + WearShoppingItem(tempId, name, complete = false, areaKey = areaKey)
         writeItems(items)
         items
     }
@@ -93,10 +112,12 @@ class WearListSync(context: Context, private val settings: WearSettingsStore.Wea
     private suspend fun flushPending(client: HaWearClient): Boolean {
         val ops = synchronized(LOCK) { readPending() }
         for (op in ops) {
-            val result = if (op.type == TYPE_REMOVE) {
-                client.removeItem(op.id)
-            } else {
-                client.toggleItem(op.id, op.complete)
+            val result = when {
+                op.type == TYPE_ADD -> client.addItem(op.name.orEmpty(), op.areaKey)
+                // Items added offline only get their real id with the next load
+                op.id.startsWith(LOCAL_ID_PREFIX) -> HaWearClient.WriteResult.GONE
+                op.type == TYPE_REMOVE -> client.removeItem(op.id)
+                else -> client.toggleItem(op.id, op.complete)
             }
             if (result == HaWearClient.WriteResult.FAILED) return false
             // Sent, or the item no longer exists on the server: either way it is done
@@ -108,10 +129,10 @@ class WearListSync(context: Context, private val settings: WearSettingsStore.Wea
     private fun applyPending(items: List<WearShoppingItem>, pending: List<PendingOp>): List<WearShoppingItem> {
         var result = items
         pending.forEach { op ->
-            result = if (op.type == TYPE_REMOVE) {
-                result.filterNot { it.id == op.id }
-            } else {
-                result.map { if (it.id == op.id) it.copy(complete = op.complete) else it }
+            result = when (op.type) {
+                TYPE_ADD -> result + WearShoppingItem(op.id, op.name.orEmpty(), complete = false, areaKey = op.areaKey)
+                TYPE_REMOVE -> result.filterNot { it.id == op.id }
+                else -> result.map { if (it.id == op.id) it.copy(complete = op.complete) else it }
             }
         }
         return result
@@ -123,7 +144,13 @@ class WearListSync(context: Context, private val settings: WearSettingsStore.Wea
             val array = JSONArray(raw)
             (0 until array.length()).map { index ->
                 val op = array.getJSONObject(index)
-                PendingOp(op.getString("type"), op.getString("id"), op.optBoolean("complete"))
+                PendingOp(
+                    type = op.getString("type"),
+                    id = op.getString("id"),
+                    complete = op.optBoolean("complete"),
+                    name = op.optString("name").takeIf { op.has("name") },
+                    areaKey = if (op.isNull("area")) null else op.optString("area")
+                )
             }
         }.getOrDefault(emptyList())
     }
@@ -131,7 +158,14 @@ class WearListSync(context: Context, private val settings: WearSettingsStore.Wea
     private fun writePending(ops: List<PendingOp>) {
         val array = JSONArray()
         ops.forEach { op ->
-            array.put(JSONObject().put("type", op.type).put("id", op.id).put("complete", op.complete))
+            array.put(
+                JSONObject()
+                    .put("type", op.type)
+                    .put("id", op.id)
+                    .put("complete", op.complete)
+                    .put("name", op.name ?: JSONObject.NULL)
+                    .put("area", op.areaKey ?: JSONObject.NULL)
+            )
         }
         prefs.edit().putString(KEY_PENDING, array.toString()).commit()
     }
@@ -171,6 +205,8 @@ class WearListSync(context: Context, private val settings: WearSettingsStore.Wea
         private const val KEY_PENDING = "pending"
         private const val TYPE_TOGGLE = "toggle"
         private const val TYPE_REMOVE = "remove"
+        private const val TYPE_ADD = "add"
+        private const val LOCAL_ID_PREFIX = "local:"
 
         private val LOCK = Any()
         private val SYNC_MUTEX = Mutex()

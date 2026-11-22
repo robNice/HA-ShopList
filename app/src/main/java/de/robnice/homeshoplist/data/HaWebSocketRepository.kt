@@ -99,7 +99,7 @@ class HaWebSocketRepository(
         scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     ) : this(
         client = HaWebSocketClient(baseUrl, token),
-        pendingSyncStore = SharedPreferencesPendingSyncStore(appContext),
+        pendingSyncStore = SharedPreferencesPendingSyncStore(appContext, todoEntity),
         productHistoryRecorder = RepositoryProductHistoryRecorder(appContext),
         notifier = SystemShoppingNotifier(appContext),
         todoEntity = todoEntity,
@@ -177,6 +177,10 @@ class HaWebSocketRepository(
     override val isConnecting = _isConnecting.asStateFlow()
     override val items = _items.asStateFlow()
     override val newItems = _newItems.asSharedFlow()
+
+    private val _listRemoved = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    /** Emits the entity id when the current list was deleted in Home Assistant. */
+    val listRemoved = _listRemoved.asSharedFlow()
     override val remoteActivity = _remoteActivity.asSharedFlow()
     override val reconnected = _reconnected.asStateFlow()
 
@@ -291,6 +295,11 @@ class HaWebSocketRepository(
                     payload = JSONObject()
                         .put("entity_id", todoEntity)
                 )
+                // Notices when the list itself is deleted in Home Assistant ("r" = removed)
+                client.send(
+                    type = "subscribe_entities",
+                    payload = JSONObject().put("entity_ids", JSONArray().put(todoEntity))
+                )
                 if (!subscribeSent) {
                     Debug.log("REPOSITORY: subscribe send failed after ready -> reconnect")
                     _isOffline.value = true
@@ -328,6 +337,10 @@ class HaWebSocketRepository(
 
                         "event" -> {
                             val event = json.optJSONObject("event")
+                            if (event != null && isEntityRemovedEvent(event, todoEntity)) {
+                                Debug.log("REPOSITORY: list $todoEntity was removed in Home Assistant")
+                                _listRemoved.tryEmit(todoEntity)
+                            }
                             if (event != null && event.has("items")) {
                                 parseItemsFromArray(
                                     array = event.getJSONArray("items"),
@@ -341,6 +354,11 @@ class HaWebSocketRepository(
                 }
             }
         }
+    }
+
+    private fun isEntityRemovedEvent(event: JSONObject, entityId: String): Boolean {
+        val removed = event.optJSONArray("r") ?: return false
+        return (0 until removed.length()).any { removed.optString(it) == entityId }
     }
 
     private fun parseItemsFromResult(resultObj: JSONObject) {
@@ -442,8 +460,12 @@ class HaWebSocketRepository(
                 remote.id !in usedRemoteIds &&
                     remote.name == pendingAdd.name
             } ?: parsedRemote.firstOrNull { remote ->
+                // Fallback: the server echoed a name whose area suffix we could not decode
+                // (e.g. the separator's NUL byte got lost). Without this match the pending add
+                // would stay forever and be re-sent, so the item keeps coming back after removal.
                 remote.id !in usedRemoteIds &&
-                    remote.name == pendingAdd.name
+                    remote.id !in previousRemoteIds &&
+                    looseItemName(remote.name) == looseItemName(pendingAdd.name)
             }
 
             if (matched == null) {
@@ -590,6 +612,21 @@ class HaWebSocketRepository(
 
         val states = response.optJSONArray("result") ?: return null
         return parseTodoListsFromStates(states)
+    }
+
+    /** Whether the token belongs to a Home Assistant administrator; null if unknown (no connection). */
+    suspend fun isCurrentUserAdmin(timeoutMillis: Long = 5_000L): Boolean? {
+        if (!awaitReady(timeoutMillis)) return null
+        return HaListAdminQueries.isAdmin(client, timeoutMillis)
+    }
+
+    /** Entity registry data per todo list; lists without registry entry are missing in the result. */
+    suspend fun loadTodoListRegistryInfo(
+        entityIds: List<String>,
+        timeoutMillis: Long = 5_000L
+    ): Map<String, TodoListRegistryInfo>? {
+        if (!awaitReady(timeoutMillis)) return null
+        return HaListAdminQueries.registryInfo(client, entityIds, timeoutMillis)
     }
 
     override fun addItem(name: String, area: ShoppingArea?) {
@@ -1460,7 +1497,20 @@ class HaWebSocketRepository(
         return if (has(key) && !isNull(key)) optLong(key) else null
     }
 
-    private fun nextTempId(): String = "$LOCAL_ID_PREFIX${tempIdCounter.getAndIncrement()}"
+    /** Name without NUL bytes and without a trailing (possibly empty) " | <area>" suffix. */
+    private fun looseItemName(name: String): String {
+        var result = name.replace("\u0000", "").trim()
+        val separatorIndex = result.lastIndexOf('|')
+        if (separatorIndex > 0) {
+            val suffix = result.substring(separatorIndex + 1)
+            if (suffix.isBlank() || ShoppingArea.fromKey(suffix) != null) {
+                result = result.substring(0, separatorIndex).trim()
+            }
+        }
+        return result
+    }
+
+    private fun nextTempId(): String ="$LOCAL_ID_PREFIX${tempIdCounter.getAndIncrement()}"
 
     private fun managedNameForService(name: String, area: ShoppingArea?): String {
         return encodeManagedItemName(name, area)

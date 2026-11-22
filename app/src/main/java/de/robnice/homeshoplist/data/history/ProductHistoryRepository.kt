@@ -2,6 +2,7 @@ package de.robnice.homeshoplist.data.history
 
 import android.content.Context
 import de.robnice.homeshoplist.model.ShoppingArea
+import de.robnice.homeshoplist.model.sanitizeVisibleItemName
 import kotlinx.coroutines.flow.Flow
 
 class ProductHistoryRepository private constructor(
@@ -32,14 +33,14 @@ class ProductHistoryRepository private constructor(
             if (normalized.isBlank()) return@mapNotNull null
             candidate.copy(
                 normalizedName = normalized,
-                displayName = candidate.displayName.trim()
+                displayName = sanitizeVisibleItemName(candidate.displayName)
             )
         }
         dao.mergeImported(sanitized)
     }
 
     suspend fun recordProductUse(name: String, area: ShoppingArea? = null) {
-        val trimmed = name.trim()
+        val trimmed = sanitizeVisibleItemName(name)
         val normalized = normalizeName(trimmed)
         if (normalized.isBlank()) {
             return
@@ -57,7 +58,7 @@ class ProductHistoryRepository private constructor(
     }
 
     suspend fun rememberProduct(name: String, area: ShoppingArea? = null) {
-        val trimmed = name.trim()
+        val trimmed = sanitizeVisibleItemName(name)
         val normalized = normalizeName(trimmed)
         if (normalized.isBlank()) {
             return
@@ -116,8 +117,7 @@ class ProductHistoryRepository private constructor(
             }
 
         fun normalizeName(name: String): String =
-            name
-                .trim()
+            sanitizeVisibleItemName(name)
                 .lowercase()
                 .replace(Regex("\\s+"), " ")
     }

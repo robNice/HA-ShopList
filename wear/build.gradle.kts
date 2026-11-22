@@ -11,8 +11,8 @@ android {
         applicationId = "de.robnice.homeshoplist"
         minSdk = 26
         targetSdk = 35
-        versionCode = 101015001
-        versionName = "1.15.1-wear"
+        versionCode = 101016000
+        versionName = "1.16.0-wear"
     }
 
     compileOptions {
@@ -61,6 +61,7 @@ android {
 
 dependencies {
     implementation(libs.play.services.wearable)
+    implementation(libs.androidx.core.splashscreen)
     // play-services-basement only asks for fragment 1.1.0, which Play reports as outdated
     implementation(libs.androidx.fragment)
     implementation(libs.wear.compose.material)
@@ -68,6 +69,7 @@ dependencies {
     implementation(libs.wear.tiles)
     implementation(libs.wear.protolayout)
     implementation(libs.wear.remote.interactions)
+    implementation(libs.wear.input)
     implementation(libs.concurrent.futures)
     implementation(libs.work.runtime.ktx)
     implementation(libs.okhttp)

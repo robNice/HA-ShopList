@@ -17,4 +17,7 @@
     <string name="cd_item_open">À acheter</string>
     <string name="cd_item_done">Terminé</string>
     <string name="cd_offline">Hors ligne – les modifications seront synchronisées plus tard</string>
+    <string name="pick_list">Choisir la liste</string>
+    <string name="add_item">Ajouter un article</string>
+    <string name="no_category">Sans catégorie</string>
 </resources>

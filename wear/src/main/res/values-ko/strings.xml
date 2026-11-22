@@ -17,4 +17,7 @@
     <string name="cd_item_open">미완료</string>
     <string name="cd_item_done">완료</string>
     <string name="cd_offline">오프라인 – 변경 사항은 나중에 동기화됩니다</string>
+    <string name="pick_list">목록 선택</string>
+    <string name="add_item">항목 추가</string>
+    <string name="no_category">카테고리 없음</string>
 </resources>

@@ -66,6 +66,10 @@ class HaWebSocketClient(
     @Volatile
     private var isConnecting = false
     @Volatile
+    private var connectStartedAt = 0L
+    private var connectWatchdogJob: Job? = null
+    private val reconnectScheduled = java.util.concurrent.atomic.AtomicBoolean(false)
+    @Volatile
     private var lastServerMessageAt = 0L
 
 
@@ -81,8 +85,11 @@ class HaWebSocketClient(
         }
 
         if (isConnecting) {
-            Debug.log("WS connect skipped (already connecting)")
-            return
+            if (!isConnectAttemptStalled()) {
+                Debug.log("WS connect skipped (already connecting)")
+                return
+            }
+            abortStalledConnectAttempt()
         }
 
         if (webSocket != null) {
@@ -92,6 +99,7 @@ class HaWebSocketClient(
 
         manualDisconnect = false
         isConnecting = true
+        connectStartedAt = System.currentTimeMillis()
 
         val cleanedBase = baseUrl.trimEnd('/')
 
@@ -112,7 +120,42 @@ class HaWebSocketClient(
             return
         }
 
-        webSocket = client.newWebSocket(request, socketListener)
+        val socket = client.newWebSocket(request, socketListener)
+        webSocket = socket
+        startConnectWatchdog(socket)
+    }
+
+    /**
+     * A connect attempt started while the network changes can hang (e.g. in DNS resolution) without
+     * ever calling back. Without this, isConnecting stays true and every later connect is skipped.
+     */
+    private fun isConnectAttemptStalled(): Boolean =
+        isConnecting && System.currentTimeMillis() - connectStartedAt > CONNECT_STALL_MILLIS
+
+    private fun abortStalledConnectAttempt() {
+        Debug.log("WS connect attempt stalled -> cancel and retry")
+        val stalled = webSocket
+        webSocket = null
+        isConnecting = false
+        isConnected = false
+        isAuthenticated = false
+        try {
+            stalled?.cancel()
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun startConnectWatchdog(socket: WebSocket) {
+        connectWatchdogJob?.cancel()
+        connectWatchdogJob = scope.launch {
+            delay(CONNECT_STALL_MILLIS + 500)
+            if (webSocket === socket && isConnecting && !isConnected) {
+                abortStalledConnectAttempt()
+                _disconnected.tryEmit(Unit)
+                _connectionErrors.tryEmit("Connection attempt timed out")
+                scheduleReconnect()
+            }
+        }
     }
 
     private val socketListener = object : WebSocketListener() {
@@ -302,7 +345,7 @@ class HaWebSocketClient(
 
     override fun ensureConnected() {
         if (!reconnectAllowed) return
-        if (isConnecting) return
+        if (isConnecting && !isConnectAttemptStalled()) return
 
         val fullyReady = isConnected && isAuthenticated && webSocket != null
         if (fullyReady) return
@@ -329,6 +372,7 @@ class HaWebSocketClient(
 
         if (!allowed) {
             reconnectJob?.cancel()
+        reconnectScheduled.set(false)
             stopHeartbeat()
         }
     }
@@ -337,8 +381,15 @@ class HaWebSocketClient(
         Debug.log("WS disconnect() called")
         manualDisconnect = true
         reconnectJob?.cancel()
+        reconnectScheduled.set(false)
+        connectWatchdogJob?.cancel()
         stopHeartbeat()
-        webSocket?.close(1000, "Closing")
+        if (isConnecting && !isConnected) {
+            // Still connecting: no close handshake possible, drop the attempt so a later connect starts fresh
+            abortStalledConnectAttempt()
+        } else {
+            webSocket?.close(1000, "Closing")
+        }
     }
 
     private fun startHeartbeat() {
@@ -411,10 +462,13 @@ class HaWebSocketClient(
             Debug.log("WS reconnect skipped (background / not allowed)")
             return
         }
-        if (reconnectJob?.isActive == true) return
+        // Not reconnectJob.isActive: a connect attempt can fail (e.g. without network) while the job
+        // that started it is still finishing, and then no further reconnect would ever be scheduled.
+        if (!reconnectScheduled.compareAndSet(false, true)) return
 
         reconnectJob = scope.launch {
             delay(2_000)
+            reconnectScheduled.set(false)
             if (!manualDisconnect && reconnectAllowed) {
                 connect()
             }
@@ -424,5 +478,6 @@ class HaWebSocketClient(
     companion object {
         private const val HEARTBEAT_INTERVAL_MILLIS = 10_000L
         private const val HEARTBEAT_TIMEOUT_MILLIS = 5_000L
+        private const val CONNECT_STALL_MILLIS = 15_000L
     }
 }

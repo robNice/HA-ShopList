@@ -74,6 +74,24 @@ class HaWearClient(
         )
     }
 
+    /** Adds an item; the category is stored like the phone app does (name + separator + key). */
+    suspend fun addItem(name: String, areaKey: String?): WriteResult = withContext(Dispatchers.IO) {
+        val summary = if (areaKey.isNullOrBlank()) name else name + AREA_NAME_SEPARATOR + areaKey
+        val body = JSONObject()
+            .put("entity_id", entityId)
+            .put("item", summary)
+            .toString()
+            .toRequestBody(JSON_MEDIA_TYPE)
+
+        execute(
+            Request.Builder()
+                .url("${baseUrl.trimEnd('/')}/api/services/todo/add_item")
+                .addHeader("Authorization", "Bearer ${token.trim()}")
+                .post(body)
+                .build()
+        )
+    }
+
     suspend fun removeItem(id: String): WriteResult = withContext(Dispatchers.IO) {
         val body = JSONObject()
             .put("entity_id", entityId)
@@ -125,8 +143,9 @@ class HaWearClient(
     }
 
     private fun stripAreaSuffix(summary: String): String {
-        val idx = summary.lastIndexOf(AREA_NAME_SEPARATOR)
-        return if (idx > 0) summary.substring(0, idx) else summary
+        // Everything from the first NUL on is (a possibly mangled) area suffix, see phone app.
+        val beforeNul = summary.substringBefore('\u0000').trim()
+        return beforeNul.ifEmpty { summary.replace("\u0000", "").trim() }
     }
 
     private fun parseAreaKey(summary: String): String? {

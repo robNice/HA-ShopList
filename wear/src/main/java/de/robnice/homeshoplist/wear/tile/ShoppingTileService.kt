@@ -83,7 +83,7 @@ class ShoppingTileService : TileService() {
         val store = WearSettingsStore(this)
         val settings = store.getSettings()
             ?: return messageTile(device, getString(R.string.tile_setup))
-        val listName = todoEntityTitle(settings.entity)
+        val listName = WearSettingsStore(this).getListName() ?: todoEntityTitle(settings.entity)
 
         val cached = store.getOpenCount()
         if (cached != null && System.currentTimeMillis() - cached.updatedAtMillis < CACHE_MAX_AGE_MS) {

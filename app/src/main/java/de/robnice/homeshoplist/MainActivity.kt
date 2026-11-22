@@ -2,6 +2,9 @@ package de.robnice.homeshoplist
 
 import android.Manifest
 import android.widget.Toast
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.platform.testTag
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +17,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -30,6 +34,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import de.robnice.homeshoplist.data.SettingsDataStore
+import de.robnice.homeshoplist.data.WearSettingsPublisher
+import de.robnice.homeshoplist.ui.components.HeaderDropdown
 import de.robnice.homeshoplist.data.update.AppUpdateRepository
 import de.robnice.homeshoplist.data.update.UpdateCheckResult
 import de.robnice.homeshoplist.viewmodel.ShoppingViewModel
@@ -46,10 +52,14 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import de.robnice.homeshoplist.data.history.ProductHistoryEntity
 import de.robnice.homeshoplist.data.history.ProductHistoryRepository
 import de.robnice.homeshoplist.model.ShoppingArea
+import de.robnice.homeshoplist.model.ShoppingList
+import de.robnice.homeshoplist.model.ShoppingLists
 import de.robnice.homeshoplist.model.ShoppingItem
 import de.robnice.homeshoplist.model.ShoppingListDisplayMode
 import de.robnice.homeshoplist.model.label
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -89,6 +99,7 @@ import de.robnice.homeshoplist.data.HaWebSocketRepository
 import de.robnice.homeshoplist.data.LocalShoppingRepository
 import de.robnice.homeshoplist.data.ShoppingRepository
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
@@ -203,8 +214,24 @@ class MainActivity : androidx.activity.ComponentActivity() {
                         return@LaunchedEffect
                     }
 
-                    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank() || todoEntity.isNullOrBlank()) {
+                    if (haUrl.isNullOrBlank() || haToken.isNullOrBlank()) {
                         runtimeRepository = null
+                        return@LaunchedEffect
+                    }
+
+                    if (todoEntity.isNullOrBlank()) {
+                        // Without a list there is no repository yet: pick the first list via REST
+                        runtimeRepository = null
+                        val lists = runCatching {
+                            withContext(Dispatchers.IO) {
+                                de.robnice.homeshoplist.data.HaTodoListRepository(
+                                    de.robnice.homeshoplist.data.HaServiceFactory.create(haUrl)
+                                ).loadTodoLists(haToken)
+                            }
+                        }.getOrNull()
+                        if (!lists.isNullOrEmpty()) {
+                            dataStore.applyAvailableLists(lists)
+                        }
                         return@LaunchedEffect
                     }
 
@@ -243,6 +270,39 @@ class MainActivity : androidx.activity.ComponentActivity() {
 
                     runtimeRepository?.setReconnectAllowed(true)
                     runtimeRepository?.ensureConnected()
+
+                    // No list chosen yet for this connection, or the chosen one was deleted:
+                    // switch to the first available list. A switch changes todoEntity and restarts this effect.
+                    val loadedLists = (runtimeRepository as? de.robnice.homeshoplist.data.HaWebSocketRepository)
+                        ?.loadAvailableLists(timeoutMillis = 15_000L)
+                    if (!loadedLists.isNullOrEmpty()) {
+                        dataStore.applyAvailableLists(loadedLists)
+                    }
+                }
+
+                // Every change of list, store order or connection reaches the watch (see WearSettingsPublisher)
+                LaunchedEffect(dataStore) {
+                    WearSettingsPublisher.publishOnChange(context.applicationContext, dataStore)
+                }
+
+                // The current list was deleted in Home Assistant: switch to the first remaining list
+                LaunchedEffect(runtimeRepository) {
+                    val repo = runtimeRepository as? de.robnice.homeshoplist.data.HaWebSocketRepository
+                        ?: return@LaunchedEffect
+                    repo.listRemoved.collect { removedId ->
+                        val removedName = dataStore.todoListName.first().ifBlank { removedId }
+                        val remaining = (repo.loadAvailableLists(timeoutMillis = 10_000L)
+                            ?: dataStore.knownLists.first())
+                            .filterNot { it.id == removedId }
+                        val switchedTo = dataStore.applyAvailableLists(remaining)
+                        if (switchedTo != null) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.list_removed_switched, removedName, switchedTo.name),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
                 }
 
                 if (config == null) {
@@ -261,10 +321,14 @@ class MainActivity : androidx.activity.ComponentActivity() {
                 ) {
 
                     composable(Screen.Shopping.route) {
-                        ShoppingScreen(
-                            navController = navController,
-                            repository = runtimeRepository
-                        )
+                        // A new repository (e.g. after switching the list) starts with fresh screen state,
+                        // so nothing of the previous list (local order, drag, input) is left over
+                        key(runtimeRepository) {
+                            ShoppingScreen(
+                                navController = navController,
+                                repository = runtimeRepository
+                            )
+                        }
                     }
 
                     composable(Screen.Settings.route) {
@@ -276,7 +340,7 @@ class MainActivity : androidx.activity.ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun ShoppingScreen(
     navController: NavController,
@@ -301,6 +365,7 @@ fun ShoppingScreen(
     val areaOrderRaw by dataStore.areaOrder.collectAsState(initial = "")
     val enabledAreasRaw by dataStore.enabledAreas.collectAsState(initial = "")
     val listDisplayModeRaw by dataStore.listDisplayMode.collectAsState(initial = "categorized")
+    val knownLists by dataStore.knownLists.collectAsState(initial = emptyList())
     val orderedAreas = remember(areaOrderRaw) {
         ShoppingArea.orderedFromStorage(areaOrderRaw)
     }
@@ -486,11 +551,23 @@ fun ShoppingScreen(
     }
     val autocompleteSuggestions by autocompleteFlow.collectAsState(initial = emptyList())
     val offlineListTitle = t(R.string.offline_list_title)
-    val listTitle = remember(todoEntity, offlineMode, offlineListTitle) {
-        if (offlineMode) offlineListTitle else todoEntity.orEmpty().toDisplayListTitle()
+    val listTitle = remember(todoEntity, todoListName, offlineMode, offlineListTitle) {
+        when {
+            offlineMode -> offlineListTitle
+            !todoListName.isNullOrBlank() -> todoListName
+            else -> todoEntity.orEmpty().toDisplayListTitle()
+        }
+    }
+    val listMenuItems = remember(knownLists, todoEntity, listTitle) {
+        ShoppingLists.withCurrent(
+            knownLists,
+            todoEntity?.takeIf { it.isNotBlank() }?.let { ShoppingList(it, listTitle) }
+        )
     }
 
     Scaffold(
+        // Stable ids for the screenshot tools (store/tools), independent of the language
+        modifier = Modifier.semantics { testTagsAsResourceId = true },
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
@@ -540,19 +617,78 @@ fun ShoppingScreen(
                             }
                         }
 
-                        Text(
-                            text = listTitle,
+                        Box(
                             modifier = Modifier
+                                .fillMaxWidth()
                                 .padding(start = 2.dp)
-                                .offset(y = (-8).dp),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                                .offset(y = 1.dp)
+                        ) {
+                            // The store follows the list (Settings > Lists), so the header only offers the list
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                if (offlineMode) {
+                                    // The offline list is the only list in this mode
+                                    Row(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(start = 2.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Checklist,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = listTitle,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                } else {
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        HeaderDropdown(
+                                            label = listTitle,
+                                            items = listMenuItems,
+                                            itemLabel = { it.name },
+                                            isSelected = { it.id == todoEntity },
+                                            onSelect = { list ->
+                                                coroutineScope.launch {
+                                                    dataStore.selectTodoList(list)
+                                                }
+                                            },
+                                            onOpen = {
+                                                // Refresh in the background; the cached lists are shown right away
+                                                coroutineScope.launch {
+                                                    val loaded = (activeRepo as? HaWebSocketRepository)
+                                                        ?.loadAvailableLists()
+                                                    if (!loaded.isNullOrEmpty()) {
+                                                        dataStore.applyAvailableLists(loaded)
+                                                    }
+                                                }
+                                            },
+                                            onClickLabel = t(R.string.list_switch),
+                                            modifier = Modifier.testTag("header_list"),
+                                            leadingIcon = Icons.Default.Checklist
+                                        )
+                                    }
+                                }
+
+                            }
+                        }
                     }
                 },
                 actions = {
                     IconButton(
+                        modifier = Modifier.testTag("open_settings"),
                         onClick = {
                             navController.navigate(Screen.Settings.route)
                         }
@@ -844,7 +980,8 @@ fun ShoppingScreen(
                             }
                         }
                     }
-                    LaunchedEffect(effectiveListDisplayMode) {
+                    // A different store order (store switch) also cancels a running drag
+                    LaunchedEffect(effectiveListDisplayMode, orderedAreas) {
                         draggingItemId = null
                         activeDropSlotKey = null
                         droppedItemId = null

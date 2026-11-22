@@ -17,4 +17,7 @@
     <string name="cd_item_open">Open</string>
     <string name="cd_item_done">Klaar</string>
     <string name="cd_offline">Offline – wijzigingen worden later gesynchroniseerd</string>
+    <string name="pick_list">Lijst kiezen</string>
+    <string name="add_item">Item toevoegen</string>
+    <string name="no_category">Zonder categorie</string>
 </resources>

@@ -7,6 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -23,6 +24,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Add
+import android.app.RemoteInput
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.wear.input.RemoteInputIntentHelper
+import androidx.wear.input.WearableRemoteInputExtender
+import android.view.inputmethod.EditorInfo
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Close
@@ -30,6 +38,18 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.SyncProblem
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -72,6 +92,10 @@ import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.wear.compose.foundation.lazy.ScalingParams
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumnDefaults
 import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
 import androidx.wear.compose.material.dialog.Confirmation
@@ -80,11 +104,12 @@ import androidx.wear.remote.interactions.RemoteActivityHelper
 import androidx.wear.compose.material.dialog.Alert
 import de.robnice.homeshoplist.wear.WearViewModel
 import de.robnice.homeshoplist.wear.model.AREA_EMOJIS
+import de.robnice.homeshoplist.wear.model.WearAreaOption
 import de.robnice.homeshoplist.wear.model.WearShoppingItem
 import kotlinx.coroutines.delay
 
 @Composable
-fun WearApp(viewModel: WearViewModel) {
+fun WearApp(viewModel: WearViewModel, demoAddName: String? = null) {
     val hasSettings by viewModel.hasSettings.collectAsState()
     val items by viewModel.items.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -102,22 +127,93 @@ fun WearApp(viewModel: WearViewModel) {
         }
     }
 
-    val listState = rememberScalingLazyListState()
+    // Start a bit below the first item, so the header buttons sit fully below the time text
+    val headerOffsetPx = with(LocalDensity.current) { HEADER_START_OFFSET.roundToPx() }
+    val listState = rememberScalingLazyListState(
+        initialCenterItemIndex = 1,
+        initialCenterItemScrollOffset = -headerOffsetPx
+    )
     val context = LocalContext.current
-    val listName = remember(hasSettings) {
-        WearSettingsStore(context).getSettings()?.entity?.let(::todoEntityTitle)
+    val listName by viewModel.listName.collectAsState()
+    val knownLists by viewModel.knownLists.collectAsState()
+    var picker by remember { mutableStateOf<WearPicker?>(null) }
+    // Name entered for a new item whose category is still to be chosen
+    var pendingAddName by remember { mutableStateOf(demoAddName) }
+    val addItemLabel = stringResource(R.string.add_item)
+    val addInputLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val text = result.data
+            ?.let { RemoteInput.getResultsFromIntent(it) }
+            ?.getCharSequence(ADD_ITEM_INPUT_KEY)
+            ?.toString()
+        if (!text.isNullOrBlank()) {
+            // Known products keep their category; for new ones the category is chosen
+            val known = viewModel.knownArea(text)
+            if (known != null || viewModel.addAreaOptions().isEmpty()) {
+                viewModel.addItem(text, known)
+            } else {
+                pendingAddName = text.trim()
+            }
+        }
     }
 
+    val screenshotMode = remember { WearSettingsStore(context).isScreenshotMode() }
+
+    CompositionLocalProvider(LocalScreenshotMode provides screenshotMode) {
     Scaffold(
         // Time text slides away while scrolling so it never overlaps list content
         timeText = { TimeText(modifier = Modifier.scrollAway(listState)) },
-        vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) },
+        // No vignette on the store screenshots (debug-only screenshot mode)
+        vignette = {
+            if (!screenshotMode) Vignette(vignettePosition = VignettePosition.TopAndBottom)
+        },
         positionIndicator = { PositionIndicator(scalingLazyListState = listState) }
     ) {
+        // Faded house of the logo behind everything
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Image(
+                painter = painterResource(R.drawable.ic_app_icon_foreground_brand),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(0.95f),
+                alpha = 0.09f
+            )
+        }
         if (!hasSettings) {
             SetupScreen(listState = listState)
+        } else if (pendingAddName != null) {
+            val name = pendingAddName.orEmpty()
+            // Back cancels adding
+            BackHandler { pendingAddName = null }
+            CategoryGrid(
+                title = name,
+                options = viewModel.addAreaOptions(),
+                noCategoryLabel = stringResource(R.string.no_category),
+                onSelect = { key ->
+                    viewModel.addItem(name, key)
+                    pendingAddName = null
+                }
+            )
+        } else if (picker != null) {
+            BackHandler { picker = null }
+            when (picker) {
+                WearPicker.Lists -> SelectionScreen(
+                    title = stringResource(R.string.pick_list),
+                    options = knownLists.map { it.id to it.name },
+                    selectedId = viewModel.currentEntity,
+                    onSelect = { id ->
+                        knownLists.firstOrNull { it.id == id }?.let(viewModel::selectList)
+                        picker = null
+                    }
+                )
+                null -> Unit
+            }
         } else {
             ShoppingListScreen(
+                // Switching needs at least two entries to choose from
+                onListClick = if (knownLists.size >= 2) ({ picker = WearPicker.Lists }) else null,
+                onAddClick = {
+                    // System input picker: voice, keyboard, handwriting (device dependent), suggestions
+                    addInputLauncher.launch(addItemInputIntent(addItemLabel, viewModel.addSuggestions()))
+                },
                 listName = listName,
                 items = items,
                 isLoading = isLoading,
@@ -131,10 +227,13 @@ fun WearApp(viewModel: WearViewModel) {
             )
         }
     }
+    }
 }
 
 @Composable
 private fun ShoppingListScreen(
+    onListClick: (() -> Unit)?,
+    onAddClick: () -> Unit,
     listName: String?,
     items: List<WearShoppingItem>,
     isLoading: Boolean,
@@ -151,6 +250,7 @@ private fun ShoppingListScreen(
     val categorized = listDisplayMode == "categorized"
     var showConfirmDelete by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val headerOffsetPx = with(LocalDensity.current) { HEADER_START_OFFSET.roundToPx() }
 
     // Shown in place of the list instead of in a Dialog: on some watches (Galaxy Watch) the
     // dialog window was not removed after confirming and left a black screen.
@@ -171,7 +271,7 @@ private fun ShoppingListScreen(
                     onClearCompleted()
                     showConfirmDelete = false
                     // The list got shorter: go back to the start position below the header
-                    coroutineScope.launch { listState.scrollToItem(1) }
+                    coroutineScope.launch { listState.scrollToItem(1, -headerOffsetPx) }
                 }) {
                     Icon(Icons.Default.Check, contentDescription = stringResource(R.string.delete))
                 }
@@ -181,17 +281,22 @@ private fun ShoppingListScreen(
     }
 
     ScalingLazyColumn(
+        scalingParams = listScalingParams(),
         modifier = Modifier
             .fillMaxSize()
             .rotaryScroll(listState),
-        autoCentering = AutoCenteringParams(),
+        // itemIndex 0: the list may start below "first item centered", see HEADER_START_OFFSET
+        autoCentering = AutoCenteringParams(itemIndex = 0),
         state = listState
     ) {
         item(key = "status_row") {
             BrandHeader(
+                onListClick = onListClick,
+                onAddClick = onAddClick,
                 listName = listName,
                 uncheckedCount = unchecked.size,
-                isLoading = isLoading,
+                // Spinner only while there is nothing to show yet; periodic refreshes stay invisible
+                isLoading = isLoading && items.isEmpty(),
                 // Offline with a cached list: show the list, not an error
                 error = error ?: if (isOffline && items.isEmpty()) "offline" else null,
                 isOffline = isOffline
@@ -297,9 +402,11 @@ private fun Modifier.rotaryScroll(listState: ScalingLazyListState): Modifier {
         .focusable()
 }
 
-/** Same as the phone app's top bar: ShopList wordmark, colored status line with cart, list name. */
+/** List name (tap: switch list) and store (tap: switch store); the logo is only in the background. */
 @Composable
 private fun BrandHeader(
+    onListClick: (() -> Unit)?,
+    onAddClick: () -> Unit,
     listName: String?,
     uncheckedCount: Int,
     isLoading: Boolean,
@@ -309,105 +416,287 @@ private fun BrandHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 14.dp, bottom = 4.dp),
+            .padding(top = 4.dp, bottom = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(R.drawable.brand_wordmark),
-            contentDescription = "ShopList",
-            modifier = Modifier.width(HEADER_WIDTH).aspectRatio(600f / 168f)
-        )
+        // One row: switch list | open items | switch store. All three 48 dp (Wear OS minimum
+        // touch target); the current list/store is shown (and changed) after tapping.
         Row(
-            modifier = Modifier.width(HEADER_WIDTH),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BrandStatusLine(modifier = Modifier.weight(1f).height(4.dp))
-            Spacer(Modifier.width(2.dp))
-            Image(
-                painter = painterResource(R.drawable.brand_cart),
-                contentDescription = null,
-                modifier = Modifier.width(22.dp).aspectRatio(100f / 58f)
+            if (onListClick != null) {
+                HeaderIconButton(
+                    icon = Icons.Default.Checklist,
+                    contentDescription = listName?.let { "${stringResource(R.string.pick_list)}: $it" }
+                        ?: stringResource(R.string.pick_list),
+                    onClick = onListClick
+                )
+            } else {
+                // Placeholder keeps the count circle centered
+                Spacer(Modifier.size(MIN_TOUCH_TARGET))
+            }
+            OpenCountCircle(uncheckedCount, isLoading, error, isOffline)
+            HeaderIconButton(
+                icon = Icons.Default.Add,
+                contentDescription = stringResource(R.string.add_item),
+                onClick = onAddClick
             )
         }
-        if (listName != null) {
-            Text(
-                text = listName,
+    }
+}
+
+/** Number of open items in a circle; also shows loading, error and offline state. */
+@Composable
+private fun OpenCountCircle(uncheckedCount: Int, isLoading: Boolean, error: String?, isOffline: Boolean) {
+    val warning = Color(0xFFFFAA00)
+    val description = stringResource(R.string.status_open, uncheckedCount)
+    Box(
+        modifier = Modifier
+            .size(MIN_TOUCH_TARGET)
+            .clip(CircleShape)
+            .border(2.dp, if (isOffline || error != null) warning else BrandAccent, CircleShape)
+            .semantics(mergeDescendants = true) {
+                contentDescription = if (isOffline) "$description, offline" else description
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        when {
+            isLoading -> CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            error != null -> Icon(
+                imageVector = Icons.Default.SyncProblem,
+                contentDescription = null,
+                tint = warning,
+                modifier = Modifier.size(22.dp)
+            )
+            else -> Text(
+                text = uncheckedCount.toString(),
                 style = MaterialTheme.typography.title3,
                 color = BrandOnSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 2.dp)
-            )
-        }
-        Box(modifier = Modifier.padding(top = 2.dp)) {
-            StatusRowContent(uncheckedCount, isLoading, error, isOffline)
-        }
-    }
-}
-
-/** Blue track with orange and green segments, like the phone header. */
-@Composable
-private fun BrandStatusLine(modifier: Modifier) {
-    Canvas(modifier = modifier) {
-        val y = size.height / 2
-        val stroke = size.height
-        var x = 0f
-        BRAND_LINE_SEGMENTS.forEach { (fraction, color) ->
-            val end = x + size.width * fraction
-            drawLine(color, Offset(x + stroke / 2, y), Offset(end - stroke / 2, y), stroke, StrokeCap.Round)
-            x = end
-        }
-    }
-}
-
-private val HEADER_WIDTH = 124.dp
-private val BrandOnSurface = Color(0xFFF3EFFA)
-private val BRAND_LINE_SEGMENTS = listOf(
-    0.08f to Color(0x574EA8F6),
-    0.22f to Color(0xFFFF9E1A),
-    0.06f to Color(0x574EA8F6),
-    0.10f to Color(0xFF34C759),
-    0.20f to Color(0x574EA8F6),
-    0.22f to Color(0xFFFF9E1A),
-    0.12f to Color(0x574EA8F6)
-)
-
-@Composable
-private fun StatusRowContent(uncheckedCount: Int, isLoading: Boolean, error: String?, isOffline: Boolean) {
-    when {
-        isLoading && uncheckedCount == 0 -> CircularProgressIndicator(
-            modifier = Modifier
-                .padding(4.dp)
-                .size(20.dp)
-        )
-        error != null -> Icon(
-            imageVector = Icons.Default.SyncProblem,
-            contentDescription = null,
-            tint = Color(0xFFFFAA00),
-            modifier = Modifier.size(20.dp)
-        )
-        // Cached list without connection: changes are kept and sent later
-        isOffline -> Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.CloudOff,
-                contentDescription = stringResource(R.string.cd_offline),
-                tint = Color(0xFFFFAA00),
-                modifier = Modifier.size(14.dp)
-            )
-            Spacer(Modifier.width(4.dp))
-            Text(
-                text = stringResource(R.string.status_open, uncheckedCount),
-                style = MaterialTheme.typography.caption1,
                 textAlign = TextAlign.Center
             )
         }
-        else -> Text(
-            text = stringResource(R.string.status_open, uncheckedCount),
-            style = MaterialTheme.typography.caption1,
-            textAlign = TextAlign.Center
-        )
     }
 }
+
+private enum class WearPicker { Lists }
+
+/** Debug-only screenshot mode: store screenshots without vignette and without faded list edges. */
+private val LocalScreenshotMode = staticCompositionLocalOf { false }
+
+@Composable
+private fun listScalingParams(): ScalingParams =
+    if (LocalScreenshotMode.current) {
+        ScalingLazyColumnDefaults.scalingParams(edgeScale = 1f, edgeAlpha = 1f)
+    } else {
+        ScalingLazyColumnDefaults.scalingParams()
+    }
+
+private const val ADD_ITEM_INPUT_KEY = "new_item"
+// Four 48 dp buttons only fit in the middle third of a round screen, three fit almost everywhere
+private const val CATEGORIES_PER_ROW = 3
+
+/**
+ * Category of a new item: round 48 dp emoji buttons, several per row, row after row.
+ * The first button adds the item without category.
+ */
+@Composable
+private fun CategoryGrid(
+    title: String,
+    options: List<WearAreaOption>,
+    noCategoryLabel: String,
+    onSelect: (String?) -> Unit
+) {
+    // First row in the middle, the name above it
+    val state = rememberScalingLazyListState(initialCenterItemIndex = 1)
+    val cells: List<WearAreaOption?> = listOf<WearAreaOption?>(null) + options
+    ScalingLazyColumn(
+        scalingParams = listScalingParams(),
+        modifier = Modifier
+            .fillMaxSize()
+            .rotaryScroll(state),
+        state = state,
+        autoCentering = AutoCenteringParams(itemIndex = 1)
+    ) {
+        item(key = "title") {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.title3,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp, bottom = 4.dp, start = 24.dp, end = 24.dp)
+            )
+        }
+        items(cells.chunked(CATEGORIES_PER_ROW)) { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)
+            ) {
+                row.forEach { option ->
+                    Button(
+                        onClick = { onSelect(option?.key) },
+                        modifier = Modifier.size(MIN_TOUCH_TARGET),
+                        colors = ButtonDefaults.secondaryButtonColors()
+                    ) {
+                        if (option == null) {
+                            Icon(Icons.Default.Close, contentDescription = noCategoryLabel, modifier = Modifier.size(22.dp))
+                        } else {
+                            Text(
+                                text = AREA_EMOJIS[option.key] ?: "❔",
+                                fontSize = 22.sp,
+                                modifier = Modifier.semantics { contentDescription = option.label }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Intent for the system input picker of Wear OS, with the most used products as suggestions. */
+private fun addItemInputIntent(label: String, suggestions: List<String>): Intent {
+    val builder = RemoteInput.Builder(ADD_ITEM_INPUT_KEY)
+        .setLabel(label)
+        .setChoices(suggestions.toTypedArray())
+        .setAllowFreeFormInput(true)
+    // Emojis make no sense for shopping items; "Done" instead of "Send" on the keyboard
+    val input = WearableRemoteInputExtender(builder)
+        .setEmojisAllowed(false)
+        .setInputActionType(EditorInfo.IME_ACTION_DONE)
+        .get()
+        .build()
+    return RemoteInputIntentHelper.createActionRemoteInputIntent().also {
+        RemoteInputIntentHelper.putRemoteInputsExtra(it, listOf(input))
+    }
+}
+
+@Composable
+private fun HeaderIconButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.size(MIN_TOUCH_TARGET),
+        colors = ButtonDefaults.secondaryButtonColors()
+    ) {
+        Icon(imageVector = icon, contentDescription = contentDescription, modifier = Modifier.size(22.dp))
+    }
+}
+
+/** Header text that opens a selection when tapped (with a small triangle). */
+@Composable
+private fun SelectableHeaderText(
+    text: String,
+    style: androidx.compose.ui.text.TextStyle,
+    onClick: (() -> Unit)?,
+    clickLabel: String,
+    modifier: Modifier = Modifier,
+    leadingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null
+) {
+    Row(
+        modifier = modifier
+            .padding(horizontal = 24.dp)
+            // Real 48 dp height: Compose would enlarge the touch area anyway, but then the
+            // areas of list and store row would overlap
+            .heightIn(min = MIN_TOUCH_TARGET)
+            .then(
+                if (onClick != null) {
+                    Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(onClickLabel = clickLabel, onClick = onClick)
+                        .padding(horizontal = 6.dp)
+                } else {
+                    Modifier
+                }
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (leadingIcon != null) {
+            Icon(
+                imageVector = leadingIcon,
+                contentDescription = null,
+                tint = BrandOnSurface,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+        }
+        Text(
+            text = text,
+            style = style,
+            color = BrandOnSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false)
+        )
+        if (onClick != null) {
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = BrandOnSurface,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+/** Full-screen choice of a list or store; the current one is marked. */
+@Composable
+private fun SelectionScreen(
+    title: String,
+    options: List<Pair<String, String>>,
+    selectedId: String?,
+    onSelect: (String) -> Unit
+) {
+    val state = rememberScalingLazyListState()
+    ScalingLazyColumn(
+        scalingParams = listScalingParams(),
+        modifier = Modifier
+            .fillMaxSize()
+            .rotaryScroll(state),
+        state = state,
+        autoCentering = AutoCenteringParams()
+    ) {
+        item(key = "title") {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.title3,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 18.dp, bottom = 4.dp)
+            )
+        }
+        items(options, key = { it.first }) { (id, name) ->
+            val selected = id == selectedId
+            Chip(
+                onClick = { onSelect(id) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = if (selected) ChipDefaults.primaryChipColors() else ChipDefaults.secondaryChipColors(),
+                label = { Text(name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                icon = if (selected) {
+                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(ChipDefaults.IconSize)) }
+                } else {
+                    null
+                }
+            )
+        }
+    }
+}
+
+
+private val HEADER_WIDTH = 124.dp
+/** Wear OS minimum touch target; the two header rows must not share their touch areas. */
+private val MIN_TOUCH_TARGET = 48.dp
+private val HEADER_START_OFFSET = 8.dp
+private val BrandOnSurface = Color(0xFFF3EFFA)
+private val BrandAccent = Color(0xFF4EA8F6)
+
 
 @Composable
 private fun ItemChip(item: WearShoppingItem, onToggle: () -> Unit) {
@@ -466,6 +755,7 @@ private fun SetupScreen(listState: ScalingLazyListState) {
     }
 
     ScalingLazyColumn(
+        scalingParams = listScalingParams(),
         modifier = Modifier
             .fillMaxSize()
             .rotaryScroll(listState),

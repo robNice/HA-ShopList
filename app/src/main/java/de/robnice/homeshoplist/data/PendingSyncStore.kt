@@ -8,23 +8,43 @@ interface PendingSyncStore {
     fun clearPendingChanges()
 }
 
+/**
+ * Pending offline changes are stored per todo list, so switching lists never
+ * sends changes of one list to another. They are synced when the list is used again.
+ */
 class SharedPreferencesPendingSyncStore(
-    context: Context
+    context: Context,
+    todoEntity: String
 ) : PendingSyncStore {
     private val prefs = context.getSharedPreferences(PENDING_SYNC_PREFS, Context.MODE_PRIVATE)
+    private val key = pendingSyncKey(todoEntity)
 
-    override fun readPendingChanges(): String? = prefs.getString(PENDING_SYNC_KEY, null)
+    init {
+        // Before lists could be switched there was one key for the configured list. The first
+        // repository after the update is created for exactly that list, so it takes them over.
+        prefs.getString(LEGACY_PENDING_SYNC_KEY, null)?.let { legacy ->
+            val editor = prefs.edit().remove(LEGACY_PENDING_SYNC_KEY)
+            if (!prefs.contains(key)) {
+                editor.putString(key, legacy)
+            }
+            editor.apply()
+        }
+    }
+
+    override fun readPendingChanges(): String? = prefs.getString(key, null)
 
     override fun writePendingChanges(raw: String) {
-        prefs.edit().putString(PENDING_SYNC_KEY, raw).apply()
+        prefs.edit().putString(key, raw).apply()
     }
 
     override fun clearPendingChanges() {
-        prefs.edit().remove(PENDING_SYNC_KEY).apply()
+        prefs.edit().remove(key).apply()
     }
 
-    private companion object {
+    companion object {
         private const val PENDING_SYNC_PREFS = "pending_shopping_list_sync"
-        private const val PENDING_SYNC_KEY = "pending_changes"
+        private const val LEGACY_PENDING_SYNC_KEY = "pending_changes"
+
+        fun pendingSyncKey(todoEntity: String): String = "pending_changes_${todoEntity.trim()}"
     }
 }

@@ -6,6 +6,7 @@ import de.robnice.homeshoplist.data.SettingsDataStore
 import de.robnice.homeshoplist.data.history.ProductHistoryEntity
 import de.robnice.homeshoplist.data.history.ProductHistoryRepository
 import de.robnice.homeshoplist.model.ShoppingArea
+import de.robnice.homeshoplist.model.ShoppingMarkets
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -34,7 +35,18 @@ data class SettingsBackupPayload(
 }
 
 data class BackupConnection(val url: String, val token: String)
-data class BackupCategories(val order: List<String>, val enabled: List<String>)
+data class BackupMarket(val name: String, val order: List<String>, val enabled: List<String>)
+
+/** All markets with their category settings; [activeIndex] points into [markets]. */
+data class BackupCategories(
+    val markets: List<BackupMarket>,
+    val activeIndex: Int,
+    /** Remembered store per list: list key -> index into [markets]. */
+    val listLinks: Map<String, Int> = emptyMap()
+) {
+    val activeMarket: BackupMarket?
+        get() = markets.getOrNull(activeIndex) ?: markets.firstOrNull()
+}
 
 class SettingsBackupException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
@@ -52,8 +64,21 @@ class SettingsBackupService(context: Context) {
             } else null,
             categories = if (BackupSection.CATEGORIES in sections) {
                 BackupCategories(
-                    order = parseAreaKeys(snapshot.areaOrder, defaultAll = true),
-                    enabled = parseAreaKeys(snapshot.enabledAreas, defaultAll = true)
+                    markets = snapshot.markets.map { market ->
+                        BackupMarket(
+                            name = market.name,
+                            order = market.areaOrder.map { it.key },
+                            enabled = market.enabledAreas.map { it.key }
+                        )
+                    },
+                    activeIndex = snapshot.markets
+                        .indexOfFirst { it.id == snapshot.activeMarketId }
+                        .coerceAtLeast(0),
+                    listLinks = snapshot.listMarketLinks.mapNotNull { (listKey, marketId) ->
+                        snapshot.markets.indexOfFirst { it.id == marketId }
+                            .takeIf { it >= 0 }
+                            ?.let { listKey to it }
+                    }.toMap()
                 )
             } else null,
             productHistory = if (BackupSection.PRODUCT_HISTORY in sections) {
@@ -86,13 +111,9 @@ class SettingsBackupService(context: Context) {
         val connection = payload.connection
             ?.takeIf { BackupSection.CONNECTION in sections }
             ?.let { it.url to it.token }
-        val categories = payload.categories
+        val markets = payload.categories
             ?.takeIf { BackupSection.CATEGORIES in sections }
-            ?.let { categoryData ->
-                val order = validatedAreaKeys(categoryData.order, requireAtLeastOne = true)
-                val enabled = validatedAreaKeys(categoryData.enabled, requireAtLeastOne = true)
-                ShoppingArea.serializeOrder(order) to ShoppingArea.serializeEnabledAreas(enabled)
-            }
+            ?.let(::validatedMarkets)
         val sanitizedHistory = payload.productHistory
             ?.takeIf { BackupSection.PRODUCT_HISTORY in sections }
             ?.let { imported ->
@@ -110,13 +131,33 @@ class SettingsBackupService(context: Context) {
                     )
                 }
             }
-        settings.importBackupSettings(connection, categories)
+        settings.importBackupSettings(connection, markets)
         sanitizedHistory?.let { history.mergeHistory(it) }
     }
 
-    private fun parseAreaKeys(value: String, defaultAll: Boolean): List<String> {
-        val parsed = value.split(',').map { it.trim() }.filter { it.isNotEmpty() }
-        return if (parsed.isEmpty() && defaultAll) ShoppingArea.entries.map { it.key } else parsed
+    /** Imported markets replace all existing ones and get new ids. */
+    private fun validatedMarkets(categories: BackupCategories): SettingsDataStore.ImportedMarkets {
+        if (categories.markets.isEmpty()) {
+            throw SettingsBackupException("Die Sicherung enthält keine Märkte.")
+        }
+        if (categories.markets.size > MAX_MARKETS) {
+            throw SettingsBackupException("Die Sicherung enthält zu viele Märkte.")
+        }
+        val markets = categories.markets.map { market ->
+            ShoppingMarkets.create(
+                name = market.name,
+                areaOrder = validatedAreaKeys(market.order, requireAtLeastOne = true),
+                enabledAreas = validatedAreaKeys(market.enabled, requireAtLeastOne = true)
+            )
+        }
+        val activeId = markets.getOrNull(categories.activeIndex)?.id
+        val links = categories.listLinks.mapNotNull { (listKey, index) ->
+            markets.getOrNull(index)?.let { listKey.take(MAX_LIST_KEY_LENGTH) to it.id }
+        }.take(MAX_MARKETS * 10).toMap()
+        return SettingsDataStore.ImportedMarkets(
+            state = ShoppingMarkets.sanitize(markets, activeId),
+            listMarketLinks = links
+        )
     }
 
     private fun validatedAreaKeys(keys: List<String>, requireAtLeastOne: Boolean): List<ShoppingArea> {
@@ -132,6 +173,8 @@ class SettingsBackupService(context: Context) {
         const val FILE_EXTENSION = ".hassl-backup"
         private const val MAX_BACKUP_BYTES = 16 * 1024 * 1024
         private const val MAX_HISTORY_ITEMS = 100_000
+        private const val MAX_MARKETS = 100
+        private const val MAX_LIST_KEY_LENGTH = 255
         private const val MAX_PRODUCT_NAME_LENGTH = 500
     }
 }
@@ -201,12 +244,27 @@ internal object SettingsBackupCodec {
         }
     }
 
-    private fun toJson(payload: SettingsBackupPayload): String = JSONObject().apply {
+    internal fun toJson(payload: SettingsBackupPayload): String = JSONObject().apply {
         put("schemaVersion", 1)
         put("createdAt", System.currentTimeMillis())
         payload.connection?.let { put("connection", JSONObject().put("url", it.url).put("token", it.token)) }
-        payload.categories?.let {
-            put("categories", JSONObject().put("order", JSONArray(it.order)).put("enabled", JSONArray(it.enabled)))
+        payload.categories?.let { categories ->
+            val markets = JSONArray().apply {
+                categories.markets.forEach { market ->
+                    put(JSONObject().put("name", market.name)
+                        .put("order", JSONArray(market.order)).put("enabled", JSONArray(market.enabled)))
+                }
+            }
+            // "order"/"enabled" of the active market stay for app versions without markets
+            val active = categories.activeMarket
+            put("categories", JSONObject()
+                .put("order", JSONArray(active?.order.orEmpty()))
+                .put("enabled", JSONArray(active?.enabled.orEmpty()))
+                .put("markets", markets)
+                .put("activeMarket", categories.activeIndex)
+                .put("listLinks", JSONObject().apply {
+                    categories.listLinks.forEach { (listKey, index) -> put(listKey, index) }
+                }))
         }
         payload.productHistory?.let { items ->
             put("productHistory", JSONArray().apply {
@@ -218,13 +276,11 @@ internal object SettingsBackupCodec {
         }
     }.toString()
 
-    private fun fromJson(json: String): SettingsBackupPayload {
+    internal fun fromJson(json: String): SettingsBackupPayload {
         val root = JSONObject(json)
         if (root.optInt("schemaVersion", -1) != 1) throw SettingsBackupException("Nicht unterstützte Backup-Version.")
         val connection = root.optJSONObject("connection")?.let { BackupConnection(it.getString("url"), it.getString("token")) }
-        val categories = root.optJSONObject("categories")?.let {
-            BackupCategories(it.getJSONArray("order").strings(), it.getJSONArray("enabled").strings())
-        }
+        val categories = root.optJSONObject("categories")?.let(::categoriesFromJson)
         val history = root.optJSONArray("productHistory")?.let { array ->
             List(array.length()) { index ->
                 val item = array.getJSONObject(index)
@@ -235,6 +291,40 @@ internal object SettingsBackupCodec {
         val payload = SettingsBackupPayload(connection, categories, history)
         if (payload.sections.isEmpty()) throw SettingsBackupException("Die Sicherung enthält keine unterstützten Daten.")
         return payload
+    }
+
+    /** Backups without "markets" (before markets existed) become the single market "Default". */
+    private fun categoriesFromJson(json: JSONObject): BackupCategories {
+        val markets = json.optJSONArray("markets")
+            ?: return BackupCategories(
+                markets = listOf(
+                    BackupMarket(
+                        name = ShoppingMarkets.DEFAULT_MARKET_NAME,
+                        order = json.getJSONArray("order").strings(),
+                        enabled = json.getJSONArray("enabled").strings()
+                    )
+                ),
+                activeIndex = 0
+            )
+        val parsed = List(markets.length()) { index ->
+            val market = markets.getJSONObject(index)
+            BackupMarket(
+                name = market.getString("name"),
+                order = market.getJSONArray("order").strings(),
+                enabled = market.getJSONArray("enabled").strings()
+            )
+        }
+        val activeIndex = json.optInt("activeMarket", 0).takeIf { it in parsed.indices } ?: 0
+        val listLinks = json.optJSONObject("listLinks")?.let { links ->
+            links.keys().asSequence()
+                .mapNotNull { key -> links.optInt(key, -1).takeIf { it in parsed.indices }?.let { key to it } }
+                .toMap()
+        }.orEmpty()
+        return BackupCategories(
+            markets = parsed,
+            activeIndex = activeIndex,
+            listLinks = listLinks
+        )
     }
 
     private fun JSONArray.strings(): List<String> = List(length()) { getString(it) }
