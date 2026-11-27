@@ -1,7 +1,11 @@
 package de.robnice.homeshoplist.ui.screens
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +62,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -926,8 +931,29 @@ fun SettingsScreen(
                     Text(t(R.string.privacy_policy))
                 }
 
+                TextButton(
+                    onClick = {
+                        try {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/robnice"))
+                            )
+                        } catch (_: ActivityNotFoundException) {
+                        }
+                    },
+                    modifier = Modifier.requiredHeightIn(min = 24.dp),
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_kofi),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(t(R.string.support_kofi))
+                }
+
                 Text(
-                    text = "v${BuildConfig.VERSION_NAME}",
+                    text = "v${BuildConfig.VERSION_NAME.removeSuffix("-mobile")}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.End

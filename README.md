@@ -25,6 +25,7 @@ Standalone Android app for **Home Assistant Todo Lists** with live updates via t
 - [Delete Completed Items](#delete-completed-items)
 - [Wear OS Companion App](#wear-os-companion-app)
 - [Screenshots](#screenshots)
+- [Support](#support)
 
 ---
 
@@ -199,3 +200,11 @@ In addition to the app, a **tile** is available for the watch face carousel.
 <img src="docs/hsl_light_categorized_completed.png" alt="Light mode categorized completed items" width="250">
 <img src="docs/hsl_light_simple.png" alt="Light mode simple list" width="250">
 <img src="docs/hsl_light_simple_completed.png" alt="Light mode simple completed items" width="250">
+
+---
+
+## Support
+
+If you like the app and want to support its development, you can buy me a coffee on Ko-fi:
+
+[![Support me on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/robnice)

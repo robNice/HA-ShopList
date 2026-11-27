@@ -48,6 +48,7 @@
     <string name="product_history_clear_message">Удалить все сохранённые подсказки продуктов на этом устройстве?</string>
     <string name="product_history_clear_confirm">Очистить</string>
     <string name="privacy_policy">Политика конфиденциальности</string>
+    <string name="support_kofi">Поддержать</string>
     <string name="close">Закрыть</string>
     <string name="help_link_label">Помощь</string>
     <string name="help_notifications_title">Уведомления</string>

@@ -48,6 +48,7 @@
     <string name="product_history_clear_message">¿Eliminar todas las sugerencias de productos guardadas en este dispositivo?</string>
     <string name="product_history_clear_confirm">Borrar</string>
     <string name="privacy_policy">Política de privacidad</string>
+    <string name="support_kofi">Apoyar</string>
     <string name="close">Cerrar</string>
     <string name="help_link_label">Ayuda</string>
     <string name="help_notifications_title">Notificaciones</string>
