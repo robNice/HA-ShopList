@@ -25,6 +25,7 @@ Standalone-Android-App für die **Home Assistant Todo-Listen** mit Live-Updates 
 - [Erledigte Items löschen](#erledigte-items-löschen)
 - [Wear OS Companion App](#wear-os-companion-app)
 - [Screenshots](#screenshots)
+- [Unterstützen](#unterstützen)
 ---
 
 ## Installation
@@ -197,3 +198,11 @@ Zusätzlich zur App steht eine **Kachel** für das Zifferblatt-Karussell zur Ver
 <img src="docs/hsl_light_categorized_completed.png" alt="Light mode categorized completed items" width="250">
 <img src="docs/hsl_light_simple.png" alt="Light mode simple list" width="250">
 <img src="docs/hsl_light_simple_completed.png" alt="Light mode simple completed items" width="250">
+
+---
+
+## Unterstützen
+
+Wenn dir die App gefällt und du die Weiterentwicklung unterstützen möchtest, kannst du mir auf Ko-fi einen Kaffee spendieren:
+
+[![Support me on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/robnice)

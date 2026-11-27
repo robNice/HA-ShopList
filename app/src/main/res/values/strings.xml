@@ -48,6 +48,7 @@
     <string name="product_history_clear_message">Delete all saved product suggestions on this device?</string>
     <string name="product_history_clear_confirm">Clear</string>
     <string name="privacy_policy">Privacy policy</string>
+    <string name="support_kofi">Support</string>
     <string name="close">Close</string>
     <string name="help_link_label">Help</string>
     <string name="help_notifications_title">Notifications</string>

@@ -48,6 +48,7 @@
     <string name="product_history_clear_message">Видалити всі збережені підказки продуктів на цьому пристрої?</string>
     <string name="product_history_clear_confirm">Очистити</string>
     <string name="privacy_policy">Політика конфіденційності</string>
+    <string name="support_kofi">Підтримати</string>
     <string name="close">Закрити</string>
     <string name="help_link_label">Допомога</string>
     <string name="help_notifications_title">Сповіщення</string>
