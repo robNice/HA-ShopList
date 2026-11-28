@@ -273,4 +273,22 @@ each    <string name="area_drinks">飲み物</string>
     <string name="area_crates_deposits">空き容器・デポジット</string>
     <string name="area_party_supplies">パーティー用品</string>
     <string name="area_ice_cubes">氷・クラッシュアイス</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">買い物リスト</string>
+    <string name="widget_list_input_description">入力欄・カテゴリ選択・リスト切り替え付きのリスト</string>
+    <string name="widget_list_only_name">リスト</string>
+    <string name="widget_list_only_description">買い物リストのみ</string>
+    <string name="widget_quick_add_name">クイック追加</string>
+    <string name="widget_quick_add_description">カテゴリ選択付きの入力欄</string>
+    <string name="widget_list_switcher_name">リスト切り替え</string>
+    <string name="widget_list_switcher_description">現在のリストを表示して切り替え</string>
+    <string name="widget_not_configured">アプリを開いて設定してください</string>
+    <string name="widget_loading">読み込み中…</string>
+    <string name="widget_pick_area">カテゴリ</string>
+    <string name="widget_added">追加しました: %1$s</string>
+    <string name="widget_open_app">アプリを開く</string>
+    <plurals name="widget_open_items">
+        <item quantity="other">未完了 %d 件</item>
+    </plurals>
 </resources>

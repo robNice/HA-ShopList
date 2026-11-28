@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Colours of the RemoteViews parts of the widgets; same as the app theme (ui/theme/Color.kt) -->
+<resources>
+    <color name="widget_background">#FFF6F1F8</color>
+    <color name="widget_surface_variant">#FFE1D9E6</color>
+    <color name="widget_on_surface">#FF221D29</color>
+    <color name="widget_on_surface_variant">#FF5C5263</color>
+    <color name="widget_primary">#FF1F78E0</color>
+    <color name="widget_on_primary">#FFFFFFFF</color>
+    <!-- Line under the header, like the app header (BrandBlue track, orange/green segments) -->
+    <color name="widget_line_track">#384EA8F6</color>
+    <color name="widget_line_orange">#FFFF9E1A</color>
+    <color name="widget_line_green">#FF34C759</color>
+</resources>

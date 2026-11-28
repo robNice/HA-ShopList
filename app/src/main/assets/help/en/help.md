@@ -70,6 +70,24 @@ The settings have five tabs. Tap an icon or swipe sideways to switch. Changes to
 - Product history: the basis for suggestions; it can be cleared here.
 - Backup and restore: an encrypted file with connection, stores and product history.
 
+## Home screen widgets
+
+Four widgets bring the list to your home screen: long-press the home screen → Widgets → HomeShopList. All of them show the current list of the app, and you can resize them.
+
+- “Shopping list”: list with input field, category choice and list switch.
+- “List”: just the shopping list.
+- “Quick add”: just the input field with category choice.
+- “List switch”: shows the current list with the number of open items and switches it.
+
+### Using the widgets
+
+- A tap on the box ticks an item off, or back on. “Clear completed” below the completed items removes them after a confirmation.
+- A tap on the input field opens the input right over the widget, with suggestions from your product history. It stays open, so you can add several items in a row.
+- The symbol next to the field chooses the category for new items.
+- A tap on the list name switches the list. The switch applies to the app and all widgets.
+- The house and the arrow at the top right open the app.
+- While the app is running, the widgets update right away. Otherwise they update when you use them and about every 30 minutes.
+
 ## Offline
 
 - Without a connection you can keep ticking off and adding items. Changes stay assigned to their list and are sent as soon as the connection is back.

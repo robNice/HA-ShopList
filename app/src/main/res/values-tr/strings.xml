@@ -273,4 +273,23 @@
     <string name="area_crates_deposits">Boş şişeler &amp; depozito</string>
     <string name="area_party_supplies">Parti malzemeleri</string>
     <string name="area_ice_cubes">Buz küpleri &amp; kırma buz</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">Alışveriş listesi</string>
+    <string name="widget_list_input_description">Giriş alanı, kategori seçimi ve liste değiştirme içeren liste</string>
+    <string name="widget_list_only_name">Liste</string>
+    <string name="widget_list_only_description">Yalnızca alışveriş listesi</string>
+    <string name="widget_quick_add_name">Hızlı ekle</string>
+    <string name="widget_quick_add_description">Kategori seçimli giriş alanı</string>
+    <string name="widget_list_switcher_name">Liste seçimi</string>
+    <string name="widget_list_switcher_description">Geçerli listeyi gösterir ve değiştirir</string>
+    <string name="widget_not_configured">Kurmak için uygulamayı açın</string>
+    <string name="widget_loading">Yükleniyor…</string>
+    <string name="widget_pick_area">Kategori</string>
+    <string name="widget_added">Eklendi: %1$s</string>
+    <string name="widget_open_app">Uygulamayı aç</string>
+    <plurals name="widget_open_items">
+        <item quantity="one">%d açık öge</item>
+        <item quantity="other">%d açık öge</item>
+    </plurals>
 </resources>

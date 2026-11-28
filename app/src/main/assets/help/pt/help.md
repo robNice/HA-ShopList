@@ -70,6 +70,24 @@ As configurações têm cinco guias. Mude tocando em um ícone ou deslizando par
 - Histórico de produtos: a base das sugestões; pode ser apagado aqui.
 - Cópia de segurança e restauro: um arquivo criptografado com a conexão, as lojas e o histórico de produtos.
 
+## Widgets da tela inicial
+
+Quatro widgets levam a lista para a tela inicial: toque e segure na tela inicial → Widgets → HomeShopList. Todos mostram a lista atual do app e o tamanho pode ser ajustado.
+
+- “Lista de compras”: lista com campo de entrada, escolha de categoria e troca de lista.
+- “Lista”: apenas a lista de compras.
+- “Adição rápida”: apenas o campo de entrada com escolha de categoria.
+- “Troca de lista”: mostra a lista atual com o número de itens em aberto e a troca.
+
+### Uso
+
+- Um toque na caixa marca um item como feito ou o desmarca. “Limpar concluídos”, abaixo dos itens concluídos, remove-os após uma confirmação.
+- Um toque no campo de entrada abre a entrada logo acima do widget, com sugestões do histórico de produtos. Ela fica aberta, assim você adiciona vários itens seguidos.
+- O símbolo ao lado do campo escolhe a categoria dos novos itens.
+- Um toque no nome da lista troca a lista. A troca vale para o app e todos os widgets.
+- A casa e a seta no canto superior direito abrem o app.
+- Enquanto o app está em execução, os widgets são atualizados na hora. Caso contrário, ao usá-los e a cada 30 minutos, aproximadamente.
+
 ## Offline
 
 - Sem conexão você continua marcando e adicionando itens. As alterações ficam ligadas à sua lista e são enviadas assim que a conexão volta.

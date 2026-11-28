@@ -273,4 +273,23 @@
     <string name="area_crates_deposits">Vuoti a rendere</string>
     <string name="area_party_supplies">Articoli per feste</string>
     <string name="area_ice_cubes">Cubetti e ghiaccio tritato</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">Lista della spesa</string>
+    <string name="widget_list_input_description">Lista con campo di inserimento, scelta della categoria e cambio lista</string>
+    <string name="widget_list_only_name">Lista</string>
+    <string name="widget_list_only_description">Solo la lista della spesa</string>
+    <string name="widget_quick_add_name">Aggiunta rapida</string>
+    <string name="widget_quick_add_description">Campo di inserimento con scelta della categoria</string>
+    <string name="widget_list_switcher_name">Cambio lista</string>
+    <string name="widget_list_switcher_description">Mostra la lista attuale e la cambia</string>
+    <string name="widget_not_configured">Apri l’app per configurarla</string>
+    <string name="widget_loading">Caricamento…</string>
+    <string name="widget_pick_area">Categoria</string>
+    <string name="widget_added">Aggiunto: %1$s</string>
+    <string name="widget_open_app">Apri app</string>
+    <plurals name="widget_open_items">
+        <item quantity="one">%d elemento aperto</item>
+        <item quantity="other">%d elementi aperti</item>
+    </plurals>
 </resources>

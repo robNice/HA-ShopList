@@ -273,4 +273,23 @@
     <string name="area_crates_deposits">Consignes &amp; vidanges</string>
     <string name="area_party_supplies">Articles de fête</string>
     <string name="area_ice_cubes">Glaçons &amp; glace pilée</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">Liste de courses</string>
+    <string name="widget_list_input_description">Liste avec champ de saisie, choix de catégorie et changement de liste</string>
+    <string name="widget_list_only_name">Liste</string>
+    <string name="widget_list_only_description">Uniquement la liste de courses</string>
+    <string name="widget_quick_add_name">Ajout rapide</string>
+    <string name="widget_quick_add_description">Champ de saisie avec choix de catégorie</string>
+    <string name="widget_list_switcher_name">Changement de liste</string>
+    <string name="widget_list_switcher_description">Affiche la liste actuelle et la change</string>
+    <string name="widget_not_configured">Ouvrez l’app pour la configurer</string>
+    <string name="widget_loading">Chargement…</string>
+    <string name="widget_pick_area">Catégorie</string>
+    <string name="widget_added">Ajouté : %1$s</string>
+    <string name="widget_open_app">Ouvrir l’app</string>
+    <plurals name="widget_open_items">
+        <item quantity="one">%d élément ouvert</item>
+        <item quantity="other">%d éléments ouverts</item>
+    </plurals>
 </resources>

@@ -70,6 +70,24 @@ De instellingen hebben vijf tabbladen. Je wisselt door op een pictogram te tikke
 - Productgeschiedenis: de basis voor suggesties; hier kun je hem wissen.
 - Back-up maken en herstellen: een versleuteld bestand met verbinding, winkels en productgeschiedenis.
 
+## Widgets op het startscherm
+
+Vier widgets zetten de lijst op het startscherm: lang drukken op het startscherm → Widgets → HomeShopList. Ze tonen allemaal de huidige lijst van de app en hun grootte is aan te passen.
+
+- „Boodschappenlijst”: lijst met invoerveld, categoriekeuze en lijstwissel.
+- „Lijst”: alleen de boodschappenlijst.
+- „Snel toevoegen”: alleen het invoerveld met categoriekeuze.
+- „Lijstwissel”: toont de huidige lijst met het aantal open items en wisselt die.
+
+### Bediening
+
+- Een tik op het vakje vinkt een item af of weer aan. „Voltooide items wissen” onder de voltooide items verwijdert ze na een bevestiging.
+- Een tik op het invoerveld opent de invoer direct boven de widget, met suggesties uit je productgeschiedenis. Die blijft open, zo voeg je meerdere items na elkaar toe.
+- Het symbool naast het veld kiest de categorie voor nieuwe items.
+- Een tik op de lijstnaam wisselt de lijst. De wissel geldt voor de app en alle widgets.
+- Het huis en de pijl rechtsboven openen de app.
+- Zolang de app draait, worden de widgets meteen bijgewerkt. Anders als je ze gebruikt en ongeveer elke 30 minuten.
+
 ## Offline
 
 - Zonder verbinding kun je gewoon afvinken en toevoegen. Wijzigingen blijven bij hun lijst en worden verstuurd zodra de verbinding terug is.

@@ -2,4 +2,12 @@
 <resources>
 
     <style name="Theme.HomeAsssistantShoppingList" parent="Theme.Material3.DayNight.NoActionBar" />
+
+    <!-- Dialogs opened from the home screen widgets: only the dialog is visible -->
+    <style name="Theme.HomeAsssistantShoppingList.WidgetDialog" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 </resources>

@@ -1,0 +1,174 @@
+<en-US>
+• New: home screen widgets – shopping list, list only, quick add and list switch
+• Add items from the home screen, with category and suggestions
+• Tick off items and switch lists right in the widget
+• Help extended; sharper app logo and tidier suggestions
+</en-US>
+<de-DE>
+• Neu: Widgets für den Startbildschirm – Einkaufsliste, nur Liste, Schnell hinzufügen und Listenwahl
+• Artikel direkt vom Startbildschirm hinzufügen, mit Kategorie und Vorschlägen
+• Artikel abhaken und Liste wechseln direkt im Widget
+• Hilfe erweitert; schärferes App-Logo und aufgeräumte Vorschläge
+</de-DE>
+<ar>
+• جديد: أدوات للشاشة الرئيسية – قائمة التسوق، القائمة فقط، إضافة سريعة وتبديل القائمة
+• أضف العناصر من الشاشة الرئيسية مع الفئة والاقتراحات
+• ضع علامة على العناصر وبدّل القوائم مباشرة في الأداة
+• مساعدة موسّعة؛ شعار تطبيق أوضح واقتراحات أكثر ترتيبًا
+</ar>
+<cs-CZ>
+• Novinka: widgety na plochu – nákupní seznam, jen seznam, rychlé přidání a přepínání seznamů
+• Přidávání položek přímo z plochy, s kategorií a návrhy
+• Odškrtávání položek a přepínání seznamů přímo ve widgetu
+• Rozšířená nápověda; ostřejší logo aplikace a úhlednější návrhy
+</cs-CZ>
+<da-DK>
+• Nyt: widgets til startskærmen – indkøbsliste, kun liste, hurtig tilføjelse og listeskift
+• Tilføj varer fra startskærmen, med kategori og forslag
+• Afkryds varer og skift liste direkte i widgetten
+• Udvidet hjælp; skarpere app-logo og mere ryddelige forslag
+</da-DK>
+<es-419>
+• Nuevo: widgets para la pantalla principal; lista de compras, solo lista, agregar rápido y cambio de lista
+• Agrega artículos desde la pantalla principal, con categoría y sugerencias
+• Marca artículos y cambia de lista directamente en el widget
+• Ayuda ampliada; logotipo de la app más nítido y sugerencias más ordenadas
+</es-419>
+<es-ES>
+• Nuevo: widgets para la pantalla de inicio; lista de la compra, solo lista, añadir rápido y cambio de lista
+• Añade artículos desde la pantalla de inicio, con categoría y sugerencias
+• Marca artículos y cambia de lista directamente en el widget
+• Ayuda ampliada; logotipo de la app más nítido y sugerencias más ordenadas
+</es-ES>
+<fi-FI>
+• Uutta: aloitusnäytön widgetit – ostoslista, pelkkä lista, pikalisäys ja listan vaihto
+• Lisää tuotteita suoraan aloitusnäytöltä, luokan ja ehdotusten kanssa
+• Merkitse tuotteet ja vaihda listaa suoraan widgetissä
+• Laajennettu ohje; terävämpi sovelluksen logo ja siistimmät ehdotukset
+</fi-FI>
+<fr-FR>
+• Nouveau : widgets pour l’écran d’accueil – liste de courses, liste seule, ajout rapide et changement de liste
+• Ajoutez des articles depuis l’écran d’accueil, avec catégorie et suggestions
+• Cochez des articles et changez de liste directement dans le widget
+• Aide enrichie ; logo de l’app plus net et suggestions mieux présentées
+</fr-FR>
+<hi-IN>
+• नया: होम स्क्रीन विजेट – खरीदारी सूची, केवल सूची, त्वरित जोड़ें और सूची बदलें
+• होम स्क्रीन से ही आइटम जोड़ें, श्रेणी और सुझावों के साथ
+• विजेट में ही आइटम पर निशान लगाएँ और सूची बदलें
+• विस्तारित सहायता; ज़्यादा साफ़ ऐप लोगो और व्यवस्थित सुझाव
+</hi-IN>
+<hu-HU>
+• Új: kezdőképernyő-widgetek – bevásárlólista, csak lista, gyors hozzáadás és listaváltás
+• Tételek hozzáadása a kezdőképernyőről, kategóriával és javaslatokkal
+• Tételek kipipálása és listaváltás közvetlenül a widgetben
+• Bővített súgó; élesebb alkalmazáslogó és rendezettebb javaslatok
+</hu-HU>
+<id>
+• Baru: widget layar utama – daftar belanja, daftar saja, tambah cepat, dan ganti daftar
+• Tambahkan item langsung dari layar utama, dengan kategori dan saran
+• Centang item dan ganti daftar langsung di widget
+• Bantuan diperluas; logo aplikasi lebih tajam dan saran lebih rapi
+</id>
+<it-IT>
+• Novità: widget per la schermata Home – lista della spesa, solo lista, aggiunta rapida e cambio lista
+• Aggiungi articoli dalla schermata Home, con categoria e suggerimenti
+• Spunta gli articoli e cambia lista direttamente nel widget
+• Guida ampliata; logo dell’app più nitido e suggerimenti più ordinati
+</it-IT>
+<iw-IL>
+• חדש: ווידג'טים למסך הבית – רשימת קניות, רשימה בלבד, הוספה מהירה והחלפת רשימה
+• הוספת פריטים ישירות ממסך הבית, עם קטגוריה והצעות
+• סימון פריטים והחלפת רשימה ישירות בווידג'ט
+• עזרה מורחבת; לוגו אפליקציה חד יותר והצעות מסודרות יותר
+</iw-IL>
+<ja-JP>
+• 新機能：ホーム画面ウィジェット – 買い物リスト、リストのみ、クイック追加、リスト切り替え
+• ホーム画面からカテゴリと候補付きでアイテムを追加
+• ウィジェット上でアイテムのチェックとリストの切り替え
+• ヘルプを拡充、アプリのロゴをより鮮明に、候補の表示を整理
+</ja-JP>
+<ko-KR>
+• 새 기능: 홈 화면 위젯 – 장보기 목록, 목록만, 빠른 추가, 목록 전환
+• 홈 화면에서 카테고리와 추천 항목으로 바로 항목 추가
+• 위젯에서 바로 항목 체크 및 목록 전환
+• 도움말 확장, 더 선명한 앱 로고와 깔끔해진 추천 항목
+</ko-KR>
+<nl-NL>
+• Nieuw: widgets voor het startscherm – boodschappenlijst, alleen lijst, snel toevoegen en lijstwissel
+• Voeg items toe vanaf het startscherm, met categorie en suggesties
+• Vink items af en wissel van lijst direct in de widget
+• Uitgebreide hulp; scherper app-logo en overzichtelijkere suggesties
+</nl-NL>
+<no-NO>
+• Nytt: moduler for startskjermen – handleliste, bare liste, rask tilføying og listebytte
+• Legg til varer rett fra startskjermen, med kategori og forslag
+• Kryss av varer og bytt liste direkte i modulen
+• Utvidet hjelp; skarpere app-logo og ryddigere forslag
+</no-NO>
+<pl-PL>
+• Nowość: widżety na ekran główny – lista zakupów, sama lista, szybkie dodawanie i wybór listy
+• Dodawanie pozycji z ekranu głównego, z kategorią i podpowiedziami
+• Odhaczanie pozycji i zmiana listy bezpośrednio w widżecie
+• Rozszerzona pomoc; ostrzejsze logo aplikacji i uporządkowane podpowiedzi
+</pl-PL>
+<pt-BR>
+• Novo: widgets para a tela inicial – lista de compras, só a lista, adição rápida e troca de lista
+• Adicione itens direto da tela inicial, com categoria e sugestões
+• Marque itens e troque de lista direto no widget
+• Ajuda ampliada; logo do app mais nítido e sugestões mais organizadas
+</pt-BR>
+<ro>
+• Nou: widgeturi pentru ecranul de pornire – listă de cumpărături, doar listă, adăugare rapidă și schimbarea listei
+• Adaugă articole direct de pe ecranul de pornire, cu categorie și sugestii
+• Bifează articole și schimbă lista direct în widget
+• Ajutor extins; logo al aplicației mai clar și sugestii mai ordonate
+</ro>
+<ru-RU>
+• Новое: виджеты для главного экрана – список покупок, только список, быстрое добавление и выбор списка
+• Добавление товаров прямо с главного экрана, с категорией и подсказками
+• Отметка товаров и смена списка прямо в виджете
+• Расширенная справка; более чёткий логотип приложения и аккуратные подсказки
+</ru-RU>
+<sk>
+• Novinka: widgety na plochu – nákupný zoznam, len zoznam, rýchle pridanie a prepínanie zoznamov
+• Pridávanie položiek priamo z plochy, s kategóriou a návrhmi
+• Odškrtávanie položiek a prepínanie zoznamov priamo vo widgete
+• Rozšírený pomocník; ostrejšie logo aplikácie a úhľadnejšie návrhy
+</sk>
+<sv-SE>
+• Nytt: widgetar för startskärmen – inköpslista, bara lista, snabbtillägg och listbyte
+• Lägg till varor direkt från startskärmen, med kategori och förslag
+• Bocka av varor och byt lista direkt i widgeten
+• Utökad hjälp; skarpare applogga och snyggare förslag
+</sv-SE>
+<th>
+• ใหม่: วิดเจ็ตหน้าจอหลัก – รายการซื้อของ, รายการอย่างเดียว, เพิ่มด่วน และสลับรายการ
+• เพิ่มรายการได้จากหน้าจอหลัก พร้อมหมวดหมู่และคำแนะนำ
+• ติ๊กรายการและสลับรายการได้ในวิดเจ็ตโดยตรง
+• ความช่วยเหลือเพิ่มเติม โลโก้แอปคมชัดขึ้น และคำแนะนำเป็นระเบียบขึ้น
+</th>
+<tr-TR>
+• Yeni: ana ekran widget'ları – alışveriş listesi, yalnızca liste, hızlı ekle ve liste seçimi
+• Ögeleri doğrudan ana ekrandan, kategori ve önerilerle ekleyin
+• Ögeleri işaretleyin ve listeyi doğrudan widget'ta değiştirin
+• Genişletilmiş yardım; daha net uygulama logosu ve daha düzenli öneriler
+</tr-TR>
+<uk>
+• Нове: віджети для головного екрана – список покупок, лише список, швидке додавання та вибір списку
+• Додавання товарів просто з головного екрана, з категорією та підказками
+• Позначення товарів і зміна списку прямо у віджеті
+• Розширена довідка; чіткіший логотип застосунку та охайніші підказки
+</uk>
+<vi>
+• Mới: tiện ích màn hình chính – danh sách mua sắm, chỉ danh sách, thêm nhanh và chuyển danh sách
+• Thêm mục ngay từ màn hình chính, kèm danh mục và gợi ý
+• Đánh dấu mục và chuyển danh sách ngay trong tiện ích
+• Trợ giúp mở rộng; logo ứng dụng sắc nét hơn và gợi ý gọn gàng hơn
+</vi>
+<zh-CN>
+• 新增：主屏幕小部件 – 购物清单、仅清单、快速添加和切换清单
+• 直接在主屏幕添加条目，支持分类和建议
+• 在小部件中直接勾选条目和切换清单
+• 帮助内容扩充；应用标志更清晰，建议显示更整洁
+</zh-CN>

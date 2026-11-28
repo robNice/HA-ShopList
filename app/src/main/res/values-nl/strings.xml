@@ -273,4 +273,23 @@
     <string name="area_crates_deposits">Leeggoed &amp; statiegeld</string>
     <string name="area_party_supplies">Feestartikelen</string>
     <string name="area_ice_cubes">IJsblokjes &amp; crushed ice</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">Boodschappenlijst</string>
+    <string name="widget_list_input_description">Lijst met invoerveld, categoriekeuze en lijstwissel</string>
+    <string name="widget_list_only_name">Lijst</string>
+    <string name="widget_list_only_description">Alleen de boodschappenlijst</string>
+    <string name="widget_quick_add_name">Snel toevoegen</string>
+    <string name="widget_quick_add_description">Invoerveld met categoriekeuze</string>
+    <string name="widget_list_switcher_name">Lijstwissel</string>
+    <string name="widget_list_switcher_description">Toont de huidige lijst en wisselt die</string>
+    <string name="widget_not_configured">Open de app om hem in te stellen</string>
+    <string name="widget_loading">Laden…</string>
+    <string name="widget_pick_area">Categorie</string>
+    <string name="widget_added">Toegevoegd: %1$s</string>
+    <string name="widget_open_app">App openen</string>
+    <plurals name="widget_open_items">
+        <item quantity="one">%d item open</item>
+        <item quantity="other">%d items open</item>
+    </plurals>
 </resources>

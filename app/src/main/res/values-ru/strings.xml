@@ -273,4 +273,25 @@
     <string name="area_crates_deposits">Тара и залог</string>
     <string name="area_party_supplies">Товары для вечеринок</string>
     <string name="area_ice_cubes">Лёд и колотый лёд</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">Список покупок</string>
+    <string name="widget_list_input_description">Список с полем ввода, выбором категории и сменой списка</string>
+    <string name="widget_list_only_name">Список</string>
+    <string name="widget_list_only_description">Только список покупок</string>
+    <string name="widget_quick_add_name">Быстрое добавление</string>
+    <string name="widget_quick_add_description">Поле ввода с выбором категории</string>
+    <string name="widget_list_switcher_name">Выбор списка</string>
+    <string name="widget_list_switcher_description">Показывает текущий список и меняет его</string>
+    <string name="widget_not_configured">Откройте приложение для настройки</string>
+    <string name="widget_loading">Загрузка…</string>
+    <string name="widget_pick_area">Категория</string>
+    <string name="widget_added">Добавлено: %1$s</string>
+    <string name="widget_open_app">Открыть приложение</string>
+    <plurals name="widget_open_items">
+        <item quantity="one">%d открытый элемент</item>
+        <item quantity="few">%d открытых элемента</item>
+        <item quantity="many">%d открытых элементов</item>
+        <item quantity="other">%d открытого элемента</item>
+    </plurals>
 </resources>

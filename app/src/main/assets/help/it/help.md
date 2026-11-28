@@ -70,6 +70,24 @@ Le impostazioni hanno cinque schede. Cambi scheda toccando un’icona o scorrend
 - Cronologia prodotti: la base dei suggerimenti; qui si può cancellare.
 - Backup e ripristino: un file cifrato con connessione, negozi e cronologia prodotti.
 
+## Widget della schermata Home
+
+Quattro widget portano la lista nella schermata Home: tieni premuto sulla schermata Home → Widget → HomeShopList. Tutti mostrano la lista attuale dell’app e se ne può cambiare la dimensione.
+
+- “Lista della spesa”: lista con campo di inserimento, scelta della categoria e cambio lista.
+- “Lista”: solo la lista della spesa.
+- “Aggiunta rapida”: solo il campo di inserimento con scelta della categoria.
+- “Cambio lista”: mostra la lista attuale con il numero di elementi aperti e la cambia.
+
+### Utilizzo
+
+- Un tocco sulla casella spunta un elemento o toglie la spunta. “Elimina completati”, sotto gli elementi completati, li rimuove dopo una conferma.
+- Un tocco sul campo di inserimento apre l’inserimento proprio sopra il widget, con suggerimenti dalla cronologia prodotti. Resta aperto, così puoi aggiungere più elementi di seguito.
+- Il simbolo accanto al campo sceglie la categoria dei nuovi elementi.
+- Un tocco sul nome della lista cambia lista. Il cambio vale per l’app e per tutti i widget.
+- La casa e la freccia in alto a destra aprono l’app.
+- Finché l’app è in esecuzione, i widget si aggiornano subito. Altrimenti quando li usi e circa ogni 30 minuti.
+
 ## Offline
 
 - Senza connessione puoi continuare a spuntare e aggiungere articoli. Le modifiche restano assegnate alla loro lista e vengono inviate appena la connessione torna.

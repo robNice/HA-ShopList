@@ -273,4 +273,22 @@
     <string name="area_crates_deposits">공병 &amp; 보증금</string>
     <string name="area_party_supplies">파티 용품</string>
     <string name="area_ice_cubes">얼음 &amp; 간 얼음</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">장보기 목록</string>
+    <string name="widget_list_input_description">입력란, 카테고리 선택, 목록 전환이 있는 목록</string>
+    <string name="widget_list_only_name">목록</string>
+    <string name="widget_list_only_description">장보기 목록만</string>
+    <string name="widget_quick_add_name">빠른 추가</string>
+    <string name="widget_quick_add_description">카테고리 선택이 있는 입력란</string>
+    <string name="widget_list_switcher_name">목록 전환</string>
+    <string name="widget_list_switcher_description">현재 목록을 표시하고 전환</string>
+    <string name="widget_not_configured">앱을 열어 설정하세요</string>
+    <string name="widget_loading">불러오는 중…</string>
+    <string name="widget_pick_area">카테고리</string>
+    <string name="widget_added">추가됨: %1$s</string>
+    <string name="widget_open_app">앱 열기</string>
+    <plurals name="widget_open_items">
+        <item quantity="other">남은 항목 %d개</item>
+    </plurals>
 </resources>

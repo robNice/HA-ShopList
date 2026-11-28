@@ -39,6 +39,59 @@
             </intent-filter>
         </service>
 
+        <receiver
+            android:name=".widget.ShoppingListInputWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_list_input_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_list_input_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.ShoppingListOnlyWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_list_only_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_list_only_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.QuickAddWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_quick_add_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_quick_add_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.ListSwitcherWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_list_switcher_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_list_switcher_info" />
+        </receiver>
+        <activity
+            android:name=".widget.WidgetDialogActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.HomeAsssistantShoppingList.WidgetDialog"
+            android:windowSoftInputMode="adjustResize|stateVisible" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

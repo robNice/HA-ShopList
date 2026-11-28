@@ -70,6 +70,24 @@ Los ajustes tienen cinco pestañas. Cambias tocando un icono o deslizando de lad
 - Historial de productos: la base de las sugerencias; aquí se puede borrar.
 - Copia de seguridad y restauración: un archivo cifrado con la conexión, las tiendas y el historial de productos.
 
+## Widgets de la pantalla de inicio
+
+Cuatro widgets llevan la lista a la pantalla de inicio: mantén pulsada la pantalla de inicio → Widgets → HomeShopList. Todos muestran la lista actual de la app y se puede cambiar su tamaño.
+
+- «Lista de la compra»: lista con campo de entrada, selección de categoría y cambio de lista.
+- «Lista»: solo la lista de la compra.
+- «Añadir rápido»: solo el campo de entrada con selección de categoría.
+- «Cambio de lista»: muestra la lista actual con el número de elementos pendientes y la cambia.
+
+### Uso
+
+- Un toque en la casilla marca un elemento como hecho o lo desmarca. «Borrar completados», debajo de los elementos completados, los elimina tras una confirmación.
+- Un toque en el campo de entrada abre la entrada justo encima del widget, con sugerencias de tu historial de productos. Permanece abierta, así puedes añadir varios elementos seguidos.
+- El símbolo junto al campo elige la categoría de los nuevos elementos.
+- Un toque en el nombre de la lista cambia la lista. El cambio se aplica a la app y a todos los widgets.
+- La casa y la flecha arriba a la derecha abren la app.
+- Mientras la app está en marcha, los widgets se actualizan al instante. Si no, al usarlos y aproximadamente cada 30 minutos.
+
 ## Sin conexión
 
 - Sin conexión puedes seguir marcando y añadiendo artículos. Los cambios quedan asignados a su lista y se envían en cuanto vuelve la conexión.

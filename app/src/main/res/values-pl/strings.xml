@@ -273,4 +273,25 @@
     <string name="area_crates_deposits">Butelki zwrotne i kaucja</string>
     <string name="area_party_supplies">Artykuły imprezowe</string>
     <string name="area_ice_cubes">Kostki lodu i kruszony lód</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">Lista zakupów</string>
+    <string name="widget_list_input_description">Lista z polem wpisywania, wyborem kategorii i zmianą listy</string>
+    <string name="widget_list_only_name">Lista</string>
+    <string name="widget_list_only_description">Tylko lista zakupów</string>
+    <string name="widget_quick_add_name">Szybkie dodawanie</string>
+    <string name="widget_quick_add_description">Pole wpisywania z wyborem kategorii</string>
+    <string name="widget_list_switcher_name">Wybór listy</string>
+    <string name="widget_list_switcher_description">Pokazuje bieżącą listę i ją zmienia</string>
+    <string name="widget_not_configured">Otwórz aplikację, aby ją skonfigurować</string>
+    <string name="widget_loading">Ładowanie…</string>
+    <string name="widget_pick_area">Kategoria</string>
+    <string name="widget_added">Dodano: %1$s</string>
+    <string name="widget_open_app">Otwórz aplikację</string>
+    <plurals name="widget_open_items">
+        <item quantity="one">%d otwarty element</item>
+        <item quantity="few">%d otwarte elementy</item>
+        <item quantity="many">%d otwartych elementów</item>
+        <item quantity="other">%d otwartego elementu</item>
+    </plurals>
 </resources>
