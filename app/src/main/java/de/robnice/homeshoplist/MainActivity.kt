@@ -103,6 +103,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.size.Size as CoilSize
 import de.robnice.homeshoplist.ui.theme.BrandBlue
 import de.robnice.homeshoplist.ui.theme.BrandBlueGlow
 import de.robnice.homeshoplist.ui.theme.BrandGreen
@@ -115,8 +117,19 @@ import androidx.compose.ui.zIndex
 
 class MainActivity : androidx.activity.ComponentActivity() {
 
+    override fun onStart() {
+        super.onStart()
+        HaRuntime.uiVisible = true
+    }
+
+    override fun onStop() {
+        HaRuntime.uiVisible = false
+        super.onStop()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        de.robnice.homeshoplist.widget.WidgetUpdater.ensureStarted(applicationContext)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -202,15 +215,16 @@ class MainActivity : androidx.activity.ComponentActivity() {
                         return@LaunchedEffect
                     }
 
+                    val listConfig = de.robnice.homeshoplist.data.ListConfig(
+                        haUrl = haUrl.orEmpty(),
+                        haToken = haToken.orEmpty(),
+                        todoEntity = todoEntity.orEmpty(),
+                        todoListName = todoListName.orEmpty(),
+                        offlineMode = offlineMode
+                    )
+
                     if (offlineMode) {
-                        // Offline list: never talk to Home Assistant
-                        if (!HaRuntime.offlineMode || HaRuntime.repository == null) {
-                            Debug.log("MainActivity: switch to offline list")
-                            HaRuntime.repository?.disconnect()
-                            HaRuntime.offlineMode = true
-                            HaRuntime.repository = LocalShoppingRepository(context.applicationContext)
-                        }
-                        runtimeRepository = HaRuntime.repository
+                        runtimeRepository = HaRuntime.obtain(context.applicationContext, listConfig)
                         return@LaunchedEffect
                     }
 
@@ -235,38 +249,8 @@ class MainActivity : androidx.activity.ComponentActivity() {
                         return@LaunchedEffect
                     }
 
-                    val repo = HaRuntime.repository
-                    val configChanged =
-                        repo == null ||
-                                HaRuntime.offlineMode ||
-                                HaRuntime.baseUrl != haUrl ||
-                                HaRuntime.token != haToken ||
-                                HaRuntime.todoEntity != todoEntity ||
-                                HaRuntime.todoListName != todoListName
-
-                    if (configChanged) {
-                        Debug.log("MainActivity: recreate repository because config changed")
-
-                        HaRuntime.repository?.disconnect()
-
-                        HaRuntime.offlineMode = false
-                        HaRuntime.baseUrl = haUrl
-                        HaRuntime.token = haToken
-                        HaRuntime.todoEntity = todoEntity
-                        HaRuntime.todoListName = todoListName
-
-                        HaRuntime.repository = de.robnice.homeshoplist.data.HaWebSocketRepository(
-                            haUrl,
-                            haToken,
-                            context.applicationContext,
-                            todoEntity,
-                            todoListName
-                        )
-                        runtimeRepository = HaRuntime.repository
-                    } else {
-                        Debug.log("MainActivity: repository already exists with same config")
-                        runtimeRepository = repo
-                    }
+                    // Shared with the home screen widgets: reused if they already opened this list
+                    runtimeRepository = HaRuntime.obtain(context.applicationContext, listConfig)
 
                     runtimeRepository?.setReconnectAllowed(true)
                     runtimeRepository?.ensureConnected()
@@ -1691,9 +1675,19 @@ private fun HeaderWordmark(
                 )
             }
         }
+        // Rendered at the SVG's own size (980x220) and only scaled down: Coil otherwise renders it once
+        // at the size of the first layout, which is narrower while the "connecting"/"offline" chip is
+        // shown (e.g. app opened from a widget), and the logo stays blurry when the chip disappears
+        val wordmarkContext = LocalContext.current
+        val wordmarkRequest = remember(assetName) {
+            ImageRequest.Builder(wordmarkContext)
+                .data("file:///android_asset/$assetName")
+                .size(CoilSize.ORIGINAL)
+                .build()
+        }
         AsyncImage(
             modifier = Modifier.matchParentSize(),
-            model = "file:///android_asset/$assetName",
+            model = wordmarkRequest,
             contentDescription = "ShopList wordmark",
             contentScale = ContentScale.Fit,
             alignment = Alignment.CenterStart
@@ -1771,7 +1765,7 @@ private fun String.toDisplayListTitle(): String {
 }
 
 @Composable
-private fun HistorySuggestionRow(
+internal fun HistorySuggestionRow(
     suggestion: ProductHistoryEntity,
     canDelete: Boolean,
     onSelect: () -> Unit,
@@ -1779,11 +1773,13 @@ private fun HistorySuggestionRow(
 ) {
     val suggestionArea = ShoppingArea.fromKey(suggestion.areaKey) ?: ShoppingArea.OTHER
 
+    // Same height with and without the delete button (its touch target is 48dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onSelect)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .heightIn(min = 48.dp)
+            .padding(start = 14.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -2472,7 +2468,7 @@ fun ShoppingRow(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AreaMenuButton(
+internal fun AreaMenuButton(
     selectedArea: ShoppingArea,
     areas: List<ShoppingArea>,
     onAreaSelected: (ShoppingArea) -> Unit,

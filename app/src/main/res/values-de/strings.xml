@@ -273,4 +273,23 @@
     <string name="area_crates_deposits">Leergut &amp; Pfand</string>
     <string name="area_party_supplies">Partybedarf</string>
     <string name="area_ice_cubes">Eiswürfel &amp; Crushed Ice</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">Einkaufsliste</string>
+    <string name="widget_list_input_description">Liste mit Eingabefeld, Kategoriewahl und Listenwechsel</string>
+    <string name="widget_list_only_name">Liste</string>
+    <string name="widget_list_only_description">Nur die Einkaufsliste</string>
+    <string name="widget_quick_add_name">Schnell hinzufügen</string>
+    <string name="widget_quick_add_description">Eingabefeld mit Kategoriewahl</string>
+    <string name="widget_list_switcher_name">Listenwahl</string>
+    <string name="widget_list_switcher_description">Zeigt die aktuelle Liste und wechselt sie</string>
+    <string name="widget_not_configured">Zum Einrichten die App öffnen</string>
+    <string name="widget_loading">Wird geladen…</string>
+    <string name="widget_pick_area">Kategorie</string>
+    <string name="widget_added">Hinzugefügt: %1$s</string>
+    <string name="widget_open_app">App öffnen</string>
+    <plurals name="widget_open_items">
+        <item quantity="one">%d Eintrag offen</item>
+        <item quantity="other">%d Einträge offen</item>
+    </plurals>
 </resources>

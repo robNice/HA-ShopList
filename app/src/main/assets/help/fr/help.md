@@ -70,6 +70,24 @@ Les paramètres ont cinq onglets. Touchez une icône ou balayez sur le côté po
 - Historique des produits : la base des suggestions ; il peut être effacé ici.
 - Sauvegarde et restauration : un fichier chiffré avec la connexion, les magasins et l’historique des produits.
 
+## Widgets de l’écran d’accueil
+
+Quatre widgets placent la liste sur l’écran d’accueil : appui long sur l’écran d’accueil → Widgets → HomeShopList. Tous affichent la liste actuelle de l’app et leur taille est réglable.
+
+- « Liste de courses » : liste avec champ de saisie, choix de catégorie et changement de liste.
+- « Liste » : uniquement la liste de courses.
+- « Ajout rapide » : uniquement le champ de saisie avec choix de catégorie.
+- « Changement de liste » : affiche la liste actuelle avec le nombre d’éléments ouverts et la change.
+
+### Utilisation
+
+- Un appui sur la case coche un élément ou le décoche. « Supprimer les éléments terminés », sous les éléments terminés, les supprime après confirmation.
+- Un appui sur le champ de saisie ouvre la saisie juste au-dessus du widget, avec des suggestions issues de l’historique des produits. Elle reste ouverte, vous pouvez donc ajouter plusieurs éléments à la suite.
+- Le symbole à côté du champ choisit la catégorie des nouveaux éléments.
+- Un appui sur le nom de la liste change de liste. Le changement s’applique à l’app et à tous les widgets.
+- La maison et la flèche en haut à droite ouvrent l’app.
+- Tant que l’app tourne, les widgets se mettent à jour immédiatement. Sinon, lorsque vous les utilisez et environ toutes les 30 minutes.
+
 ## Hors ligne
 
 - Sans connexion, vous pouvez continuer à cocher et ajouter des articles. Les modifications restent liées à leur liste et sont envoyées dès que la connexion revient.

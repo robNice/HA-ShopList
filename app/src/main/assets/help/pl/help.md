@@ -70,6 +70,24 @@ Ustawienia mają pięć kart. Przełączasz je, dotykając ikony lub przesuwają
 - Historia produktów: podstawa podpowiedzi; tutaj można ją usunąć.
 - Kopia zapasowa i przywracanie: zaszyfrowany plik z połączeniem, sklepami i historią produktów.
 
+## Widżety na ekranie głównym
+
+Cztery widżety umieszczają listę na ekranie głównym: przytrzymaj ekran główny → Widżety → HomeShopList. Wszystkie pokazują bieżącą listę aplikacji, a ich rozmiar można zmieniać.
+
+- „Lista zakupów”: lista z polem wpisywania, wyborem kategorii i zmianą listy.
+- „Lista”: tylko lista zakupów.
+- „Szybkie dodawanie”: tylko pole wpisywania z wyborem kategorii.
+- „Wybór listy”: pokazuje bieżącą listę z liczbą otwartych elementów i ją zmienia.
+
+### Obsługa
+
+- Dotknięcie pola wyboru odhacza element lub cofa odhaczenie. „Usuń zakończone” pod zakończonymi elementami usuwa je po potwierdzeniu.
+- Dotknięcie pola wpisywania otwiera wpisywanie tuż nad widżetem, z podpowiedziami z historii produktów. Pozostaje ono otwarte, więc możesz dodać kilka elementów po kolei.
+- Symbol obok pola wybiera kategorię nowych elementów.
+- Dotknięcie nazwy listy zmienia listę. Zmiana dotyczy aplikacji i wszystkich widżetów.
+- Domek i strzałka w prawym górnym rogu otwierają aplikację.
+- Gdy aplikacja działa, widżety aktualizują się od razu. W przeciwnym razie przy użyciu i mniej więcej co 30 minut.
+
 ## Bez połączenia
 
 - Bez połączenia możesz dalej odhaczać i dodawać pozycje. Zmiany pozostają przypisane do swojej listy i są wysyłane, gdy tylko połączenie wróci.

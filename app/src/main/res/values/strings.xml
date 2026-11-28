@@ -273,4 +273,23 @@
     <string name="area_crates_deposits">Empties &amp; deposit</string>
     <string name="area_party_supplies">Party supplies</string>
     <string name="area_ice_cubes">Ice cubes &amp; crushed ice</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">Shopping list</string>
+    <string name="widget_list_input_description">List with input field, category choice and list switch</string>
+    <string name="widget_list_only_name">List</string>
+    <string name="widget_list_only_description">Just the shopping list</string>
+    <string name="widget_quick_add_name">Quick add</string>
+    <string name="widget_quick_add_description">Input field with category choice</string>
+    <string name="widget_list_switcher_name">List switch</string>
+    <string name="widget_list_switcher_description">Shows the current list and switches it</string>
+    <string name="widget_not_configured">Open the app to set it up</string>
+    <string name="widget_loading">Loading…</string>
+    <string name="widget_pick_area">Category</string>
+    <string name="widget_added">Added: %1$s</string>
+    <string name="widget_open_app">Open app</string>
+    <plurals name="widget_open_items">
+        <item quantity="one">%d item open</item>
+        <item quantity="other">%d items open</item>
+    </plurals>
 </resources>

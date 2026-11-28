@@ -273,4 +273,23 @@
     <string name="area_crates_deposits">Envases retornables</string>
     <string name="area_party_supplies">Artículos de fiesta</string>
     <string name="area_ice_cubes">Cubitos y hielo picado</string>
+
+    <!-- Home screen widgets -->
+    <string name="widget_list_input_name">Lista de la compra</string>
+    <string name="widget_list_input_description">Lista con campo de entrada, selección de categoría y cambio de lista</string>
+    <string name="widget_list_only_name">Lista</string>
+    <string name="widget_list_only_description">Solo la lista de la compra</string>
+    <string name="widget_quick_add_name">Añadir rápido</string>
+    <string name="widget_quick_add_description">Campo de entrada con selección de categoría</string>
+    <string name="widget_list_switcher_name">Cambio de lista</string>
+    <string name="widget_list_switcher_description">Muestra la lista actual y la cambia</string>
+    <string name="widget_not_configured">Abre la app para configurarla</string>
+    <string name="widget_loading">Cargando…</string>
+    <string name="widget_pick_area">Categoría</string>
+    <string name="widget_added">Añadido: %1$s</string>
+    <string name="widget_open_app">Abrir app</string>
+    <plurals name="widget_open_items">
+        <item quantity="one">%d elemento pendiente</item>
+        <item quantity="other">%d elementos pendientes</item>
+    </plurals>
 </resources>

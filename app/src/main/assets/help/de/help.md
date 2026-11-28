@@ -70,6 +70,24 @@ Die Einstellungen haben fünf Reiter. Du wechselst per Tipp auf ein Symbol oder 
 - Produkthistorie: Grundlage für die Vorschläge; hier kannst du sie löschen.
 - Sichern und wiederherstellen: eine verschlüsselte Datei mit Verbindung, Märkten und Produkthistorie.
 
+## Widgets auf dem Startbildschirm
+
+Vier Widgets bringen die Liste auf den Startbildschirm: lange auf den Startbildschirm drücken → Widgets → HomeShopList. Alle zeigen die aktuelle Liste der App, ihre Größe lässt sich anpassen.
+
+- „Einkaufsliste“: Liste mit Eingabefeld, Kategoriewahl und Listenwechsel.
+- „Liste“: nur die Einkaufsliste.
+- „Schnell hinzufügen“: nur das Eingabefeld mit Kategoriewahl.
+- „Listenwahl“: zeigt die aktuelle Liste mit der Zahl offener Artikel und wechselt sie.
+
+### Bedienung
+
+- Ein Tipp auf das Kästchen hakt einen Artikel ab oder wieder an. „Erledigte löschen“ unter den erledigten Artikeln entfernt sie nach einer Rückfrage.
+- Ein Tipp auf das Eingabefeld öffnet die Eingabe direkt über dem Widget, mit Vorschlägen aus der Produkthistorie. Sie bleibt offen, so gibst du mehrere Artikel nacheinander ein.
+- Das Symbol neben dem Feld wählt die Kategorie für neue Artikel.
+- Ein Tipp auf den Listennamen wechselt die Liste. Der Wechsel gilt für die App und alle Widgets.
+- Haus und Pfeil oben rechts öffnen die App.
+- Solange die App läuft, aktualisieren sich die Widgets sofort. Sonst beim Antippen und etwa alle 30 Minuten.
+
 ## Ohne Verbindung
 
 - Ohne Verbindung kannst du weiter abhaken und hinzufügen. Änderungen bleiben ihrer Liste zugeordnet und werden gesendet, sobald die Verbindung wieder steht.

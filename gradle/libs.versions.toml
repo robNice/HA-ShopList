@@ -35,6 +35,7 @@ wearRemoteInteractions = "1.2.0"
 concurrentFutures = "1.2.0"
 workManager = "2.10.1"
 material = "1.12.0"
+glance = "1.1.1"
 
 [libraries]
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version = "1.0.1" }
@@ -84,6 +85,8 @@ wear-protolayout = { module = "androidx.wear.protolayout:protolayout", version.r
 androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "fragment" }
 concurrent-futures = { module = "androidx.concurrent:concurrent-futures", version.ref = "concurrentFutures" }
 work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workManager" }
+glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
+glance-material3 = { module = "androidx.glance:glance-material3", version.ref = "glance" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

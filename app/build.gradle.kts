@@ -16,8 +16,8 @@ android {
         applicationId = "de.robnice.homeshoplist"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1016001
-        versionName = "1.16.1-mobile"
+        versionCode = 1017000
+        versionName = "1.17.0-mobile"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -110,6 +110,8 @@ dependencies {
     implementation(libs.androidx.core.ktx.v1170)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
     add("ksp", libs.androidx.room.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.json)

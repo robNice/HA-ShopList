@@ -70,6 +70,24 @@ Ayarlarda beş sekme vardır. Bir simgeye dokunarak veya yana kaydırarak geçi�
 - Ürün geçmişi: önerilerin temeli; burada silinebilir.
 - Yedekleme ve geri yükleme: bağlantıyı, mağazaları ve ürün geçmişini içeren şifreli bir dosya.
 
+## Ana ekran widget'ları
+
+Dört widget listeyi ana ekrana getirir: ana ekrana uzun basın → Widget'lar → HomeShopList. Hepsi uygulamanın geçerli listesini gösterir ve boyutları değiştirilebilir.
+
+- "Alışveriş listesi": giriş alanı, kategori seçimi ve liste değiştirme içeren liste.
+- "Liste": yalnızca alışveriş listesi.
+- "Hızlı ekle": yalnızca kategori seçimli giriş alanı.
+- "Liste seçimi": geçerli listeyi açık öge sayısıyla gösterir ve değiştirir.
+
+### Kullanım
+
+- Kutuya dokunmak bir ögeyi tamamlandı olarak işaretler veya işareti kaldırır. Tamamlanan ögelerin altındaki "Tamamlananları temizle" onaydan sonra onları siler.
+- Giriş alanına dokunmak, girişi doğrudan widget'ın üzerinde, ürün geçmişinden önerilerle açar. Açık kalır, böylece art arda birkaç öge ekleyebilirsiniz.
+- Alanın yanındaki simge yeni ögelerin kategorisini seçer.
+- Liste adına dokunmak listeyi değiştirir. Değişiklik uygulama ve tüm widget'lar için geçerlidir.
+- Sağ üstteki ev ve ok uygulamayı açar.
+- Uygulama çalışırken widget'lar hemen güncellenir. Aksi halde kullandığınızda ve yaklaşık her 30 dakikada bir.
+
 ## Çevrimdışı
 
 - Bağlantı olmadan da işaretlemeye ve eklemeye devam edebilirsiniz. Değişiklikler kendi listelerine bağlı kalır ve bağlantı gelir gelmez gönderilir.
