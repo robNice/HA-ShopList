@@ -30,7 +30,11 @@ Standalone-Android-App für die **Home Assistant Todo-Listen** mit Live-Updates 
 
 ## Installation
 
-Lade die aktuelle APK aus den **[Releases](https://github.com/robNice/HA-ShopList/releases)** herunter.
+<a href="https://play.google.com/store/apps/details?id=de.robnice.homeshoplist"><img alt="Jetzt bei Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/de_badge_web_generic.png" height="80"></a>
+
+Hol dir die App bei **[Google Play](https://play.google.com/store/apps/details?id=de.robnice.homeshoplist)**.
+
+Alternativ kannst du die aktuelle APK aus den **[Releases](https://github.com/robNice/HA-ShopList/releases)** herunterladen.
 
 ---
 
